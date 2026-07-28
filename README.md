@@ -45,7 +45,7 @@ To keep this from being a mystery, Sundial won't let you create presets until it
 
 > Install via `./build.sh` (not by running a Debug build from Xcode) so launch-at-login binds the app in `/Applications` rather than a transient DerivedData path.
 
-Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Releases](https://github.com/Id3arium/Sundial/releases) page, unzip it, and drag it to `/Applications`.
+Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Releases](https://github.com/andres-al-campos/Sundial/releases) page, unzip it, and drag it to `/Applications`.
 
 ## First run
 
