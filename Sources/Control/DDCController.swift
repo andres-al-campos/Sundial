@@ -44,13 +44,27 @@ class DDCController {
         }
     }
 
-    /// Returns true if the display's actual DDC brightness and contrast match the preset.
-    /// Uses raw DDC reads (VCP codes) to bypass BetterDisplay's cache.
-    func matches(_ preset: Preset) -> Bool {
+    /// How the display's actual DDC state compares to a preset.
+    ///
+    /// `.unknown` is deliberately distinct from `.drifted`: a failed DDC read is
+    /// not evidence that anything moved. Collapsing the two makes an unreachable
+    /// or flaky monitor look permanently drifted, so the scheduler re-applies on
+    /// every tick and the user can never change anything by hand.
+    enum DisplayState {
+        case matches
+        case drifted
+        case unknown
+    }
+
+    /// Compare the display's actual DDC brightness and contrast against a preset.
+    /// Uses raw DDC reads (VCP codes) to bypass BetterDisplay's cache. Returns
+    /// `.unknown` if either read fails — see `DisplayState`.
+    func state(of preset: Preset) -> DisplayState {
         guard let brightness = readDDC(vcp: 0x10),
-              let contrast   = readDDC(vcp: 0x12) else { return false }
-        return abs(brightness - preset.hardwareBrightness) <= 1
-            && abs(contrast   - preset.hardwareContrast)   <= 1
+              let contrast   = readDDC(vcp: 0x12) else { return .unknown }
+        let ok = abs(brightness - preset.hardwareBrightness) <= 1
+              && abs(contrast   - preset.hardwareContrast)   <= 1
+        return ok ? .matches : .drifted
     }
 
     /// Probe whether the configured display is reachable over DDC by attempting
@@ -68,8 +82,27 @@ class DDCController {
     /// VCP 0x10 = brightness, 0x12 = contrast.
     private func readDDC(vcp: Int) -> Int? {
         let hex = String(format: "0x%02X", vcp)
-        let output = runCapture([cliPath, "get", "-nameLike=\(displayName)", "-ddc", "-vcp=\(hex)"])
-        return Int(output.trimmingCharacters(in: .whitespacesAndNewlines))
+        let result = runCapture([cliPath, "get", "-nameLike=\(displayName)", "-ddc", "-vcp=\(hex)"])
+        let trimmed = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let value = Int(trimmed) { return value }
+
+        // Read failed. Say why — the caller only sees nil, so this is the one
+        // place the actual reason is available.
+        let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch result.outcome {
+        case .timedOut:
+            print("[Sundial] DDC read of \(hex) timed out after \(Self.commandTimeout)s. BetterDisplay may be busy or wedged — quit and reopen BetterDisplay if this persists.")
+        case .launchFailed(let message):
+            print("[Sundial] Could not launch BetterDisplay: \(message) — verify the path in Settings points to /Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay and that BetterDisplay.app is installed.")
+        case .exited(let status):
+            var detail = "[Sundial] DDC read of \(hex) from \"\(displayName)\" failed"
+            if status != 0 { detail += " (exit \(status))" }
+            if !trimmed.isEmpty { detail += ": \(trimmed)" }
+            if !stderr.isEmpty { detail += " / \(stderr)" }
+            print(detail)
+            print("[Sundial] The monitor may not support DDC reads, may have DDC/CI disabled in its on-screen menu, or the display name in Settings may not match a connected monitor.")
+        }
+        return nil
     }
 
     private func setPercent(_ param: String, value: Int) async {
@@ -77,20 +110,78 @@ class DDCController {
         try? await Task.sleep(nanoseconds: 25_000_000)
     }
 
-    private func runCapture(_ args: [String]) -> String {
+    /// Seconds to wait for a CLI invocation before giving up. BetterDisplay can
+    /// hang indefinitely (observed on `version` and on DDC reads to a wedged
+    /// monitor); `waitUntilExit()` would block the caller forever if it does.
+    static let commandTimeout: TimeInterval = 5
+
+    private struct CaptureResult {
+        enum Outcome {
+            case exited(Int32)
+            case timedOut
+            case launchFailed(String)
+        }
+        var outcome: Outcome
+        var stdout: String
+        var stderr: String
+    }
+
+    private func runCapture(_ args: [String]) -> CaptureResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: args[0])
         process.arguments = Array(args.dropFirst())
+
         let outPipe = Pipe()
+        let errPipe = Pipe()
         process.standardOutput = outPipe
-        process.standardError = Pipe()
+        process.standardError = errPipe
+
         do {
             try process.run()
-            process.waitUntilExit()
-            return String(data: outPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
         } catch {
-            return ""
+            return CaptureResult(outcome: .launchFailed(error.localizedDescription), stdout: "", stderr: "")
         }
+
+        // Drain both pipes on background queues. A process that fills a pipe
+        // buffer blocks until it is read, so reading only after waiting would
+        // deadlock on verbose output.
+        var outData = Data()
+        var errData = Data()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global().async {
+            outData = outPipe.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+        group.enter()
+        DispatchQueue.global().async {
+            errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        let deadline = Date().addingTimeInterval(Self.commandTimeout)
+        var timedOut = false
+        while process.isRunning {
+            if Date() >= deadline {
+                process.terminate()
+                // SIGTERM may not land; give it a moment, then SIGKILL so the
+                // pipe readers get EOF and the group can complete.
+                if group.wait(timeout: .now() + 0.5) == .timedOut {
+                    kill(process.processIdentifier, SIGKILL)
+                }
+                timedOut = true
+                break
+            }
+            usleep(20_000)
+        }
+
+        _ = group.wait(timeout: .now() + 1.0)
+        process.waitUntilExit()
+
+        let stdout = String(data: outData, encoding: .utf8) ?? ""
+        let stderr = String(data: errData, encoding: .utf8) ?? ""
+        let outcome: CaptureResult.Outcome = timedOut ? .timedOut : .exited(process.terminationStatus)
+        return CaptureResult(outcome: outcome, stdout: stdout, stderr: stderr)
     }
 
     @discardableResult
