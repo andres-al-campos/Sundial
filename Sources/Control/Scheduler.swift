@@ -159,12 +159,21 @@ class Scheduler {
                     await controller.apply(preset)
                 }
             }
-        } else if !controller.matches(preset) {
-            // Same entry, but the display drifted (wake from sleep, reboot,
-            // BetterDisplay restart, manual override, etc.) — re-apply.
-            transitionTask?.cancel()
-            transitionTask = Task {
-                await controller.apply(preset)
+        } else {
+            switch controller.state(of: preset) {
+            case .drifted:
+                // Same entry, but the display genuinely drifted (wake from sleep,
+                // reboot, BetterDisplay restart, manual override) — re-apply.
+                transitionTask?.cancel()
+                transitionTask = Task {
+                    await controller.apply(preset)
+                }
+            case .matches, .unknown:
+                // `.unknown` means the DDC read failed, which is not evidence of
+                // drift. Re-applying on an unreadable display would fight the user
+                // every tick for as long as reads keep failing; the next tick with
+                // a working read corrects any real drift 15s later.
+                break
             }
         }
     }
