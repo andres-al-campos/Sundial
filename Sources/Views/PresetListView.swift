@@ -271,7 +271,7 @@ private struct PresetEditorBody: View {
     @State private var scheduleEntry: ScheduleEntry?
     @State private var scheduleTime: Date = Date()
     @State private var sliderApplyTask: Task<Void, Never>?
-    /// True while a slider drag holds `previewingPresetID` — see `beginSliderEdit`.
+    /// True while a drag on the active preset holds `previewingPresetID` — see `beginSliderEdit`.
     @State private var claimedForSliderEdit = false
 
     init(preset: Preset) {
@@ -486,9 +486,8 @@ private struct PresetEditorBody: View {
     ///
     /// Only claims when nothing else is previewing, so an explicit preview of
     /// another preset keeps ownership and is restored untouched on release.
-    /// Drop a stale claim if the row goes away mid-drag (row collapsed, menu
-    /// closed). Both of those paths already clear `previewingPresetID` globally;
-    /// this just keeps this row's flag from lying on the way back in.
+    /// Drop a drag lock if the row goes away mid-drag (row collapsed, menu
+    /// closed), so this row's flag doesn't outlive the drag.
     private func releaseSliderClaimIfNeeded() {
         guard claimedForSliderEdit else { return }
         claimedForSliderEdit = false
@@ -498,14 +497,31 @@ private struct PresetEditorBody: View {
         }
     }
 
+    /// Take the monitor when a slider drag starts.
+    ///
+    /// Without a lock the scheduler's 15s tick sees the display not matching
+    /// the scheduled preset and reverts the drag.
+    ///
+    /// On a non-active preset the drag enters preview, same as pressing the
+    /// Preview button, and stays there after release so you can judge the result.
+    /// It ends the usual ways: Preview button, collapsing the row, closing the menu.
+    ///
+    /// The active preset has no preview mode, so it only locks for the drag
+    /// itself; its edits persist and the scheduler applies them.
     private func beginSliderEdit() {
-        guard appState.previewingPresetID == nil else { return }
-        claimedForSliderEdit = true
-        appState.previewingPresetID = draft.id
+        if isActivePreset {
+            guard appState.previewingPresetID == nil else { return }
+            claimedForSliderEdit = true
+            appState.previewingPresetID = draft.id
+        } else if !isPreviewing {
+            // Apply the whole preset first, so the screen shows this preset
+            // and not just the one parameter being dragged.
+            appState.previewingPresetID = draft.id
+            applyNow()
+        }
     }
 
-    /// Release the claim taken by `beginSliderEdit`, and let the scheduler decide
-    /// what should be on screen now. Only releases a claim this drag took.
+    /// Release the active preset's drag lock. Non-active previews keep holding.
     private func endSliderEdit() {
         guard claimedForSliderEdit else { return }
         claimedForSliderEdit = false
