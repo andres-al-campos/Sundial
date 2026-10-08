@@ -271,6 +271,8 @@ private struct PresetEditorBody: View {
     @State private var scheduleEntry: ScheduleEntry?
     @State private var scheduleTime: Date = Date()
     @State private var sliderApplyTask: Task<Void, Never>?
+    /// True while a drag on the active preset holds `previewingPresetID` — see `beginSliderEdit`.
+    @State private var claimedForSliderEdit = false
 
     init(preset: Preset) {
         self.preset = preset
@@ -329,9 +331,11 @@ private struct PresetEditorBody: View {
                     guard liveApply else { return }
                     scheduleApply("hardwareBrightness", value: newValue)
                 },
+                onEditingBegan: { beginSliderEdit() },
                 onCommit: {
                     persist()
                     if liveApply { applyNow() }
+                    endSliderEdit()
                 }
             )
             LabeledSlider(
@@ -341,9 +345,11 @@ private struct PresetEditorBody: View {
                     guard liveApply else { return }
                     scheduleApply("hardwareContrast", value: newValue)
                 },
+                onEditingBegan: { beginSliderEdit() },
                 onCommit: {
                     persist()
                     if liveApply { applyNow() }
+                    endSliderEdit()
                 }
             )
             LabeledSlider(
@@ -353,7 +359,11 @@ private struct PresetEditorBody: View {
                     guard liveApply else { return }
                     NightShiftController.setStrength(newValue)
                 },
-                onCommit: { persist() }
+                onEditingBegan: { beginSliderEdit() },
+                onCommit: {
+                    persist()
+                    endSliderEdit()
+                }
             )
 
             // Actions
@@ -400,6 +410,7 @@ private struct PresetEditorBody: View {
             loadSchedule()
         }
         .onDisappear {
+            releaseSliderClaimIfNeeded()
             if isPreviewing { endPreview() }
             sliderApplyTask?.cancel()
         }
@@ -466,6 +477,58 @@ private struct PresetEditorBody: View {
         sliderApplyTask = Task { await controller.apply(snapshot) }
     }
 
+    /// Claim the monitor for the duration of a slider drag.
+    ///
+    /// Without this the scheduler's 15s tick sees the display no longer matching
+    /// the scheduled preset — which is exactly what dragging a slider does — and
+    /// re-applies the preset, undoing the drag. Night Shift appeared to work only
+    /// because `state(of:)` reads brightness and contrast and cannot see it.
+    ///
+    /// Only claims when nothing else is previewing, so an explicit preview of
+    /// another preset keeps ownership and is restored untouched on release.
+    /// Drop a drag lock if the row goes away mid-drag (row collapsed, menu
+    /// closed), so this row's flag doesn't outlive the drag.
+    private func releaseSliderClaimIfNeeded() {
+        guard claimedForSliderEdit else { return }
+        claimedForSliderEdit = false
+        if appState.previewingPresetID == draft.id {
+            appState.previewingPresetID = nil
+            appState.onPreviewEnded?()
+        }
+    }
+
+    /// Take the monitor when a slider drag starts.
+    ///
+    /// Without a lock the scheduler's 15s tick sees the display not matching
+    /// the scheduled preset and reverts the drag.
+    ///
+    /// On a non-active preset the drag enters preview, same as pressing the
+    /// Preview button, and stays there after release so you can judge the result.
+    /// It ends the usual ways: Preview button, collapsing the row, closing the menu.
+    ///
+    /// The active preset has no preview mode, so it only locks for the drag
+    /// itself; its edits persist and the scheduler applies them.
+    private func beginSliderEdit() {
+        if isActivePreset {
+            guard appState.previewingPresetID == nil else { return }
+            claimedForSliderEdit = true
+            appState.previewingPresetID = draft.id
+        } else if !isPreviewing {
+            // Apply the whole preset first, so the screen shows this preset
+            // and not just the one parameter being dragged.
+            appState.previewingPresetID = draft.id
+            applyNow()
+        }
+    }
+
+    /// Release the active preset's drag lock. Non-active previews keep holding.
+    private func endSliderEdit() {
+        guard claimedForSliderEdit else { return }
+        claimedForSliderEdit = false
+        appState.previewingPresetID = nil
+        appState.onPreviewEnded?()
+    }
+
     /// Debounced single-param apply — cancels any in-flight task so rapid slider
     /// movement only sends the final value, without touching other params.
     private func scheduleApply(_ param: String, value: Int) {
@@ -487,6 +550,7 @@ private struct LabeledSlider: View {
     let label: String
     @Binding var value: Int
     var onLiveChange: ((Int) -> Void)?
+    var onEditingBegan: (() -> Void)?
     let onCommit: () -> Void
 
     var body: some View {
@@ -507,7 +571,7 @@ private struct LabeledSlider: View {
                 ),
                 in: 0...100,
                 onEditingChanged: { editing in
-                    if !editing { onCommit() }
+                    if editing { onEditingBegan?() } else { onCommit() }
                 }
             )
             .controlSize(.small)
