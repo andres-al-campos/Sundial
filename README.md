@@ -35,7 +35,7 @@ To keep this from being a mystery, Sundial won't let you create presets until it
 ./build.sh          # build, install to /Applications, and relaunch
 ```
 
-`build.sh` regenerates the Xcode project from `project.yml`, builds a Release `.app`, copies it to `/Applications`, and relaunches it. Other options:
+`build.sh` regenerates the Xcode project from `project.yml`, builds a Release `.app`, copies it to `/Applications`, and relaunches it. To install somewhere else, copy `build.local.env.example` to `build.local.env` and set `INSTALL_DIR`. Other options:
 
 ```bash
 ./build.sh -n       # build only, stage into ./build/Sundial.app (no install)

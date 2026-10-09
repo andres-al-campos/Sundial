@@ -3,6 +3,7 @@
 #
 # Usage:
 #   ./build.sh                 # build, install to /Applications, relaunch (default)
+#                              # (set INSTALL_DIR in build.local.env to install elsewhere)
 #   ./build.sh --no-install    # build only, stage into ./build/Sundial.app
 #   ./build.sh -n              # short form of --no-install
 #   ./build.sh -v              # verbose xcodebuild output
@@ -30,6 +31,18 @@ for arg in "$@"; do
 done
 
 cd "$(dirname "$0")"
+
+# Where to install. build.local.env (gitignored) can set INSTALL_DIR; see
+# build.local.env.example.
+INSTALL_DIR=/Applications
+if [ -f build.local.env ]; then
+    # shellcheck disable=SC1091
+    . ./build.local.env
+fi
+if [ "$INSTALL" = "1" ] && [ ! -d "$INSTALL_DIR" ]; then
+    echo "error: install folder '$INSTALL_DIR' doesn't exist. Create it with 'mkdir -p \"$INSTALL_DIR\"' or fix INSTALL_DIR in build.local.env."
+    exit 1
+fi
 
 # 1. Regenerate project from project.yml
 if ! command -v xcodegen >/dev/null 2>&1; then
@@ -124,11 +137,11 @@ if [ "$INSTALL" = "1" ]; then
         exit 1
     fi
 
-    echo "→ Installing to /Applications/$APP_NAME.app"
-    rm -rf "/Applications/$APP_NAME.app"
-    cp -R "$OUT_DIR/$APP_NAME.app" /Applications/
+    echo "→ Installing to $INSTALL_DIR/$APP_NAME.app"
+    rm -rf "${INSTALL_DIR:?}/$APP_NAME.app"
+    cp -R "$OUT_DIR/$APP_NAME.app" "$INSTALL_DIR/"
 
     echo "→ Launching..."
-    open "/Applications/$APP_NAME.app"
+    open "$INSTALL_DIR/$APP_NAME.app"
     echo "✓ $APP_NAME running. Check the menu bar."
 fi
