@@ -479,7 +479,7 @@ private struct PresetEditorBody: View {
 
     /// Claim the monitor for the duration of a slider drag.
     ///
-    /// Without this the scheduler's 15s tick sees the display no longer matching
+    /// Without this the scheduler's minute tick sees the display no longer matching
     /// the scheduled preset — which is exactly what dragging a slider does — and
     /// re-applies the preset, undoing the drag. Night Shift appeared to work only
     /// because `state(of:)` reads brightness and contrast and cannot see it.
@@ -499,7 +499,7 @@ private struct PresetEditorBody: View {
 
     /// Take the monitor when a slider drag starts.
     ///
-    /// Without a lock the scheduler's 15s tick sees the display not matching
+    /// Without a lock the scheduler's minute tick sees the display not matching
     /// the scheduled preset and reverts the drag.
     ///
     /// On a non-active preset the drag enters preview, same as pressing the

@@ -19,7 +19,7 @@ class Scheduler {
         self.state = state
         self.controller = controller
 
-        timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
                 self.tick(state: state, controller: controller)
@@ -172,7 +172,7 @@ class Scheduler {
                 // `.unknown` means the DDC read failed, which is not evidence of
                 // drift. Re-applying on an unreadable display would fight the user
                 // every tick for as long as reads keep failing; the next tick with
-                // a working read corrects any real drift 15s later.
+                // a working read corrects any real drift a minute later.
                 break
             }
         }
