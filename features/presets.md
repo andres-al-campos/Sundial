@@ -12,8 +12,8 @@ day. Sundial applies the preset whose time most recently passed.
   Preview button does the same. Collapsing the row or closing the menu ends it.
 - Add and delete presets.
 - **Contrast locks in HDR.** While the configured display is in HDR, the
-  Contrast slider is greyed out with a lock beside its label, and hovering the
-  row shows "Locked by monitor in HDR" where the slider is. The value stays visible. The schedule still sends contrast: the
+  Contrast slider is replaced by the text "Locked by monitor in HDR", with a
+  lock beside the label. The value stays visible. The schedule still sends contrast: the
   monitor stores it and uses it when HDR goes off.
 
 ## How to get to it
@@ -32,8 +32,8 @@ because another screen is in HDR, not with no name set.
 Last driven: 2026-10-12, macOS. Passed; failed as expected against a copy with
 the headroom comparison loosened.
 
-By hand only: that the slider greys and ungreys when HDR is toggled in System
-Settings → Displays, that hovering the row shows the note, and everything else in this feature (editing, live apply,
+By hand only: that the note replaces the slider and goes away again when HDR
+is toggled in System Settings → Displays, and everything else in this feature (editing, live apply,
 preview, add, delete).
 
 ## Gotchas
@@ -47,9 +47,10 @@ preview, add, delete).
 - The lock applies to any display in HDR, on the assumption that monitors
   generally lock contrast there. Only the M27Q was observed.
 - Brightness is not locked. Whether the M27Q honours it in HDR is not known.
-- The note takes the slider's place on hover instead of adding a line,
-  because the expanded card's height is pinned and a new line would push the
-  card below it out of view. An agent's call.
+- The note takes the slider's place instead of adding a line, because the
+  expanded card's height is pinned and a new line would push the card below
+  it out of view. Always shown, left-aligned: the user's call, 2026-10-12,
+  since a slider that can't move has nothing to show.
 - The note is not a system tooltip: one was tried first and never appeared in
   the menu. The "Active" badge still uses one and may have the same problem.
 - The lock follows an HDR toggle after a short delay.

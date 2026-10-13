@@ -562,12 +562,12 @@ private struct LabeledSlider: View {
     let label: String
     @Binding var value: Int
     /// Why the slider can't be moved right now, or nil when it can. A lock
-    /// sits beside the label, and hovering the row shows the note where the
-    /// slider is. It takes the slider's place because the expanded card's
-    /// height is pinned (see `Row`), and it isn't a `.help` tooltip because
-    /// those don't appear in this menu. Keep it short: the slot is ~170pt.
+    /// sits beside the label and the note is shown where the slider would be:
+    /// a slider that can't move has nothing to show. It takes the slider's
+    /// place because the expanded card's height is pinned (see `Row`), and it
+    /// isn't a `.help` tooltip because those don't appear in this menu. Keep
+    /// it short: the slot is ~170pt.
     var lockedNote: String?
-    @State private var isHovered = false
     var onLiveChange: ((Int) -> Void)?
     var onEditingBegan: (() -> Void)?
     let onCommit: () -> Void
@@ -601,9 +601,10 @@ private struct LabeledSlider: View {
             )
             .controlSize(.small)
             .disabled(lockedNote != nil)
-            .opacity(showsNote ? 0 : 1)
-            .overlay {
-                if showsNote, let lockedNote {
+            // Hidden, not removed, so the row keeps the slider's height.
+            .opacity(lockedNote == nil ? 1 : 0)
+            .overlay(alignment: .leading) {
+                if let lockedNote {
                     Text(lockedNote)
                         .font(.caption)
                         .lineLimit(1)
@@ -615,9 +616,5 @@ private struct LabeledSlider: View {
                 .frame(width: 32, alignment: .trailing)
         }
         .foregroundStyle(lockedNote == nil ? .primary : .secondary)
-        .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
     }
-
-    private var showsNote: Bool { lockedNote != nil && isHovered }
 }
