@@ -6,6 +6,8 @@
 #                              # (set INSTALL_DIR in build.local.env to install elsewhere)
 #   ./build.sh --no-install    # build only, stage into ./build/Sundial.app
 #   ./build.sh -n              # short form of --no-install
+#   ./build.sh check           # run the laws in laws/ and every drive (no build)
+#   ./build.sh drive [name]    # run every feature check in drive/, or one
 #   ./build.sh -v              # verbose xcodebuild output
 #   ./build.sh -n -v           # both
 
@@ -14,13 +16,22 @@ set -e
 APP_NAME=Sundial
 INSTALL=1
 VERBOSE=0
+MODE=build   # build | check | drive
+DRIVE_NAME=""
 
 for arg in "$@"; do
+    # The word after `drive` is the feature to drive, not a flag.
+    if [ "$MODE" = "drive" ] && [ -z "$DRIVE_NAME" ] && [ "${arg#-}" = "$arg" ]; then
+        DRIVE_NAME="$arg"
+        continue
+    fi
     case "$arg" in
+        check)           MODE=check ;;
+        drive)           MODE=drive ;;
         -n|--no-install) INSTALL=0 ;;
         -v|--verbose)    VERBOSE=1 ;;
         -h|--help)
-            sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *)
@@ -31,6 +42,44 @@ for arg in "$@"; do
 done
 
 cd "$(dirname "$0")"
+
+# Every feature check in drive/, or the one named. A name with no script is an
+# error, so a typo can't pass by running nothing.
+drive() {
+    local name="$1" failed=0 ran=0
+    if [ -n "$name" ]; then
+        if [ ! -f "drive/$name.sh" ]; then
+            echo "error: no drive named \"$name\": there's no drive/$name.sh. Fix the name, or write that check."
+            local there
+            there=$(ls drive 2>/dev/null | sed -n 's/\.sh$//p' | tr '\n' ' ' || true)
+            echo "       The ones there: ${there:-none yet}"
+            return 1
+        fi
+        "drive/$name.sh"
+        return $?
+    fi
+    for d in drive/*.sh; do
+        [ -f "$d" ] || continue
+        ran=1
+        "$d" || failed=1
+    done
+    [ "$ran" = 1 ] || echo "No drives yet: drive/ has no checks. features/README.md lists what isn't covered."
+    return $failed
+}
+
+if [ "$MODE" = "drive" ]; then
+    drive "$DRIVE_NAME" && exit 0
+    exit 1
+fi
+
+if [ "$MODE" = "check" ]; then
+    failed=0
+    for law in laws/*.sh; do
+        "$law" || failed=1
+    done
+    drive "" || failed=1
+    exit $failed
+fi
 
 # Where to install. build.local.env (gitignored) can set INSTALL_DIR; see
 # build.local.env.example.
