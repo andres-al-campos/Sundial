@@ -13,7 +13,7 @@ day. Sundial applies the preset whose time most recently passed.
 - Add and delete presets.
 - **Contrast locks in HDR.** While the configured display is in HDR, the
   Contrast slider is greyed out with a lock beside its label, and hovering the
-  row says why. The value stays visible. The schedule still sends contrast: the
+  row shows "Locked by monitor in HDR" where the slider is. The value stays visible. The schedule still sends contrast: the
   monitor stores it and uses it when HDR goes off.
 
 ## How to get to it
@@ -33,7 +33,7 @@ Last driven: 2026-10-12, macOS. Passed; failed as expected against a copy with
 the headroom comparison loosened.
 
 By hand only: that the slider greys and ungreys when HDR is toggled in System
-Settings → Displays, and everything else in this feature (editing, live apply,
+Settings → Displays, that hovering the row shows the note, and everything else in this feature (editing, live apply,
 preview, add, delete).
 
 ## Gotchas
@@ -42,16 +42,14 @@ preview, add, delete).
   (48, 64 and 19 all round-tripped on 2026-10-12) while the picture doesn't
   change. The scheduler's drift check therefore sees a match in HDR.
 - HDR is read from macOS (the screen's potential EDR headroom), because
-  BetterDisplay's `-hdr` query answers "Pro required". Measured once: 4.18 on
-  the M27Q, presumably with HDR on. That it drops to 1 with HDR off is an
-  agent's assumption from how macOS reports external displays, not yet
-  measured. If the slider stays grey with HDR off, this is why.
+  BetterDisplay's `-hdr` query answers "Pro required". It read 4.18 on the M27Q with
+  HDR on, and the lock comes and goes as HDR is toggled (seen 2026-10-12).
 - The lock applies to any display in HDR, on the assumption that monitors
   generally lock contrast there. Only the M27Q was observed.
 - Brightness is not locked. Whether the M27Q honours it in HDR is not known.
-- The note is a tooltip and a lock glyph, not a line of text, because the
-  expanded card's height is pinned and a new line would push the card below
-  it out of view. An agent's call.
-- The slider refreshes its HDR state when the row appears and when macOS
-  reports a screen change. Whether toggling HDR sends that report is not
-  verified; reopening the row always refreshes.
+- The note takes the slider's place on hover instead of adding a line,
+  because the expanded card's height is pinned and a new line would push the
+  card below it out of view. An agent's call.
+- The note is not a system tooltip: one was tried first and never appeared in
+  the menu. The "Active" badge still uses one and may have the same problem.
+- The lock follows an HDR toggle after a short delay.

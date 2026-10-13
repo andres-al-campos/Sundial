@@ -344,9 +344,7 @@ private struct PresetEditorBody: View {
             LabeledSlider(
                 label: "Contrast",
                 value: $draft.hardwareContrast,
-                lockedNote: contrastLockedByHDR
-                    ? "Your monitor locks contrast while HDR is on. Turn HDR off in System Settings → Displays to adjust it."
-                    : nil,
+                lockedNote: contrastLockedByHDR ? "Locked by monitor in HDR" : nil,
                 onLiveChange: { newValue in
                     guard liveApply else { return }
                     scheduleApply("hardwareContrast", value: newValue)
@@ -563,10 +561,13 @@ private struct PresetEditorBody: View {
 private struct LabeledSlider: View {
     let label: String
     @Binding var value: Int
-    /// Why the slider can't be moved right now, or nil when it can. Shown as
-    /// the row's tooltip, with a lock beside the label; the row keeps its
-    /// height because the expanded card's height is pinned (see `Row`).
+    /// Why the slider can't be moved right now, or nil when it can. A lock
+    /// sits beside the label, and hovering the row shows the note where the
+    /// slider is. It takes the slider's place because the expanded card's
+    /// height is pinned (see `Row`), and it isn't a `.help` tooltip because
+    /// those don't appear in this menu. Keep it short: the slot is ~170pt.
     var lockedNote: String?
+    @State private var isHovered = false
     var onLiveChange: ((Int) -> Void)?
     var onEditingBegan: (() -> Void)?
     let onCommit: () -> Void
@@ -600,11 +601,23 @@ private struct LabeledSlider: View {
             )
             .controlSize(.small)
             .disabled(lockedNote != nil)
+            .opacity(showsNote ? 0 : 1)
+            .overlay {
+                if showsNote, let lockedNote {
+                    Text(lockedNote)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
             Text("\(value)%")
                 .font(.caption.monospacedDigit())
                 .frame(width: 32, alignment: .trailing)
         }
         .foregroundStyle(lockedNote == nil ? .primary : .secondary)
-        .help(lockedNote ?? "")
+        .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
     }
+
+    private var showsNote: Bool { lockedNote != nil && isHovered }
 }
