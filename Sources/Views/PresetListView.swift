@@ -273,6 +273,9 @@ private struct PresetEditorBody: View {
     @State private var sliderApplyTask: Task<Void, Never>?
     /// True while a drag on the active preset holds `previewingPresetID` — see `beginSliderEdit`.
     @State private var claimedForSliderEdit = false
+    /// True while the monitor is in HDR, where it stores the contrast it's sent
+    /// but doesn't apply it. The slider greys out so it doesn't look broken.
+    @State private var contrastLockedByHDR = false
 
     init(preset: Preset) {
         self.preset = preset
@@ -341,6 +344,9 @@ private struct PresetEditorBody: View {
             LabeledSlider(
                 label: "Contrast",
                 value: $draft.hardwareContrast,
+                lockedNote: contrastLockedByHDR
+                    ? "Your monitor locks contrast while HDR is on. Turn HDR off in System Settings → Displays to adjust it."
+                    : nil,
                 onLiveChange: { newValue in
                     guard liveApply else { return }
                     scheduleApply("hardwareContrast", value: newValue)
@@ -408,12 +414,20 @@ private struct PresetEditorBody: View {
         .opacity(draft.enabled ? 1.0 : 0.6)
         .onAppear {
             loadSchedule()
+            refreshHDR()
         }
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didChangeScreenParametersNotification
+        )) { _ in refreshHDR() }
         .onDisappear {
             releaseSliderClaimIfNeeded()
             if isPreviewing { endPreview() }
             sliderApplyTask?.cancel()
         }
+    }
+
+    private func refreshHDR() {
+        contrastLockedByHDR = HDRState.isOn(displayName: appState.displayName)
     }
 
     // MARK: - Schedule helpers
@@ -549,15 +563,25 @@ private struct PresetEditorBody: View {
 private struct LabeledSlider: View {
     let label: String
     @Binding var value: Int
+    /// Why the slider can't be moved right now, or nil when it can. Shown as
+    /// the row's tooltip, with a lock beside the label; the row keeps its
+    /// height because the expanded card's height is pinned (see `Row`).
+    var lockedNote: String?
     var onLiveChange: ((Int) -> Void)?
     var onEditingBegan: (() -> Void)?
     let onCommit: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(label)
-                .font(.caption)
-                .frame(width: 72, alignment: .leading)
+            HStack(spacing: 3) {
+                Text(label)
+                if lockedNote != nil {
+                    Image(systemName: "lock.fill")
+                        .font(.caption2)
+                }
+            }
+            .font(.caption)
+            .frame(width: 72, alignment: .leading)
             Slider(
                 value: Binding(
                     get: { Double(value) },
@@ -575,9 +599,12 @@ private struct LabeledSlider: View {
                 }
             )
             .controlSize(.small)
+            .disabled(lockedNote != nil)
             Text("\(value)%")
                 .font(.caption.monospacedDigit())
                 .frame(width: 32, alignment: .trailing)
         }
+        .foregroundStyle(lockedNote == nil ? .primary : .secondary)
+        .help(lockedNote ?? "")
     }
 }
