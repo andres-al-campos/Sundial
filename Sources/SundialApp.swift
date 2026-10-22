@@ -42,7 +42,7 @@ struct SundialApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarView()
+            MenuBarView(activePresetID: appState.activePresetID)
                 .environmentObject(appState)
                 .onAppear {
                     // Keep controller in sync with any settings changes made since launch.

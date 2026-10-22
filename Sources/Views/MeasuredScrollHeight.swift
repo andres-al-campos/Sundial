@@ -18,11 +18,12 @@ import SwiftUI
 //       VStack { ... }
 //           .measureContentHeight()      // on the CONTENT, inside the ScrollView
 //   }
-//   .scrollContentHeight("settings", cap: 320)   // on the ScrollView itself
+//   .scrollContentHeight("presets", cap: 320, initial: h)   // on the ScrollView
 //
-// The key names the panel so its last measured height outlives the view: each
-// open (and each switch between panels) builds a fresh view, and starting it
-// from 0 made the popup open at the floor and then jump to the content height.
+// Each open builds a fresh view, and starting from 0 made the popup open at
+// the floor and then jump to the content height. So it starts from the last
+// height measured under `key`, or on the first open after launch from
+// `initial`, the caller's best computation of the content's height.
 //
 // The two halves talk via the ContentHeightKey preference, so the reader always
 // reflects the laid-out content rather than the (clamped) ScrollView frame.
@@ -52,11 +53,12 @@ extension View {
     ///
     /// - Parameters:
     ///   - key: Names the panel; its last measured height is the next open's start.
+    ///   - initial: Starting height when nothing has been measured under `key` yet.
     ///   - cap: Maximum panel height. Content taller than this scrolls.
     ///   - floor: Minimum height, applied before the first measurement so the panel
     ///            never collapses to zero. Defaults to 44.
-    func scrollContentHeight(_ key: String, cap: CGFloat, floor: CGFloat = 44) -> some View {
-        modifier(ScrollContentHeight(key: key, cap: cap, floor: floor))
+    func scrollContentHeight(_ key: String, cap: CGFloat, initial: CGFloat, floor: CGFloat = 44) -> some View {
+        modifier(ScrollContentHeight(key: key, cap: cap, initial: initial, floor: floor))
     }
 }
 
@@ -69,11 +71,11 @@ private struct ScrollContentHeight: ViewModifier {
     let floor: CGFloat
     @State private var measured: CGFloat
 
-    init(key: String, cap: CGFloat, floor: CGFloat) {
+    init(key: String, cap: CGFloat, initial: CGFloat, floor: CGFloat) {
         self.key = key
         self.cap = cap
         self.floor = floor
-        _measured = State(initialValue: Self.lastHeight[key] ?? 0)
+        _measured = State(initialValue: Self.lastHeight[key] ?? initial)
     }
 
     func body(content: Content) -> some View {

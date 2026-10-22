@@ -3,11 +3,14 @@ import SwiftUI
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @State private var showSettings = false
-    /// The card to show expanded on the next open: the active preset as of the
-    /// last close. Starting from it, instead of expanding in onAppear, keeps the
-    /// popup from opening collapsed and then growing.
-    @MainActor private static var nextExpandedID: UUID?
-    @State private var expandedPresetID: UUID? = MenuBarView.nextExpandedID
+    @State private var expandedPresetID: UUID?
+
+    /// `activePresetID` is the card to open expanded. Taking it at construction,
+    /// instead of expanding in onAppear, keeps the popup from opening collapsed
+    /// and then growing.
+    init(activePresetID: UUID?) {
+        _expandedPresetID = State(initialValue: activePresetID)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -51,7 +54,7 @@ struct MenuBarView: View {
             } else if showSettings {
                 SettingsView()
             } else {
-                PresetListView(expandedPresetID: $expandedPresetID)
+                PresetListView(expandedPresetID: $expandedPresetID, appState: appState)
             }
 
             Divider()
@@ -65,9 +68,6 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 320)
-        .onAppear {
-            expandedPresetID = appState.activePresetID
-        }
         .onDisappear {
             // Popover closed — always end any active preview so the monitor
             // snaps back to the scheduled preset.
@@ -75,7 +75,6 @@ struct MenuBarView: View {
                 appState.previewingPresetID = nil
                 appState.onPreviewEnded?()
             }
-            MenuBarView.nextExpandedID = appState.activePresetID
             expandedPresetID = appState.activePresetID
         }
     }

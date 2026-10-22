@@ -10,15 +10,30 @@ private enum Row {
     /// sliders, actions row) + its 12pt bottom padding. Measured from the rendered
     /// card via a GeometryReader (settles at ~195pt).
     static let expanded: CGFloat = 195
+    /// Viewport before scrolling: one expanded card and one collapsed neighbor.
+    static let cap: CGFloat = expanded + collapsed
+    /// "Add Preset": a text line plus 10pt padding top and bottom. Estimated.
+    static let addButton: CGFloat = 36
+    /// "No presets yet" block. Estimated.
+    static let emptyState: CGFloat = 70
 }
 
 struct PresetListView: View {
     @EnvironmentObject var appState: AppState
     @Binding var expandedPresetID: UUID?
-    /// The last sorted list, so a new open starts with its rows instead of the
-    /// empty state (which swapped in the rows a frame later and resized the popup).
-    @MainActor private static var lastSorted: [Preset] = []
-    @State private var sortedPresets: [Preset] = PresetListView.lastSorted
+    @State private var sortedPresets: [Preset]
+    /// The list's height before its first measurement, worked out from the rows.
+    private let initialHeight: CGFloat
+
+    /// Takes `appState` here as well as from the environment so the list starts
+    /// with its rows and its height: filling them in after the first layout
+    /// showed the empty state for a frame and resized the popup.
+    init(expandedPresetID: Binding<UUID?>, appState: AppState) {
+        _expandedPresetID = expandedPresetID
+        let sorted = Self.sorted(appState)
+        _sortedPresets = State(initialValue: sorted)
+        initialHeight = Self.estimatedHeight(sorted, expanded: expandedPresetID.wrappedValue)
+    }
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -100,7 +115,7 @@ struct PresetListView: View {
         // MenuBarExtra(.window) on macOS 26. Cap = 1 expanded card + 1 collapsed card
         // (heights pinned via Row above), so expanding a card shows itself + exactly one
         // collapsed neighbor, then scrolls. Grows to fit content below the cap.
-        .scrollContentHeight("presets", cap: Row.expanded + Row.collapsed)
+        .scrollContentHeight("presets", cap: Row.cap, initial: initialHeight)
         .onAppear {
             refreshSort()
             // Scroll the currently-active preset to the top of the viewport on open.
@@ -121,12 +136,26 @@ struct PresetListView: View {
     }
 
     private func refreshSort() {
-        sortedPresets = appState.presets.sorted { a, b in
+        sortedPresets = Self.sorted(appState)
+    }
+
+    private static func sorted(_ appState: AppState) -> [Preset] {
+        appState.presets.sorted { a, b in
             let aTime = appState.schedule.first(where: { $0.presetID == a.id })?.minutesSinceMidnight
             let bTime = appState.schedule.first(where: { $0.presetID == b.id })?.minutesSinceMidnight
             return (aTime ?? Int.max) < (bTime ?? Int.max)
         }
-        Self.lastSorted = sortedPresets
+    }
+
+    /// Rows plus their dividers plus the Add button, capped. With two or more
+    /// presets and one expanded this is the cap, so the guessed parts
+    /// (`Row.addButton`, `Row.emptyState`) only matter for a list of 0 or 1.
+    private static func estimatedHeight(_ presets: [Preset], expanded: UUID?) -> CGFloat {
+        let rows = presets.reduce(CGFloat(0)) { sum, p in
+            sum + (p.id == expanded ? Row.expanded : Row.collapsed) + 1
+        }
+        let body = presets.isEmpty ? Row.emptyState : rows
+        return min(body + Row.addButton, Row.cap)
     }
 }
 

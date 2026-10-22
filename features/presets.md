@@ -56,7 +56,9 @@ preview, add, delete).
 - The lock follows an HDR toggle after a short delay.
 - The popup opened at a 44pt floor, showed "No presets yet", then expanded the
   active card: three resizes per open (fixed 2026-10-21). Each open builds the
-  panel views fresh, so anything they hold starts empty. The measured height,
-  the sorted list and the expanded card now start from what they were at the
-  last close, and the Connect button keeps its spinner's space when idle. The
-  very first open after launch still expands the active card in a second step.
+  panel views fresh, so anything set after the first layout is a resize. The
+  list and the expanded card now come from the app's state at construction,
+  and the list's first height is computed from its rows (the cap, for two or
+  more presets). Setup and Settings are plain stacks, which size in one pass;
+  the Connect button keeps its spinner's space when idle. Jitter on the first
+  open after launch counts too: the user's call, 2026-10-21.
