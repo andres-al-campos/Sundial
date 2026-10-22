@@ -3,7 +3,11 @@ import SwiftUI
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @State private var showSettings = false
-    @State private var expandedPresetID: UUID?
+    /// The card to show expanded on the next open: the active preset as of the
+    /// last close. Starting from it, instead of expanding in onAppear, keeps the
+    /// popup from opening collapsed and then growing.
+    @MainActor private static var nextExpandedID: UUID?
+    @State private var expandedPresetID: UUID? = MenuBarView.nextExpandedID
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -71,7 +75,8 @@ struct MenuBarView: View {
                 appState.previewingPresetID = nil
                 appState.onPreviewEnded?()
             }
-            expandedPresetID = nil
+            MenuBarView.nextExpandedID = appState.activePresetID
+            expandedPresetID = appState.activePresetID
         }
     }
 }

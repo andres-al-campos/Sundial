@@ -57,7 +57,9 @@ struct SetupView: View {
                     runTest()
                 } label: {
                     HStack(spacing: 6) {
-                        if testing { ProgressView().controlSize(.small) }
+                        // Always laid out, shown only while testing, so the button
+                        // keeps one size as the spinner comes and goes.
+                        ProgressView().controlSize(.small).opacity(testing ? 1 : 0)
                         Text(testing ? "Connecting…" : "Connect Monitor")
                     }
                     .frame(maxWidth: .infinity)
@@ -73,7 +75,7 @@ struct SetupView: View {
         // MenuBarExtra(.window) on macOS 26. Matches SettingsView's cap; the copy is
         // kept tight enough to fit the Connect Monitor button, and the ScrollView is
         // a safety net for the longest error / unusually tall content.
-        .scrollContentHeight(cap: 420)
+        .scrollContentHeight("setup", cap: 420)
     }
 
     private func runTest() {

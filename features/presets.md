@@ -54,3 +54,9 @@ preview, add, delete).
 - The note is not a system tooltip: one was tried first and never appeared in
   the menu. The "Active" badge still uses one and may have the same problem.
 - The lock follows an HDR toggle after a short delay.
+- The popup opened at a 44pt floor, showed "No presets yet", then expanded the
+  active card: three resizes per open (fixed 2026-10-21). Each open builds the
+  panel views fresh, so anything they hold starts empty. The measured height,
+  the sorted list and the expanded card now start from what they were at the
+  last close, and the Connect button keeps its spinner's space when idle. The
+  very first open after launch still expands the active card in a second step.

@@ -76,6 +76,6 @@ struct SettingsView: View {
         // Concrete, self-sizing height — a maxHeight-only frame collapses to 0 inside
         // MenuBarExtra(.window) on macOS 26. Settings is short, so this sizes down to
         // fit; the cap only matters as an overflow ceiling.
-        .scrollContentHeight(cap: 420)
+        .scrollContentHeight("settings", cap: 420)
     }
 }

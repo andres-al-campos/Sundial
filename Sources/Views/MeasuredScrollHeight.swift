@@ -18,7 +18,11 @@ import SwiftUI
 //       VStack { ... }
 //           .measureContentHeight()      // on the CONTENT, inside the ScrollView
 //   }
-//   .scrollContentHeight(cap: 320)       // on the ScrollView itself
+//   .scrollContentHeight("settings", cap: 320)   // on the ScrollView itself
+//
+// The key names the panel so its last measured height outlives the view: each
+// open (and each switch between panels) builds a fresh view, and starting it
+// from 0 made the popup open at the floor and then jump to the content height.
 //
 // The two halves talk via the ContentHeightKey preference, so the reader always
 // reflects the laid-out content rather than the (clamped) ScrollView frame.
@@ -33,7 +37,7 @@ private struct ContentHeightKey: PreferenceKey {
 
 extension View {
     /// Apply to the content *inside* a ScrollView so its natural height is published
-    /// to an enclosing `.scrollContentHeight(cap:)`.
+    /// to an enclosing `.scrollContentHeight(_:cap:)`.
     func measureContentHeight() -> some View {
         background(
             GeometryReader { proxy in
@@ -47,22 +51,37 @@ extension View {
     /// fit content up to `cap`, then scrolls. Survives MenuBarExtra(.window) on macOS 26.
     ///
     /// - Parameters:
+    ///   - key: Names the panel; its last measured height is the next open's start.
     ///   - cap: Maximum panel height. Content taller than this scrolls.
     ///   - floor: Minimum height, applied before the first measurement so the panel
     ///            never collapses to zero. Defaults to 44.
-    func scrollContentHeight(cap: CGFloat, floor: CGFloat = 44) -> some View {
-        modifier(ScrollContentHeight(cap: cap, floor: floor))
+    func scrollContentHeight(_ key: String, cap: CGFloat, floor: CGFloat = 44) -> some View {
+        modifier(ScrollContentHeight(key: key, cap: cap, floor: floor))
     }
 }
 
 private struct ScrollContentHeight: ViewModifier {
+    /// Last measured height per panel, kept across opens.
+    @MainActor private static var lastHeight: [String: CGFloat] = [:]
+
+    let key: String
     let cap: CGFloat
     let floor: CGFloat
-    @State private var measured: CGFloat = 0
+    @State private var measured: CGFloat
+
+    init(key: String, cap: CGFloat, floor: CGFloat) {
+        self.key = key
+        self.cap = cap
+        self.floor = floor
+        _measured = State(initialValue: Self.lastHeight[key] ?? 0)
+    }
 
     func body(content: Content) -> some View {
         content
-            .onPreferenceChange(ContentHeightKey.self) { measured = $0 }
+            .onPreferenceChange(ContentHeightKey.self) { height in
+                measured = height
+                Self.lastHeight[key] = height
+            }
             .frame(height: min(max(measured, floor), cap))
     }
 }

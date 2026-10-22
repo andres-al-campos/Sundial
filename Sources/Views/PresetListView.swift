@@ -15,7 +15,10 @@ private enum Row {
 struct PresetListView: View {
     @EnvironmentObject var appState: AppState
     @Binding var expandedPresetID: UUID?
-    @State private var sortedPresets: [Preset] = []
+    /// The last sorted list, so a new open starts with its rows instead of the
+    /// empty state (which swapped in the rows a frame later and resized the popup).
+    @MainActor private static var lastSorted: [Preset] = []
+    @State private var sortedPresets: [Preset] = PresetListView.lastSorted
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -97,7 +100,7 @@ struct PresetListView: View {
         // MenuBarExtra(.window) on macOS 26. Cap = 1 expanded card + 1 collapsed card
         // (heights pinned via Row above), so expanding a card shows itself + exactly one
         // collapsed neighbor, then scrolls. Grows to fit content below the cap.
-        .scrollContentHeight(cap: Row.expanded + Row.collapsed)
+        .scrollContentHeight("presets", cap: Row.expanded + Row.collapsed)
         .onAppear {
             refreshSort()
             // Scroll the currently-active preset to the top of the viewport on open.
@@ -123,6 +126,7 @@ struct PresetListView: View {
             let bTime = appState.schedule.first(where: { $0.presetID == b.id })?.minutesSinceMidnight
             return (aTime ?? Int.max) < (bTime ?? Int.max)
         }
+        Self.lastSorted = sortedPresets
     }
 }
 
