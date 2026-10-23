@@ -1,5 +1,7 @@
 # Sundial features
 
+Updated 2026-10-12 19:24, at 1.0.3.
+
 What a user can do with Sundial, how to reach it, and how to drive it. Read
 this before adding anything: if it's already here, extend it instead of
 building it again.

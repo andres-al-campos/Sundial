@@ -13,7 +13,7 @@ Rules that decide cases nobody has met yet. Rulings on one thing go in that
 feature's file, under Calls. The walled_garden `AGENTS.md` principles apply
 here too (motion spends attention; a menu bar popup opens at its final size).
 
-- **A control that can't act shows why, in its own place.** A slider locked by
+- 2026-10-12 19:29, 1.0.3. **A control that can't act shows why, in its own place.** A slider locked by
   HDR is replaced by its reason rather than greyed out beside it: a control
   that can't move has nothing to show, and the reason is the thing worth
-  reading. (2026-10-12, from the contrast lock.)
+  reading. (From the contrast lock.)
