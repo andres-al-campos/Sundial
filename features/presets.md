@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-21 21:31, at 1.0.3.
+Updated 2026-10-22 22:34, at 1.0.3.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. Sundial applies the preset whose time most recently passed.
@@ -51,8 +51,7 @@ preview, add, delete).
 - Brightness is not locked. Whether the M27Q honours it in HDR is not known.
 - The note takes the slider's place instead of adding a line, because the
   expanded card's height is pinned and a new line would push the card below
-  it out of view. Always shown, left-aligned: the user's call, 2026-10-12,
-  since a slider that can't move has nothing to show.
+  it out of view.
 - The note is not a system tooltip: one was tried first and never appeared in
   the menu. The "Active" badge still uses one and may have the same problem.
 - The lock follows an HDR toggle after a short delay.
@@ -62,5 +61,14 @@ preview, add, delete).
   list and the expanded card now come from the app's state at construction,
   and the list's first height is computed from its rows (the cap, for two or
   more presets). Setup and Settings are plain stacks, which size in one pass;
-  the Connect button keeps its spinner's space when idle. Jitter on the first
-  open after launch counts too: the user's call, 2026-10-21.
+  the Connect button keeps its spinner's space when idle.
+
+## Calls
+
+- 2026-10-12 19:29, 1.0.3. The HDR note is always shown, left-aligned, in the
+  slider's place, not on hover: a slider that can't move has nothing to show,
+  and the reason is the thing worth reading. Applies *What you touch is what
+  the monitor does*.
+- 2026-10-21 21:31, 1.0.3. Jitter on the first open after launch counts too,
+  though nothing is kept yet: the list's first height is computed from its
+  rows. A case of walled_garden's "A menu bar popup opens at its final size".
