@@ -6,15 +6,15 @@
 #                              # (set INSTALL_DIR in build.local.env to install elsewhere)
 #   ./build.sh --no-install    # build only, stage into ./build/Sundial.app
 #   ./build.sh -n              # short form of --no-install
-#   ./build.sh check           # run the laws in laws/ and every drive (no build)
-#   ./build.sh drive [name]    # run every feature check in drive/, or one
+#   ./build.sh check           # run the laws in tests/ and every drive (no build)
+#   ./build.sh drive [name]    # run every feature check in tests/drive/, or one
 #   ./build.sh -v              # verbose xcodebuild output
 #   ./build.sh -n -v           # both
 
 set -e
 
-# The pre-commit hook stamps the docs a commit changes (hooks/stamp-docs.mjs).
-git -C "$(dirname "$0")" rev-parse --git-dir >/dev/null 2>&1 && git -C "$(dirname "$0")" config core.hooksPath hooks || true
+# The pre-commit hook stamps the docs a commit changes (dev/hooks/stamp-docs.mjs).
+git -C "$(dirname "$0")" rev-parse --git-dir >/dev/null 2>&1 && git -C "$(dirname "$0")" config core.hooksPath dev/hooks || true
 
 APP_NAME=Sundial
 INSTALL=1
@@ -46,27 +46,27 @@ done
 
 cd "$(dirname "$0")"
 
-# Every feature check in drive/, or the one named. A name with no script is an
+# Every feature check in tests/drive/, or the one named. A name with no script is an
 # error, so a typo can't pass by running nothing.
 drive() {
     local name="$1" failed=0 ran=0
     if [ -n "$name" ]; then
-        if [ ! -f "drive/$name.sh" ]; then
-            echo "error: no drive named \"$name\": there's no drive/$name.sh. Fix the name, or write that check."
+        if [ ! -f "tests/drive/$name.sh" ]; then
+            echo "error: no drive named \"$name\": there's no tests/drive/$name.sh. Fix the name, or write that check."
             local there
-            there=$(ls drive 2>/dev/null | sed -n 's/\.sh$//p' | tr '\n' ' ' || true)
+            there=$(ls tests/drive 2>/dev/null | sed -n 's/\.sh$//p' | tr '\n' ' ' || true)
             echo "       The ones there: ${there:-none yet}"
             return 1
         fi
-        "drive/$name.sh"
+        "tests/drive/$name.sh"
         return $?
     fi
-    for d in drive/*.sh; do
+    for d in tests/drive/*.sh; do
         [ -f "$d" ] || continue
         ran=1
         "$d" || failed=1
     done
-    [ "$ran" = 1 ] || echo "No drives yet: drive/ has no checks. features/README.md lists what isn't covered."
+    [ "$ran" = 1 ] || echo "No drives yet: tests/drive/ has no checks. dev/features/README.md lists what isn't covered."
     return $failed
 }
 
@@ -77,7 +77,7 @@ fi
 
 if [ "$MODE" = "check" ]; then
     failed=0
-    for law in laws/*.sh; do
+    for law in tests/*.sh; do
         "$law" || failed=1
     done
     drive "" || failed=1

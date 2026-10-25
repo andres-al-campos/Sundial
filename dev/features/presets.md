@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-22 22:34, at 1.0.3.
+Updated 2026-10-25 01:32, at 1.0.3.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. Sundial applies the preset whose time most recently passed.

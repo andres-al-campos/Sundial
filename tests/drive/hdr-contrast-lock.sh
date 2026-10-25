@@ -3,11 +3,11 @@
 #
 # Compiles the app's own HDR decision with a small harness and feeds it screen
 # lists, so it runs without a monitor. It can't see whether macOS reports the
-# headroom it assumes, or how the greyed slider looks; features/presets.md
+# headroom it assumes, or how the greyed slider looks; dev/features/presets.md
 # says how to check those by hand.
 
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -40,7 +40,7 @@ if failed { exit(1) }
 SWIFT
 
 if ! swiftc -o "$work/hdr" Sources/Control/HDRState.swift "$work/main.swift" 2> "$work/err"; then
-    echo "✗ hdr-contrast-lock: the harness didn't compile. HDRState's signature probably changed; update drive/hdr-contrast-lock.sh to match."
+    echo "✗ hdr-contrast-lock: the harness didn't compile. HDRState's signature probably changed; update tests/drive/hdr-contrast-lock.sh to match."
     sed 's/^/    /' "$work/err"
     exit 1
 fi

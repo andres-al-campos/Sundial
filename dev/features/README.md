@@ -1,6 +1,6 @@
 # Sundial features
 
-Updated 2026-10-12 19:24, at 1.0.3.
+Updated 2026-10-25 01:32, at 1.0.3.
 
 What a user can do with Sundial, how to reach it, and how to drive it. Read
 this before adding anything: if it's already here, extend it instead of
@@ -34,10 +34,10 @@ feature touched for the first time gets a file and a row here.
 
 ## Driving conventions
 
-`./build.sh check` runs every law in `laws/`, including the one that keeps
+`./build.sh check` runs every law in `tests/`, including the one that keeps
 this map and its files in step, then every drive.
 
-A feature's check is `drive/<name>.sh`. `./build.sh drive` runs them all and
+A feature's check is `tests/drive/<name>.sh`. `./build.sh drive` runs them all and
 `./build.sh drive <name>` runs one; a name with no script is an error. There
 is no test target.
 
