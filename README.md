@@ -1,7 +1,5 @@
 # Sundial
 
-Updated 2026-10-09 12:25, at 1.0.3.
-
 A macOS menu bar app that schedules your monitor's brightness, contrast, and Night Shift by time of day — so your screen matches the room as it shifts from morning to night, without you ever touching a slider.
 
 Sundial drives your monitor's **hardware** brightness and contrast over DDC (via the [BetterDisplay](https://github.com/waydabber/BetterDisplay) CLI), not a software dimming overlay — so it's the real backlight changing, the same as the buttons on the monitor itself. Night Shift warmth is driven through macOS's built-in Night Shift.
