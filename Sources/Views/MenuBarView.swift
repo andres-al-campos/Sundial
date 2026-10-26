@@ -47,7 +47,8 @@ struct MenuBarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
 
-            Divider()
+            // The mode control sits in the header block, so no line between them.
+            if !appState.isSetUp || showSettings { Divider() }
 
             if !appState.isSetUp {
                 SetupView()
@@ -106,12 +107,12 @@ extension MenuBarView {
 
     /// Auto or Schedule: one or the other drives the monitor, so a segmented
     /// control (pick one), not tabs (look at one) or a switch (one thing on or
-    /// off). Its halves are equal and span the popup.
+    /// off). Its halves are equal and span the popup, and it belongs to the
+    /// header, so there's no line between them.
     private var modePicker: some View {
         ModeSegments(mode: appState.mode, onPick: setMode)
-            .frame(height: 22)
             .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.bottom, 8)
     }
 
     private func setMode(_ newMode: AppState.Mode) {
@@ -127,38 +128,51 @@ extension MenuBarView {
 
 // MARK: - Mode Segments
 
-/// The Mac's segmented control with equal segments filling its width. SwiftUI's
-/// segmented Picker sizes to its labels, which left the right side empty.
-private struct ModeSegments: NSViewRepresentable {
+/// A segmented control drawn in SwiftUI so it can move: the selected pill
+/// slides to the mode picked instead of jumping, and the other half glows
+/// faintly under the pointer. Halves are equal and fill the width.
+private struct ModeSegments: View {
     let mode: AppState.Mode
     let onPick: (AppState.Mode) -> Void
+    @Namespace private var pill
+    @State private var hovered: AppState.Mode?
 
-    private static let modes: [AppState.Mode] = [.auto, .schedule]
+    private static let modes: [(AppState.Mode, String)] = [(.auto, "Auto"), (.schedule, "Schedule")]
 
-    func makeNSView(context: Context) -> NSSegmentedControl {
-        let control = NSSegmentedControl(labels: ["Auto", "Schedule"], trackingMode: .selectOne,
-                                         target: context.coordinator, action: #selector(Coordinator.picked(_:)))
-        control.segmentDistribution = .fillEqually
-        control.controlSize = .small
-        control.font = .systemFont(ofSize: NSFont.systemFontSize(for: .small))
-        control.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        return control
-    }
-
-    func updateNSView(_ control: NSSegmentedControl, context: Context) {
-        context.coordinator.onPick = onPick
-        control.selectedSegment = Self.modes.firstIndex(of: mode) ?? 0
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
-
-    final class Coordinator: NSObject {
-        var onPick: (AppState.Mode) -> Void
-        init(onPick: @escaping (AppState.Mode) -> Void) { self.onPick = onPick }
-
-        @objc func picked(_ sender: NSSegmentedControl) {
-            onPick(ModeSegments.modes[sender.selectedSegment])
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Self.modes, id: \.0) { item, label in
+                let on = item == mode
+                Text(label)
+                    .font(.system(size: 11, weight: on ? .medium : .regular))
+                    .foregroundStyle(on ? .primary : .secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 20)
+                    .background {
+                        if on {
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color(nsColor: .controlColor))
+                                .shadow(color: .black.opacity(0.18), radius: 0.75, y: 0.5)
+                                .matchedGeometryEffect(id: "pill", in: pill)
+                        } else if hovered == item {
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color.primary.opacity(0.06))
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onHover { inside in
+                        withAnimation(.easeOut(duration: 0.12)) { hovered = inside ? item : (hovered == item ? nil : hovered) }
+                    }
+                    .onTapGesture {
+                        guard !on else { return }
+                        onPick(item)
+                    }
+            }
         }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.07)))
+        // Only the pill animates; the panel below swaps in its own transaction.
+        .animation(.easeOut(duration: 0.22), value: mode)
     }
 }
 
