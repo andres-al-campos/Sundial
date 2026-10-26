@@ -9,3 +9,7 @@ xcuserdata/
 *.xcodeproj
 
 build.local.env
+
+# Process, not product: mockups and plans stay local.
+designs/
+plans/
