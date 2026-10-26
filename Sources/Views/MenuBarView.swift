@@ -54,13 +54,13 @@ struct MenuBarView: View {
             } else if showSettings {
                 SettingsView()
             } else {
+                modePicker
+                Divider()
                 if appState.mode == .auto {
                     AutoView()
                 } else {
                     PresetListView(expandedPresetID: $expandedPresetID, appState: appState)
                 }
-                Divider()
-                modePicker
             }
 
             Divider()
@@ -98,13 +98,14 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
-    /// Auto, or the preset in force in Schedule mode.
+    /// The preset in force in Schedule mode. Auto needs none: its tab says it.
     private var headerCaption: String? {
-        if appState.mode == .auto { return "Auto" }
+        if appState.mode == .auto { return nil }
         return appState.preset(for: appState.activePresetID)?.name
     }
 
-    /// Set once and rarely touched, so it sits at the bottom, out of the way.
+    /// Two equal tabs under the header, so which mode is on reads first and
+    /// the panel below is that mode's.
     private var modePicker: some View {
         Picker("", selection: Binding(
             get: { appState.mode },
