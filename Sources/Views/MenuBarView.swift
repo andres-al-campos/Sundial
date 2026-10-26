@@ -22,12 +22,6 @@ struct MenuBarView: View {
                     .font(.system(size: 15, weight: .semibold))
                 Spacer()
 
-                if !showSettings, appState.isSetUp, let caption = headerCaption {
-                    Text(caption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
                 // The gear only appears once setup is complete — before that the
                 // SetupView already exposes the path/name fields, so a Settings
                 // toggle would be redundant (and could strand the user on an empty
@@ -99,12 +93,6 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
-    /// The preset in force in Schedule mode. Auto needs none: its tab says it.
-    private var headerCaption: String? {
-        if appState.mode == .auto { return nil }
-        return appState.preset(for: appState.activePresetID)?.name
-    }
-
     /// Auto or Schedule: one or the other drives the monitor, so a segmented
     /// control (pick one), not tabs (look at one) or a switch (one thing on or
     /// off). Its halves are equal and span the popup, and it belongs to the
