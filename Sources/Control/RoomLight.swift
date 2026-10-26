@@ -75,23 +75,35 @@ enum RoomLight {
         return min(max((log(max(lux, 0) + 1) - lo) / (hi - lo), 0), 1)
     }
 
-    /// Averages the sensor so the monitor follows the room, not the reading: a
-    /// hand passing the notch swung it 30 → 600 lux within a second, and shutting
-    /// the blinds took it 237 → 35 in eight. Works on log lux, so a halving of
-    /// the light moves it the same at any level.
+    /// Averages the sensor so the monitor follows the room, not the reading.
+    /// A median of the last 5 seconds first drops a hand passing the notch
+    /// (30 → 600 lux and back within a second); a short average then smooths
+    /// what's left, so shutting the blinds (237 → 35 lux in eight seconds) or a
+    /// cloud lands in about 20 seconds. Big changes are meant to be seen; most
+    /// are small. Works on log lux, so a halving of the light moves it the same
+    /// at any level.
     struct Smoother {
         /// Seconds for the average to cover ~63% of a step change.
-        var timeConstant: Double = 15
+        var timeConstant: Double = 6
+        /// Readings the median is taken over, one a second.
+        var medianWindow = 5
         private(set) var logLux: Double?
+        private var recent: [Double] = []
 
-        init(timeConstant: Double = 15) { self.timeConstant = timeConstant }
+        init(timeConstant: Double = 6, medianWindow: Int = 5) {
+            self.timeConstant = timeConstant
+            self.medianWindow = medianWindow
+        }
 
         var lux: Double? { logLux.map { exp($0) - 1 } }
 
         /// Feed one reading taken `dt` seconds after the last. The first reading
         /// is taken as is, so Auto starts from the room it finds.
         mutating func add(lux: Double, dt: Double) -> Double {
-            let x = log(max(lux, 0) + 1)
+            recent.append(max(lux, 0))
+            if recent.count > medianWindow { recent.removeFirst() }
+            let median = recent.sorted()[recent.count / 2]
+            let x = log(median + 1)
             if let current = logLux {
                 let alpha = 1 - exp(-dt / timeConstant)
                 logLux = current + alpha * (x - current)

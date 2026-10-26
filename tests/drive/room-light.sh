@@ -54,26 +54,32 @@ check("near Midnight's 100 at 11:57 PM", near(ns(23, 57), 100, 5), ns(23, 57))
 check("full after midnight", ns(3, 0) == 100, ns(3, 0))
 check("off from 6:30 AM", ns(6, 30) == 0 && ns(6, 29) == 100, (ns(6, 29), ns(6, 30)))
 
-// Easing: the blinds shutting arrives in under a minute, not instantly.
+// Easing: the blinds shutting (as logged, 237 → 35 lux over 8 s) lands in about
+// 20 seconds: not instantly, and not dragging on.
 var s = RoomLight.Smoother()
-_ = s.add(lux: 240, dt: 1)
-var after3 = 0.0, after60 = 0.0
-for i in 1...60 {
-    let v = s.add(lux: 35, dt: 1)
-    if i == 3 { after3 = v }
-    if i == 60 { after60 = v }
+for _ in 0..<10 { _ = s.add(lux: 237, dt: 1) }
+var after3 = 0.0, after25 = 0.0
+for (i, v) in ([217, 192, 163, 206, 159, 72, 163, 41] + Array(repeating: 35, count: 30)).enumerated() {
+    let avg = s.add(lux: Double(v), dt: 1)
+    if i == 2 { after3 = avg }
+    if i == 24 { after25 = avg }
 }
-check("3s after the blinds shut, the average is still well above", after3 > 120, after3)
-check("a minute after, it has arrived", near(after60, 35, 5), after60)
+check("3s into the blinds shutting, the average has barely moved", after3 > 180, after3)
+check("25s in, it has arrived (within 15%)", after25 < 35 * 1.15, after25)
 
-// A hand passing the notch hardly moves the brightness.
+// A hand passing the notch doesn't move it at all.
 var h = RoomLight.Smoother()
-_ = h.add(lux: 500, dt: 1)
-let spike = h.add(lux: 3300, dt: 1)
-let moved = RoomLight.brightness(level: lvl, lux: spike) / RoomLight.brightness(level: lvl, lux: 500)
-check("a 1s spike to 3300 lux moves brightness under 10%", moved < 1.1, moved)
+for _ in 0..<5 { _ = h.add(lux: 500, dt: 1) }
+var peak = 0.0
+for v in [3300.0, 500, 500, 500, 500] { peak = max(peak, h.add(lux: v, dt: 1)) }
+check("a 1s spike to 3300 lux leaves the average where it was", near(peak, 500, 1), peak)
+var d = RoomLight.Smoother()
+for _ in 0..<5 { _ = d.add(lux: 500, dt: 1) }
+var low = 1000.0
+for v in [30.0, 500, 500, 500, 500] { low = min(low, d.add(lux: v, dt: 1)) }
+check("and so does a 1s dip to 30 lux", near(low, 500, 1), low)
 
-check("a step is capped", RoomLight.step(10, toward: 20, maxStep: 2) == 12, RoomLight.step(10, toward: 20, maxStep: 2))
+check("a step is capped", RoomLight.step(10, toward: 20, maxStep: 5) == 15, RoomLight.step(10, toward: 20, maxStep: 5))
 check("a step lands on a near target", RoomLight.step(10, toward: 10.3, maxStep: 2) == 10.3, RoomLight.step(10, toward: 10.3, maxStep: 2))
 
 if !failures.isEmpty {
@@ -92,4 +98,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room, a set level keeps, contrast and Night Shift match the fitted presets, and it eases within a minute"
+echo "✓ room-light: brightness is your level times the room, a set level keeps, contrast and Night Shift match the fitted presets, it lands in ~20s, and a passing hand is ignored"

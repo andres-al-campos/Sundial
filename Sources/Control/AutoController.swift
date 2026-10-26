@@ -24,8 +24,8 @@ final class AutoController {
     private var lastRawLux: Double?
 
     /// Per-second limits on how fast the monitor moves: brightness and contrast
-    /// cross their full range in under a minute, Night Shift in ~1.5.
-    private static let maxStep = (brightness: 2.0, contrast: 2.0, nightShift: 1.0)
+    /// cross their full range in 20 seconds, Night Shift in ~1.5 minutes.
+    private static let maxStep = (brightness: 5.0, contrast: 5.0, nightShift: 1.0)
     /// Readings missed in a row before Auto says the sensor dropped out.
     private static let missesBeforeDropout = 3
 
