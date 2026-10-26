@@ -27,10 +27,15 @@ func near(_ a: Double, _ b: Double, _ tol: Double) -> Bool { abs(a - b) <= tol }
 let lvl = RoomLight.defaultLevel
 check("the default level gives the Morning preset (42) in the lit room (550 lux)",
       near(RoomLight.brightness(level: lvl, lux: 550), 42, 1.5), RoomLight.brightness(level: lvl, lux: 550))
-check("and about Night's 1 in a dark room (0.5 lux floors at 1)",
-      RoomLight.brightness(level: lvl, lux: 0.5) < 3, RoomLight.brightness(level: lvl, lux: 0.5))
-check("16x the light gives 4x the brightness",
-      near(RoomLight.brightness(level: 10, lux: 1600) / RoomLight.brightness(level: 10, lux: 100), 4, 0.01), "")
+check("any level reaches the monitor's darkest (0) in a dark room",
+      RoomLight.brightness(level: 100, lux: RoomLight.darkLux) == 0, RoomLight.brightness(level: 100, lux: RoomLight.darkLux))
+check("and is just above it a little lighter",
+      RoomLight.brightness(level: lvl, lux: 5) > 0 && RoomLight.brightness(level: lvl, lux: 5) < 3, RoomLight.brightness(level: lvl, lux: 5))
+check("the level is the brightness at 100 lux",
+      near(RoomLight.brightness(level: 30, lux: 100), 30, 0.001), RoomLight.brightness(level: 30, lux: 100))
+check("more light, more brightness",
+      RoomLight.brightness(level: 10, lux: 35) < RoomLight.brightness(level: 10, lux: 100)
+        && RoomLight.brightness(level: 10, lux: 100) < RoomLight.brightness(level: 10, lux: 550), "")
 check("brightness never passes 100", RoomLight.brightness(level: 80, lux: 10_000) == 100, RoomLight.brightness(level: 80, lux: 10_000))
 // Setting a brightness keeps it: the level saved gives it back in the same room,
 // and scales it in another.
@@ -39,9 +44,10 @@ check("a set brightness comes back in the same room", near(RoomLight.brightness(
 check("and is lower with the blinds shut", RoomLight.brightness(level: set, lux: 35) < 8, RoomLight.brightness(level: set, lux: 35))
 check("a level can be set in a pitch-dark room", RoomLight.level(forBrightness: 5, lux: 0).isFinite, RoomLight.level(forBrightness: 5, lux: 0))
 
-// Contrast follows brightness on the presets' line.
-check("contrast at brightness 0 is Midnight's 7-8", near(RoomLight.contrast(brightness: 0), 7.8, 0.01), RoomLight.contrast(brightness: 0))
-check("contrast at Morning's 42 is near its 69", near(RoomLight.contrast(brightness: 42), 69, 3), RoomLight.contrast(brightness: 42))
+// Contrast is √2 × brightness, so both reach 0 together.
+check("contrast at brightness 0 is 0", RoomLight.contrast(brightness: 0) == 0, RoomLight.contrast(brightness: 0))
+check("contrast at 42 is about 59", near(RoomLight.contrast(brightness: 42), 59.4, 0.1), RoomLight.contrast(brightness: 42))
+check("contrast never passes 100", RoomLight.contrast(brightness: 90) == 100, RoomLight.contrast(brightness: 90))
 
 // Night Shift by the clock, against the presets it was fitted to.
 func ns(_ h: Int, _ m: Int) -> Double { RoomLight.nightShift(minuteOfDay: h * 60 + m) }
@@ -98,4 +104,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room, a set level keeps, contrast and Night Shift match the fitted presets, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: brightness is your level times the room down to 0 in the dark, a set level keeps, contrast is √2 × brightness, Night Shift matches the fitted presets, it lands in ~20s, and a passing hand is ignored"

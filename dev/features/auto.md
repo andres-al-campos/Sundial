@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 17:25, at 1.0.3.
+Updated 2026-10-26 17:28, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -11,12 +11,12 @@ presets; Schedule (the presets) is the other.
 - **Brightness is your level times the room.** You set it once with the
   Brightness slider and it stays: Sundial saves it as your level (the
   brightness at 100 lux), and the room scales it by the square root of its
-  light. Sixteen times the light gives four
-  times the brightness. The default level, 18, gives the old Morning preset's
-  42 in the lit room (~550 lux) and about 1 in a dark room at night.
-- **Contrast follows brightness**, on the line fitted to the six presets
-  (7.8 + 1.41 × brightness, R² 0.82). AfterNoon and Twilight sat 12 and 20
-  off it.
+  light, shifted so it reaches 0 at 2 lux (a guess at a room lit only by the
+  screen). The default level, 16.4, gives the old Morning preset's 42 in the
+  lit room (~550 lux).
+- **Contrast follows brightness**: √2 × brightness, so at night both reach
+  0, the monitor's darkest. The presets' own line had the same slope plus 7.8
+  (R² 0.82, against 0.71 for √2 ×).
 - **Night Shift follows the clock**, fitted to the presets' evening values
   (R² 0.98): off until 5:13 PM, rising ~14% an hour to full at 12:11 AM, full
   until 6:30 AM, then off.
@@ -42,9 +42,9 @@ Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 
 `./build.sh drive room-light` (~5s): compiles the app's room-light rules with
 a harness. It checks that brightness is the level times the room's square
-root (Morning's 42 at 550 lux, ~1 in the dark, never past 100), that a set
+root (Morning's 42 at 550 lux, 0 at 2 lux, never past 100), that a set
 brightness comes back in the same room and scales in another, that contrast
-and Night Shift land near the presets they were fitted to, that the blinds
+is √2 × brightness, that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
 spike or dip (a hand at the notch) leaves the average where it was.
 
@@ -92,3 +92,9 @@ row.
 - 2026-10-26 17:25, 1.0.3. Easing is quick, about 20 seconds for a big change: "big changes are
   supposed to be salient, and most will not be." It replaced a minute or more.
   Applies *Just right for the room*.
+- 2026-10-26 17:28, 1.0.3. The scaling can reach the monitor's darkest, brightness 0 and contrast 0,
+  as Schedule's darkest presets did: "I do want to be able to have a scaling
+  that can still give me maximum darkness." So contrast is √2 × brightness
+  with no offset, though the presets' line had one ("the preset is 1
+  datapoint"), and brightness reaches 0 at 2 lux. Applies *Just right for the
+  room*.
