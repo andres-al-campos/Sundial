@@ -68,6 +68,7 @@ class Scheduler {
     func reapplyForCurrentTime() {
         guard let state, let controller else { return }
         guard state.isSetUp else { return }
+        guard !state.autoDrivesMonitor else { return }
         guard let entry = activeEntry(in: state.schedule, presets: state.presets) else { return }
         guard let preset = state.preset(for: entry.presetID) else { return }
 
@@ -88,6 +89,7 @@ class Scheduler {
         guard let state, let controller else { return }
         guard state.isSetUp else { return }
         guard state.previewingPresetID == nil else { return }
+        guard !state.autoDrivesMonitor else { return }
         lastAppliedEntryID = nil
 
         guard let entry = activeEntry(in: state.schedule, presets: state.presets) else { return }
@@ -113,6 +115,7 @@ class Scheduler {
         guard state.isSetUp else { return }
         guard state.applyOnWake else { return }
         guard state.previewingPresetID == nil else { return }
+        guard !state.autoDrivesMonitor else { return }
 
         controller.cliPath = state.cliPath
         controller.displayName = state.displayName
@@ -137,6 +140,13 @@ class Scheduler {
         guard state.isSetUp else { return }
         // Preview owns the monitor while active — don't fight it.
         guard state.previewingPresetID == nil else { return }
+        // So does Auto, while it can read the room. Forgetting the last entry
+        // makes the schedule re-apply in full when Auto hands back (lid closed).
+        guard !state.autoDrivesMonitor else {
+            lastAppliedEntryID = nil
+            lastAppliedPreset = nil
+            return
+        }
 
         controller.cliPath = state.cliPath
         controller.displayName = state.displayName
@@ -183,12 +193,16 @@ class Scheduler {
     /// Returns the most recent enabled schedule entry (pointing at an enabled preset) whose time ≤ now.
     /// Wraps midnight: if nothing is before now, returns the last entry of the day.
     private func activeEntry(in schedule: [ScheduleEntry], presets: [Preset]) -> ScheduleEntry? {
+        Self.activeEntry(in: schedule, presets: presets, at: Date())
+    }
+
+    static func activeEntry(in schedule: [ScheduleEntry], presets: [Preset], at date: Date) -> ScheduleEntry? {
         let enabledPresetIDs = Set(presets.filter { $0.enabled }.map { $0.id })
         let enabled = schedule.filter { $0.enabled && enabledPresetIDs.contains($0.presetID) }
         guard !enabled.isEmpty else { return nil }
 
         let cal = Calendar.current
-        let now = cal.dateComponents([.hour, .minute], from: Date())
+        let now = cal.dateComponents([.hour, .minute], from: date)
         let nowMinutes = (now.hour ?? 0) * 60 + (now.minute ?? 0)
 
         if let entry = enabled.last(where: { $0.minutesSinceMidnight <= nowMinutes }) {

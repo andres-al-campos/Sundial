@@ -6,6 +6,7 @@ struct SundialApp: App {
     @StateObject private var appState: AppState
     private let controller: DDCController
     private let scheduler: Scheduler
+    private let auto: AutoController
 
     init() {
         let state = AppState()
@@ -14,14 +15,15 @@ struct SundialApp: App {
             displayName: state.displayName
         )
         let sched = Scheduler()
+        let autoCtrl = AutoController()
 
         // Wire callbacks before start so the scheduler can call them on first tick.
-        state.onPreviewEnded  = { sched.reapplyForCurrentTime() }
-        state.onScheduleChanged = { sched.recompute() }
+        Self.wire(state, sched, autoCtrl)
 
         // Start immediately at app launch — registers wake observers and fires the
         // first tick so the correct preset is applied before any menu interaction.
         sched.start(state: state, controller: ctrl)
+        autoCtrl.start(state: state, controller: ctrl)
 
         // Reconcile the login item with the persisted preference. Registration can be
         // lost out from under us — e.g. the bundle moves, or a stale DerivedData
@@ -38,6 +40,20 @@ struct SundialApp: App {
         _appState  = StateObject(wrappedValue: state)
         controller = ctrl
         scheduler  = sched
+        auto       = autoCtrl
+    }
+
+    /// The callbacks views use to reach the scheduler and Auto. Whichever owns
+    /// the monitor takes it back when a preview ends.
+    private static func wire(_ state: AppState, _ sched: Scheduler, _ auto: AutoController) {
+        state.onPreviewEnded = { [weak state] in
+            if state?.autoDrivesMonitor == true { auto.forceApply() } else { sched.reapplyForCurrentTime() }
+        }
+        state.onScheduleChanged = { sched.recompute() }
+        state.onAutoChanged = { auto.refresh() }
+        state.onHold = { brightness in
+            if let brightness { auto.setHeld(brightness: brightness) } else { auto.endHold() }
+        }
     }
 
     var body: some Scene {
@@ -48,11 +64,9 @@ struct SundialApp: App {
                     // Keep controller in sync with any settings changes made since launch.
                     controller.cliPath   = appState.cliPath
                     controller.displayName = appState.displayName
-                    // Callbacks are already set; re-assigning is harmless.
-                    appState.onPreviewEnded   = { [scheduler] in scheduler.reapplyForCurrentTime() }
-                    appState.onScheduleChanged = { [scheduler] in scheduler.recompute() }
                     // start() is guarded — no-op on every open after the first.
                     scheduler.start(state: appState, controller: controller)
+                    auto.start(state: appState, controller: controller)
                 }
         } label: {
             Label("Sundial", systemImage: "sun.max")

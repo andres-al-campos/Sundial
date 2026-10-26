@@ -22,10 +22,10 @@ struct MenuBarView: View {
                     .font(.system(size: 15, weight: .semibold))
                 Spacer()
 
-                if let preset = appState.preset(for: appState.activePresetID), !showSettings, appState.isSetUp {
-                    Text(preset.name)
+                if !showSettings, appState.isSetUp, let caption = headerCaption {
+                    Text(caption)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(appState.hold == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
                 }
 
                 // The gear only appears once setup is complete — before that the
@@ -54,7 +54,13 @@ struct MenuBarView: View {
             } else if showSettings {
                 SettingsView()
             } else {
-                PresetListView(expandedPresetID: $expandedPresetID, appState: appState)
+                if appState.mode == .auto {
+                    AutoView()
+                } else {
+                    PresetListView(expandedPresetID: $expandedPresetID, appState: appState)
+                }
+                Divider()
+                modePicker
             }
 
             Divider()
@@ -71,8 +77,9 @@ struct MenuBarView: View {
         .onDisappear {
             // Popover closed — always end any active preview so the monitor
             // snaps back to the scheduled preset.
-            if appState.previewingPresetID != nil {
+            if appState.previewingPresetID != nil || appState.previewingEnd != nil {
                 appState.previewingPresetID = nil
+                appState.previewingEnd = nil
                 appState.onPreviewEnded?()
             }
             expandedPresetID = appState.activePresetID
@@ -83,11 +90,53 @@ struct MenuBarView: View {
         // expanded card there, so the next open shows the active preset.
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
             expandedPresetID = appState.activePresetID
+            if appState.previewingEnd != nil {
+                appState.previewingEnd = nil
+                appState.onPreviewEnded?()
+            }
         }
         // The schedule can move on while the popup is closed.
         .onChange(of: appState.activePresetID) { _, newValue in
             if NSApp.keyWindow == nil { expandedPresetID = newValue }
         }
+    }
+}
+
+extension MenuBarView {
+    /// Auto, Held, or the preset in force when the schedule drives the monitor.
+    private var headerCaption: String? {
+        if appState.mode == .auto {
+            if appState.hold != nil { return "Held" }
+            if appState.roomLux != nil { return "Auto" }
+        }
+        return appState.preset(for: appState.activePresetID)?.name
+    }
+
+    /// Set once and rarely touched, so it sits at the bottom, out of the way.
+    private var modePicker: some View {
+        Picker("", selection: Binding(
+            get: { appState.mode },
+            set: { newMode in
+                guard newMode != appState.mode else { return }
+                appState.previewingPresetID = nil
+                appState.previewingEnd = nil
+                appState.mode = newMode
+                appState.save()
+                // Auto stands aside or takes over on this tick; then the
+                // schedule takes the monitor if Auto let go of it.
+                appState.onAutoChanged?()
+                appState.onScheduleChanged?()
+                expandedPresetID = appState.activePresetID
+            }
+        )) {
+            Text("Auto").tag(AppState.Mode.auto)
+            Text("Schedule").tag(AppState.Mode.schedule)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .controlSize(.small)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
     }
 }
 

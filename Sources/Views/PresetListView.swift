@@ -596,7 +596,7 @@ private struct PresetEditorBody: View {
 
 // MARK: - Labeled slider
 
-private struct LabeledSlider: View {
+struct LabeledSlider: View {
     let label: String
     @Binding var value: Int
     /// Why the slider can't be moved right now, or nil when it can. A lock
