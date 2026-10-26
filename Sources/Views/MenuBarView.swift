@@ -104,28 +104,14 @@ extension MenuBarView {
         return appState.preset(for: appState.activePresetID)?.name
     }
 
-    /// Auto on or off, a switch like a preset's Enabled, in the same row in
-    /// both modes. Off is Schedule.
+    /// Auto or Schedule: one or the other drives the monitor, so a segmented
+    /// control (pick one), not tabs (look at one) or a switch (one thing on or
+    /// off). Its halves are equal and span the popup.
     private var modePicker: some View {
-        HStack(spacing: 8) {
-            Text("Auto")
-                .font(.caption)
-                .frame(width: 72, alignment: .leading)
-            Text(appState.mode == .auto ? "follows the room's light" : "off · presets by time")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
-            Toggle("", isOn: Binding(
-                get: { appState.mode == .auto },
-                set: { on in setMode(on ? .auto : .schedule) }
-            ))
-            .labelsHidden()
-            .controlSize(.mini)
-            .toggleStyle(.switch)
-        }
-        .frame(height: 20)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        ModeSegments(mode: appState.mode, onPick: setMode)
+            .frame(height: 22)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
     }
 
     private func setMode(_ newMode: AppState.Mode) {
@@ -136,6 +122,43 @@ extension MenuBarView {
         // Whichever mode is now on takes the monitor at once, in full.
         if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
         expandedPresetID = appState.activePresetID
+    }
+}
+
+// MARK: - Mode Segments
+
+/// The Mac's segmented control with equal segments filling its width. SwiftUI's
+/// segmented Picker sizes to its labels, which left the right side empty.
+private struct ModeSegments: NSViewRepresentable {
+    let mode: AppState.Mode
+    let onPick: (AppState.Mode) -> Void
+
+    private static let modes: [AppState.Mode] = [.auto, .schedule]
+
+    func makeNSView(context: Context) -> NSSegmentedControl {
+        let control = NSSegmentedControl(labels: ["Auto", "Schedule"], trackingMode: .selectOne,
+                                         target: context.coordinator, action: #selector(Coordinator.picked(_:)))
+        control.segmentDistribution = .fillEqually
+        control.controlSize = .small
+        control.font = .systemFont(ofSize: NSFont.systemFontSize(for: .small))
+        control.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return control
+    }
+
+    func updateNSView(_ control: NSSegmentedControl, context: Context) {
+        context.coordinator.onPick = onPick
+        control.selectedSegment = Self.modes.firstIndex(of: mode) ?? 0
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
+
+    final class Coordinator: NSObject {
+        var onPick: (AppState.Mode) -> Void
+        init(onPick: @escaping (AppState.Mode) -> Void) { self.onPick = onPick }
+
+        @objc func picked(_ sender: NSSegmentedControl) {
+            onPick(ModeSegments.modes[sender.selectedSegment])
+        }
     }
 }
 
