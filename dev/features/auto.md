@@ -106,4 +106,4 @@ row.
   between them; the selection slides between the halves ("nothing should
   teleport") and the other half glows faintly on hover. The header's right side is
   bare in both modes: the control says the mode, and Schedule opens on the
-  preset in force.
+  preset in force. Applies *Never a fight with the controls*.
