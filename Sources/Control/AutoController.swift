@@ -1,13 +1,12 @@
 import Foundation
 import AppKit
 
-/// Auto mode: reads the room's light once a second and eases the monitor's
-/// brightness and contrast to the point between the two ends that the room
-/// picks. Night Shift still follows the schedule's presets, since warmth is
-/// about the hour, not the light.
+/// Auto mode: reads the room's light once a second and eases the monitor to
+/// your level times the room (brightness), the contrast that goes with it, and
+/// the clock's Night Shift. See `RoomLight` for the rules.
 ///
-/// While there's no reading (no sensor, lid closed) Auto stands aside and the
-/// Scheduler drives the monitor as in Schedule mode.
+/// Needs no presets. While the sensor gives no reading (lid closed, no sensor)
+/// it keeps the last room it saw, or 100 lux before the first.
 @MainActor
 final class AutoController {
     private weak var state: AppState?
@@ -24,11 +23,11 @@ final class AutoController {
     private var lastLogged = Date.distantPast
     private var lastRawLux: Double?
 
-    /// Per-second limits on how fast the monitor moves. Brightness and contrast
-    /// take ~3 minutes across their full range, Night Shift ~1.5.
-    private static let maxStep = (brightness: 0.5, contrast: 0.5, nightShift: 1.0)
-    /// Readings missed in a row before Auto hands the monitor to the schedule.
-    private static let missesBeforeHandoff = 3
+    /// Per-second limits on how fast the monitor moves: brightness and contrast
+    /// cross their full range in under a minute, Night Shift in ~1.5.
+    private static let maxStep = (brightness: 2.0, contrast: 2.0, nightShift: 1.0)
+    /// Readings missed in a row before Auto says the sensor dropped out.
+    private static let missesBeforeDropout = 3
 
     func start(state: AppState, controller: DDCController) {
         guard timer == nil else { return }
@@ -61,20 +60,22 @@ final class AutoController {
         tick()
     }
 
-    /// Brightness set by hand from Auto's slider. It moves the monitor at once
-    /// and holds until it lapses (see `RoomLight.Hold`).
-    func setHeld(brightness: Int) {
-        guard let state, let lux = state.roomLux else { return }
-        state.hold = RoomLight.Hold(brightness: brightness, since: Date(), lux: lux)
-        shown?.brightness = Double(brightness)
+    /// Brightness set by hand from Auto's slider: shown at once, and kept as
+    /// the level for this room, so other rooms scale from it. Saved and logged
+    /// once, when the drag ends (`done`).
+    func setBrightness(_ brightness: Int, done: Bool) {
+        guard let state else { return }
+        let lux = state.roomLux ?? RoomLight.referenceLux
+        state.autoLevel = RoomLight.level(forBrightness: Double(brightness), lux: lux)
+        let contrast = RoomLight.contrast(brightness: Double(brightness))
+        shown = (Double(brightness), contrast, shown?.nightShift ?? Double(state.autoNightShift))
         state.autoBrightness = brightness
         write("hardwareBrightness", brightness)
-        log(force: true)
-    }
-
-    func endHold() {
-        state?.hold = nil
-        log(force: true)
+        write("hardwareContrast", Int(contrast.rounded()))
+        if done {
+            state.save()
+            log(force: true)
+        }
     }
 
     // MARK: - Tick
@@ -89,59 +90,34 @@ final class AutoController {
         lastTick = now
 
         guard state.mode == .auto else {
-            standAside(state)
+            shown = nil
+            written = [:]
             return
         }
 
-        guard let raw = AmbientLightSensor.lux() else {
+        if let raw = AmbientLightSensor.lux() {
+            missedReadings = 0
+            lastRawLux = raw
+            state.roomLux = smoother.add(lux: raw, dt: dt)
+            if !state.sensorReading { state.sensorReading = true }
+        } else {
             missedReadings += 1
-            // Said once per dropout, including one that starts at launch.
-            if missedReadings == Self.missesBeforeHandoff {
-                print("[Sundial] No room light reading (lid closed, sensor covered, or no sensor). Following the schedule until it's back.")
-                if state.roomLux != nil {
-                    standAside(state)
-                    state.onScheduleChanged?()
-                }
+            lastRawLux = nil
+            if missedReadings == Self.missesBeforeDropout {
+                print("[Sundial] No room light reading (lid closed, sensor covered, or no sensor). Keeping the last room seen until it's back.")
+                state.sensorReading = false
             }
-            return
         }
-        missedReadings = 0
-        lastRawLux = raw
-        let lux = smoother.add(lux: raw, dt: dt)
-        let takingOver = state.roomLux == nil
-        state.roomLux = lux
 
         // A preset preview owns the monitor until it ends.
         guard state.previewingPresetID == nil else { return }
 
-        let nightShift = Double(scheduledNightShift(state))
-
-        // Taking over from the schedule: start from what it last applied, so
-        // the hand-over eases instead of jumping.
-        if takingOver || shown == nil {
-            if let preset = scheduledPreset(state) {
-                shown = (Double(preset.hardwareBrightness), Double(preset.hardwareContrast), Double(preset.nightShift))
-            }
-        }
-
-        // An end being edited is shown as is, so you see what you're setting.
-        if let kind = state.previewingEnd {
-            let end = state.end(kind)
-            shown = (Double(end.brightness), Double(end.contrast), nightShift)
-            send(state)
-            return
-        }
-
-        if let hold = state.hold, hold.isOver(now: now, lux: lux) {
-            state.hold = nil
-            log(force: true)
-        }
-
-        let t = RoomLight.position(lux: lux)
-        let auto = RoomLight.target(position: t, dark: state.darkEnd, bright: state.brightEnd)
-        let target = (brightness: state.hold.map { Double($0.brightness) } ?? auto.brightness,
-                      contrast: auto.contrast,
-                      nightShift: nightShift)
+        let lux = state.roomLux ?? RoomLight.referenceLux
+        let brightness = RoomLight.brightness(level: state.autoLevel, lux: lux)
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: now)
+        let target = (brightness: brightness,
+                      contrast: RoomLight.contrast(brightness: brightness),
+                      nightShift: RoomLight.nightShift(minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0)))
 
         var s = shown ?? target
         s.brightness = RoomLight.step(s.brightness, toward: target.brightness, maxStep: Self.maxStep.brightness * dt)
@@ -152,18 +128,11 @@ final class AutoController {
         log(force: false)
     }
 
-    private func standAside(_ state: AppState) {
-        if state.roomLux != nil { state.roomLux = nil }
-        if state.hold != nil { state.hold = nil }
-        shown = nil
-        written = [:]
-        smoother = RoomLight.Smoother()
-    }
-
     private func send(_ state: AppState) {
         guard let s = shown else { return }
         let b = Int(s.brightness.rounded()), c = Int(s.contrast.rounded()), n = Int(s.nightShift.rounded())
         if state.autoBrightness != b { state.autoBrightness = b }
+        if state.autoNightShift != n { state.autoNightShift = n }
         write("hardwareBrightness", b)
         write("hardwareContrast", c)
         write("nightShift", n)
@@ -175,21 +144,10 @@ final class AutoController {
         Task { await controller.applySingle(param, value: value) }
     }
 
-    // MARK: - Schedule
-
-    private func scheduledPreset(_ state: AppState) -> Preset? {
-        Scheduler.activeEntry(in: state.schedule, presets: state.presets, at: Date())
-            .flatMap { state.preset(for: $0.presetID) }
-    }
-
-    private func scheduledNightShift(_ state: AppState) -> Int {
-        scheduledPreset(state)?.nightShift ?? 0
-    }
-
     // MARK: - Log
 
-    /// One line a minute, and one whenever a hold starts or ends, so a few days
-    /// of use show what you set against how bright the room was. Kept next to
+    /// One line a minute, and one whenever you set the brightness, so a few days
+    /// of use show what you chose against how bright the room was. Kept next to
     /// config.json as room-log.csv.
     private static let logURL: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -209,12 +167,12 @@ final class AutoController {
             String(Int(s.brightness.rounded())),
             String(Int(s.contrast.rounded())),
             String(Int(s.nightShift.rounded())),
-            state.hold.map { String($0.brightness) } ?? "",
+            force ? String(format: "%.1f", state.autoLevel) : "",
         ]
         let line = fields.joined(separator: ",") + "\n"
         let fm = FileManager.default
         if !fm.fileExists(atPath: Self.logURL.path) {
-            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,held\n".utf8))
+            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set\n".utf8))
         }
         guard let handle = try? FileHandle(forWritingTo: Self.logURL) else { return }
         defer { try? handle.close() }

@@ -1,11 +1,12 @@
 #!/bin/bash
-# Drive: Auto's decisions from the room's light.
+# Drive: Auto's decisions from the room's light and the clock.
 #
-# Compiles the app's RoomLight with a harness and feeds it lux readings, so it
-# runs without a sensor or a monitor. The cases use the readings logged on
-# 2026-10-26 (lit room ~550, blinds shut ~35, a hand passing the notch spiking
-# to 3000+). It can't see whether the sensor reads, or how the change feels on
-# the monitor; dev/features/auto.md says how to check those by hand.
+# Compiles the app's RoomLight with a harness and feeds it lux readings and
+# times, so it runs without a sensor or a monitor. The lux cases use readings
+# logged on 2026-10-26 (lit room ~550, blinds shut ~35, a hand passing the notch
+# spiking to 3000+); the Night Shift and contrast cases are the presets the
+# curves were fitted to. It can't see whether the sensor reads, or how the
+# change feels on the monitor; dev/features/auto.md says how to check those.
 
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -20,52 +21,60 @@ var failures: [String] = []
 func check(_ what: String, _ ok: Bool, _ got: Any) {
     if !ok { failures.append("\(what): got \(got)") }
 }
+func near(_ a: Double, _ b: Double, _ tol: Double) -> Bool { abs(a - b) <= tol }
 
-// Where the room sits.
-check("a room at or below dark lux is fully dark", RoomLight.position(lux: 0) == 0 && RoomLight.position(lux: 5) == 0, RoomLight.position(lux: 0))
-check("a room at or above bright lux is fully bright", RoomLight.position(lux: 500) == 1 && RoomLight.position(lux: 5000) == 1, RoomLight.position(lux: 5000))
-let mid = RoomLight.position(lux: 50)
-check("50 lux sits near the middle on a log scale", mid > 0.4 && mid < 0.6, mid)
-let blinds = RoomLight.position(lux: 35), lit = RoomLight.position(lux: 550)
-check("blinds shut sit well below the lit room", blinds < 0.5 && lit == 1, (blinds, lit))
+// Brightness: your level times the room.
+let lvl = RoomLight.defaultLevel
+check("the default level gives the Morning preset (42) in the lit room (550 lux)",
+      near(RoomLight.brightness(level: lvl, lux: 550), 42, 1.5), RoomLight.brightness(level: lvl, lux: 550))
+check("and about Night's 1 in a dark room (0.5 lux floors at 1)",
+      RoomLight.brightness(level: lvl, lux: 0.5) < 3, RoomLight.brightness(level: lvl, lux: 0.5))
+check("16x the light gives 4x the brightness",
+      near(RoomLight.brightness(level: 10, lux: 1600) / RoomLight.brightness(level: 10, lux: 100), 4, 0.01), "")
+check("brightness never passes 100", RoomLight.brightness(level: 80, lux: 10_000) == 100, RoomLight.brightness(level: 80, lux: 10_000))
+// Setting a brightness keeps it: the level saved gives it back in the same room,
+// and scales it in another.
+let set = RoomLight.level(forBrightness: 8, lux: 240)
+check("a set brightness comes back in the same room", near(RoomLight.brightness(level: set, lux: 240), 8, 0.001), RoomLight.brightness(level: set, lux: 240))
+check("and is lower with the blinds shut", RoomLight.brightness(level: set, lux: 35) < 8, RoomLight.brightness(level: set, lux: 35))
+check("a level can be set in a pitch-dark room", RoomLight.level(forBrightness: 5, lux: 0).isFinite, RoomLight.level(forBrightness: 5, lux: 0))
 
-// What the monitor gets.
-let dark = RoomLight.End(brightness: 0, contrast: 7), bright = RoomLight.End(brightness: 42, contrast: 69)
-let t0 = RoomLight.target(position: 0, dark: dark, bright: bright)
-let t1 = RoomLight.target(position: 1, dark: dark, bright: bright)
-check("a dark room gets the dark end", t0.brightness == 0 && t0.contrast == 7, t0)
-check("a bright room gets the bright end", t1.brightness == 42 && t1.contrast == 69, t1)
+// Contrast follows brightness on the presets' line.
+check("contrast at brightness 0 is Midnight's 7-8", near(RoomLight.contrast(brightness: 0), 7.8, 0.01), RoomLight.contrast(brightness: 0))
+check("contrast at Morning's 42 is near its 69", near(RoomLight.contrast(brightness: 42), 69, 3), RoomLight.contrast(brightness: 42))
 
-// Gradual: shutting the blinds eases over minutes, not seconds.
+// Night Shift by the clock, against the presets it was fitted to.
+func ns(_ h: Int, _ m: Int) -> Double { RoomLight.nightShift(minuteOfDay: h * 60 + m) }
+check("off in the afternoon", ns(14, 47) == 0, ns(14, 47))
+check("off just before the ramp", ns(17, 12) == 0, ns(17, 12))
+check("near Twilight's 31 at 7:17 PM", near(ns(19, 17), 31, 4), ns(19, 17))
+check("near Evening's 42 at 8:07 PM", near(ns(20, 7), 42, 4), ns(20, 7))
+check("near Night's 67 at 10:17 PM", near(ns(22, 17), 67, 7), ns(22, 17))
+check("near Midnight's 100 at 11:57 PM", near(ns(23, 57), 100, 5), ns(23, 57))
+check("full after midnight", ns(3, 0) == 100, ns(3, 0))
+check("off from 6:30 AM", ns(6, 30) == 0 && ns(6, 29) == 100, (ns(6, 29), ns(6, 30)))
+
+// Easing: the blinds shutting arrives in under a minute, not instantly.
 var s = RoomLight.Smoother()
 _ = s.add(lux: 240, dt: 1)
-var after10 = 0.0, after180 = 0.0
-for i in 1...180 {
+var after3 = 0.0, after60 = 0.0
+for i in 1...60 {
     let v = s.add(lux: 35, dt: 1)
-    if i == 10 { after10 = v }
-    if i == 180 { after180 = v }
+    if i == 3 { after3 = v }
+    if i == 60 { after60 = v }
 }
-check("10s after the blinds shut, the average has barely started down", after10 > 120, after10)
-check("3 minutes after, it has arrived", abs(after180 - 35) < 5, after180)
+check("3s after the blinds shut, the average is still well above", after3 > 120, after3)
+check("a minute after, it has arrived", near(after60, 35, 5), after60)
 
-// A hand passing the notch hardly moves it.
+// A hand passing the notch hardly moves the brightness.
 var h = RoomLight.Smoother()
 _ = h.add(lux: 500, dt: 1)
 let spike = h.add(lux: 3300, dt: 1)
-check("a 1s spike to 3300 lux moves the average under 10%", spike < 550, spike)
+let moved = RoomLight.brightness(level: lvl, lux: spike) / RoomLight.brightness(level: lvl, lux: 500)
+check("a 1s spike to 3300 lux moves brightness under 10%", moved < 1.1, moved)
 
-// The monitor's own easing.
-check("a step is capped", RoomLight.step(10, toward: 20, maxStep: 0.5) == 10.5, RoomLight.step(10, toward: 20, maxStep: 0.5))
-check("a step lands on a near target", RoomLight.step(10, toward: 10.3, maxStep: 0.5) == 10.3, RoomLight.step(10, toward: 10.3, maxStep: 0.5))
-check("a step goes down too", RoomLight.step(10, toward: 0, maxStep: 0.5) == 9.5, RoomLight.step(10, toward: 0, maxStep: 0.5))
-
-// A hand-set brightness holds, then lets go.
-let start = Date(timeIntervalSince1970: 0)
-let hold = RoomLight.Hold(brightness: 8, since: start, lux: 240)
-check("a hold lasts with the room unchanged", !hold.isOver(now: start.addingTimeInterval(19 * 60), lux: 300), "over at 19 min")
-check("a hold lapses after 20 minutes", hold.isOver(now: start.addingTimeInterval(20 * 60), lux: 240), "held at 20 min")
-check("a hold ends when the room doubles", hold.isOver(now: start.addingTimeInterval(60), lux: 500), "held after doubling")
-check("a hold ends when the room halves (blinds shut)", hold.isOver(now: start.addingTimeInterval(60), lux: 35), "held after blinds")
+check("a step is capped", RoomLight.step(10, toward: 20, maxStep: 2) == 12, RoomLight.step(10, toward: 20, maxStep: 2))
+check("a step lands on a near target", RoomLight.step(10, toward: 10.3, maxStep: 2) == 10.3, RoomLight.step(10, toward: 10.3, maxStep: 2))
 
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
@@ -83,4 +92,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: Auto maps the room to the two ends, eases over minutes, ignores a passing hand, and a hold lapses"
+echo "✓ room-light: brightness is your level times the room, a set level keeps, contrast and Night Shift match the fitted presets, and it eases within a minute"

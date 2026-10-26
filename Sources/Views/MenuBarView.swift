@@ -25,7 +25,7 @@ struct MenuBarView: View {
                 if !showSettings, appState.isSetUp, let caption = headerCaption {
                     Text(caption)
                         .font(.caption)
-                        .foregroundStyle(appState.hold == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                        .foregroundStyle(.secondary)
                 }
 
                 // The gear only appears once setup is complete — before that the
@@ -77,9 +77,8 @@ struct MenuBarView: View {
         .onDisappear {
             // Popover closed — always end any active preview so the monitor
             // snaps back to the scheduled preset.
-            if appState.previewingPresetID != nil || appState.previewingEnd != nil {
+            if appState.previewingPresetID != nil {
                 appState.previewingPresetID = nil
-                appState.previewingEnd = nil
                 appState.onPreviewEnded?()
             }
             expandedPresetID = appState.activePresetID
@@ -90,10 +89,6 @@ struct MenuBarView: View {
         // expanded card there, so the next open shows the active preset.
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
             expandedPresetID = appState.activePresetID
-            if appState.previewingEnd != nil {
-                appState.previewingEnd = nil
-                appState.onPreviewEnded?()
-            }
         }
         // The schedule can move on while the popup is closed.
         .onChange(of: appState.activePresetID) { _, newValue in
@@ -103,12 +98,9 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
-    /// Auto, Held, or the preset in force when the schedule drives the monitor.
+    /// Auto, or the preset in force in Schedule mode.
     private var headerCaption: String? {
-        if appState.mode == .auto {
-            if appState.hold != nil { return "Held" }
-            if appState.roomLux != nil { return "Auto" }
-        }
+        if appState.mode == .auto { return "Auto" }
         return appState.preset(for: appState.activePresetID)?.name
     }
 
@@ -119,13 +111,10 @@ extension MenuBarView {
             set: { newMode in
                 guard newMode != appState.mode else { return }
                 appState.previewingPresetID = nil
-                appState.previewingEnd = nil
                 appState.mode = newMode
                 appState.save()
-                // Auto stands aside or takes over on this tick; then the
-                // schedule takes the monitor if Auto let go of it.
-                appState.onAutoChanged?()
-                appState.onScheduleChanged?()
+                // Whichever mode is now on takes the monitor at once, in full.
+                if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
                 expandedPresetID = appState.activePresetID
             }
         )) {

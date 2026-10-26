@@ -140,8 +140,8 @@ class Scheduler {
         guard state.isSetUp else { return }
         // Preview owns the monitor while active — don't fight it.
         guard state.previewingPresetID == nil else { return }
-        // So does Auto, while it can read the room. Forgetting the last entry
-        // makes the schedule re-apply in full when Auto hands back (lid closed).
+        // So does Auto mode. Forgetting the last entry makes the schedule
+        // re-apply in full when you switch back to Schedule.
         guard !state.autoDrivesMonitor else {
             lastAppliedEntryID = nil
             lastAppliedPreset = nil

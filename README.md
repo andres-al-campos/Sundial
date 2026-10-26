@@ -6,7 +6,7 @@ Sundial drives your monitor's **hardware** brightness and contrast over DDC (via
 
 ## What it does
 
-- **Auto** (the main mode) — reads the room's light with the MacBook's ambient light sensor, the photodiode beside the camera (not the camera), and eases brightness and contrast between a _Dark room_ and a _Bright room_ setting. Drag Brightness to hold a value for a while, say for a dark video. Night Shift still follows the schedule, and with the lid closed the schedule takes over.
+- **Auto** (the main mode) — reads the room's light with the MacBook's ambient light sensor, the photodiode beside the camera (not the camera). You set the brightness you like once; the room's light scales it, contrast follows brightness, and Night Shift warms through the evening by the clock. No presets needed.
 - **Time-of-day presets** — define presets like _Morning_, _Day_, _Evening_, _Night_, each with a brightness, contrast, and Night Shift strength.
 - **Scheduling** — assign a preset to a time; Sundial applies it automatically and smoothly interpolates between presets so the change is gradual, not a jarring jump.
 - **Live control** — drag a slider in the menu bar to adjust the current display immediately.

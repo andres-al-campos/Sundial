@@ -11,36 +11,36 @@ class AppState: ObservableObject {
     @Published var applyOnWake: Bool = true
     @Published var launchAtLogin: Bool = false
 
-    /// Auto follows the room's light between `darkEnd` and `brightEnd`;
-    /// Schedule applies the presets by time of day.
+    /// Auto sets the monitor from the room's light and the clock; Schedule
+    /// applies the presets by time of day.
     enum Mode: String, Codable { case auto, schedule }
     @Published var mode: Mode = .auto
-    @Published var darkEnd = RoomLight.End(brightness: 0, contrast: 7)
-    @Published var brightEnd = RoomLight.End(brightness: 42, contrast: 69)
+    /// How bright you like the screen, as the brightness at 100 lux. The room's
+    /// light multiplies it (see `RoomLight`). Set by dragging Auto's slider.
+    @Published var autoLevel: Double = RoomLight.defaultLevel
 
     // Auto's live state, set by AutoController and not saved.
 
-    /// The averaged room light, or nil while there's no reading (no sensor, lid
-    /// closed). Nil in Auto means the schedule is driving the monitor.
+    /// The averaged room light. Holds its last value while the sensor gives no
+    /// reading; nil only before the first.
     @Published var roomLux: Double?
+    /// False while the sensor gives no reading (lid closed, no sensor).
+    @Published var sensorReading = false
     /// The brightness Auto has the monitor at right now.
     @Published var autoBrightness: Int = 0
-    /// A brightness set by hand in Auto, until it lapses.
-    @Published var hold: RoomLight.Hold?
-    /// The end being previewed on the monitor while its card is edited.
-    @Published var previewingEnd: EndKind?
-    enum EndKind { case dark, bright }
+    /// The Night Shift Auto has set right now.
+    @Published var autoNightShift: Int = 0
 
     /// True when Auto, not the schedule, owns the monitor.
-    var autoDrivesMonitor: Bool { mode == .auto && roomLux != nil }
+    var autoDrivesMonitor: Bool { mode == .auto }
 
     /// Set by the app at startup: Auto re-evaluates at once instead of on its
-    /// next tick (an end edited, the mode switched).
+    /// next tick (the mode switched).
     var onAutoChanged: (() -> Void)?
 
-    /// Set by the app at startup: hold Auto's brightness at a value, or nil to
-    /// end the hold and ease back to the room.
-    var onHold: ((Int?) -> Void)?
+    /// Set by the app at startup: show this brightness now, and keep it as the
+    /// level for this room. The flag is true when the drag ends.
+    var onSetBrightness: ((Int, Bool) -> Void)?
 
     /// True once the BetterDisplay path + display name have been verified against
     /// real hardware (a DDC read succeeded). Until then, the menu bar shows the
@@ -84,8 +84,7 @@ class AppState: ObservableObject {
         var launchAtLogin: Bool
         var isSetUp: Bool?
         var mode: Mode?
-        var darkEnd: RoomLight.End?
-        var brightEnd: RoomLight.End?
+        var autoLevel: Double?
     }
 
     func save() {
@@ -98,8 +97,7 @@ class AppState: ObservableObject {
             launchAtLogin: launchAtLogin,
             isSetUp: isSetUp,
             mode: mode,
-            darkEnd: darkEnd,
-            brightEnd: brightEnd
+            autoLevel: autoLevel
         )
         do {
             let data = try JSONEncoder().encode(config)
@@ -123,21 +121,7 @@ class AppState: ObservableObject {
         launchAtLogin = config.launchAtLogin
         isSetUp = config.isSetUp ?? false
         mode = config.mode ?? .auto
-        // A config from before Auto takes its ends from the presets: the dimmest
-        // for a dark room, the brightest for a bright one.
-        let byBrightness = presets.sorted { $0.hardwareBrightness < $1.hardwareBrightness }
-        darkEnd = config.darkEnd ?? byBrightness.first.map { .init(brightness: $0.hardwareBrightness, contrast: $0.hardwareContrast) } ?? darkEnd
-        brightEnd = config.brightEnd ?? byBrightness.last.map { .init(brightness: $0.hardwareBrightness, contrast: $0.hardwareContrast) } ?? brightEnd
-    }
-
-    func end(_ kind: EndKind) -> RoomLight.End {
-        kind == .dark ? darkEnd : brightEnd
-    }
-
-    /// `persist: false` while a slider is mid-drag; the release saves.
-    func setEnd(_ kind: EndKind, _ end: RoomLight.End, persist: Bool = true) {
-        if kind == .dark { darkEnd = end } else { brightEnd = end }
-        if persist { save() }
+        autoLevel = config.autoLevel ?? RoomLight.defaultLevel
     }
 
     // MARK: - Setup validation
