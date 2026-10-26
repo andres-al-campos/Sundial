@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-25 01:32, at 1.0.3.
+Updated 2026-10-26 14:24, at 1.0.3.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. Sundial applies the preset whose time most recently passed.
@@ -62,6 +62,13 @@ preview, add, delete).
   and the list's first height is computed from its rows (the cap, for two or
   more presets). Setup and Settings are plain stacks, which size in one pass;
   the Connect button keeps its spinner's space when idle.
+- The panel keeps its views' @State across opens, so a value given at
+  construction counts only on the first open, and onDisappear doesn't fire on
+  every close. The popup sometimes opened on the card it was closed on, or with
+  the name field still in edit mode (fixed 2026-10-26): closing is now read
+  from the window resigning key, which resets the expanded card to the active
+  preset and ends a name edit. An active-preset change while closed also moves
+  the expanded card.
 
 ## Calls
 

@@ -184,6 +184,11 @@ private struct PresetCardRow: View {
         .background(isHovered ? Color.primary.opacity(0.06) : Color.clear)
         .onHover { isHovered = $0 }
         .onAppear { nameDraft = preset.name }
+        // Closing the popup ends a name edit (and commits it), so it doesn't
+        // reopen still highlighted.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+            nameFocused = false
+        }
         .onChange(of: preset.name) { _, newValue in
             if !nameFocused { nameDraft = newValue }
         }

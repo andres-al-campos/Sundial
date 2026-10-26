@@ -77,6 +77,17 @@ struct MenuBarView: View {
             }
             expandedPresetID = appState.activePresetID
         }
+        // The panel keeps this view (and its @State) across opens, so the init
+        // value only counts once, and onDisappear doesn't fire on every close.
+        // Resigning key is the close signal that always arrives: reset the
+        // expanded card there, so the next open shows the active preset.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+            expandedPresetID = appState.activePresetID
+        }
+        // The schedule can move on while the popup is closed.
+        .onChange(of: appState.activePresetID) { _, newValue in
+            if NSApp.keyWindow == nil { expandedPresetID = newValue }
+        }
     }
 }
 
