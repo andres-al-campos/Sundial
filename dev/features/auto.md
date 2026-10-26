@@ -98,10 +98,12 @@ row.
   with no offset, though the presets' line had one ("the preset is 1
   datapoint"), and brightness reaches 0 at 2 lux. Applies *Just right for the
   room*.
-- 2026-10-26 18:14, 1.0.3. Auto | Schedule is a full-width segmented control under the header. A
+- 2026-10-26 18:36, 1.0.3. Auto | Schedule is a full-width segmented control under the header. A
   switch was wrong because it changed the whole popup ("what toggle does
   that?"), and tabs read as two pages you could both look at, not one choice
   of what drives the monitor. The first segmented control sized to its labels
   and left the right side empty, so its halves now fill the width. It belongs to the header, with no line
   between them; the selection slides between the halves ("nothing should
-  teleport") and the other half glows faintly on hover.
+  teleport") and the other half glows faintly on hover. The header's right side is
+  bare in both modes: the control says the mode, and Schedule opens on the
+  preset in force.
