@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 17:48, at 1.0.3.
+Updated 2026-10-26 18:00, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -29,12 +29,12 @@ presets; Schedule (the presets) is the other.
   it saw (100 lux before the first) and the Room row says "no reading".
 - **Room log.** One line a minute, and one each time you let go of the slider
   (with the level saved), in `room-log.csv` next to `config.json`.
-- **Auto | Schedule** tabs under the header switch modes.
+- **The Auto switch** under the header turns Auto off, which is Schedule.
 
 ## How to get to it
 
-Click the sun in the menu bar. Auto is what opens; the tab beside it under the
-header is Schedule.
+Click the sun in the menu bar. Auto is what opens; turning off the Auto switch
+under the header goes to Schedule.
 
 ## Driving it
 

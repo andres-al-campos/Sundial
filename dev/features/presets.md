@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-26 17:48, at 1.0.3.
+Updated 2026-10-26 18:00, at 1.0.3.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -21,7 +21,7 @@ passed. Auto mode doesn't use them (see auto.md).
 
 ## How to get to it
 
-Click the sun in the menu bar, choose the Schedule tab under the header, then click a
+Click the sun in the menu bar, turn off the Auto switch under the header, then click a
 preset's row to expand it.
 
 ## Driving it

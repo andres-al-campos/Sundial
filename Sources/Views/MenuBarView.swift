@@ -104,29 +104,38 @@ extension MenuBarView {
         return appState.preset(for: appState.activePresetID)?.name
     }
 
-    /// Two equal tabs under the header, so which mode is on reads first and
-    /// the panel below is that mode's.
+    /// Auto on or off, a switch like a preset's Enabled, in the same row in
+    /// both modes. Off is Schedule.
     private var modePicker: some View {
-        Picker("", selection: Binding(
-            get: { appState.mode },
-            set: { newMode in
-                guard newMode != appState.mode else { return }
-                appState.previewingPresetID = nil
-                appState.mode = newMode
-                appState.save()
-                // Whichever mode is now on takes the monitor at once, in full.
-                if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
-                expandedPresetID = appState.activePresetID
-            }
-        )) {
-            Text("Auto").tag(AppState.Mode.auto)
-            Text("Schedule").tag(AppState.Mode.schedule)
+        HStack(spacing: 8) {
+            Text("Auto")
+                .font(.caption)
+                .frame(width: 72, alignment: .leading)
+            Text(appState.mode == .auto ? "follows the room's light" : "off · presets by time")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            Toggle("", isOn: Binding(
+                get: { appState.mode == .auto },
+                set: { on in setMode(on ? .auto : .schedule) }
+            ))
+            .labelsHidden()
+            .controlSize(.mini)
+            .toggleStyle(.switch)
         }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .controlSize(.small)
+        .frame(height: 20)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+    }
+
+    private func setMode(_ newMode: AppState.Mode) {
+        guard newMode != appState.mode else { return }
+        appState.previewingPresetID = nil
+        appState.mode = newMode
+        appState.save()
+        // Whichever mode is now on takes the monitor at once, in full.
+        if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
+        expandedPresetID = appState.activePresetID
     }
 }
 
