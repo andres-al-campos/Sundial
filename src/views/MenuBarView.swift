@@ -60,9 +60,14 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Quit holds the right in every panel; Add Preset takes the left in
+            // Quit holds the left in every panel; Add Preset takes the right in
             // Schedule, so the list ends on its last card.
             HStack {
+                HoverButton("Quit Sundial") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .foregroundStyle(.secondary)
+                Spacer()
                 if appState.isSetUp && !showSettings && appState.mode == .schedule {
                     Button(action: addPreset) {
                         Label("Add Preset", systemImage: "plus")
@@ -70,11 +75,6 @@ struct MenuBarView: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.accentColor)
                 }
-                Spacer()
-                HoverButton("Quit Sundial") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .foregroundStyle(.secondary)
             }
             .font(.subheadline)
             .padding(.horizontal, 14)
