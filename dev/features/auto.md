@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-27 01:02, at 1.0.3.
+Updated 2026-10-27 01:24, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -56,11 +56,13 @@ a harness. It checks that brightness is the level times the room's fourth
 root (the evening's settings at 2, 19-32 and 84 lux, never past 100, level 0
 darkest), that a set
 brightness comes back in the same room and scales in another, that a set
-contrast comes back at the same brightness and scales with it, that Night Shift lands near the presets it was fitted to, that the blinds
+contrast comes back at the same brightness and scales with it, that sunrise
+and sunset for Chicago land on its solstice times (and zone.tab's point
+parses), that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
 spike or dip (a hand at the notch) leaves the average where it was.
 
-Last driven: 2026-10-26, macOS. Passed; failed as expected with the Night
+Last driven: 2026-10-27, macOS. Passed; on 2026-10-26 it failed as expected with the Night
 Shift ramp an hour late, and with the median removed.
 
 Seen on the real thing 2026-10-26: installed, it read 27 lux, stayed up, and
