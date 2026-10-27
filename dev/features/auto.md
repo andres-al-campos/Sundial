@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 23:21, at 1.0.3.
+Updated 2026-10-26 23:43, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -15,9 +15,11 @@ presets; Schedule (the presets) is the other.
   0.1 lux count as 0.1. The default level, 45, fits the brightnesses set on the
   evening of 2026-10-26 (17-22 at 2 lux, 25-30 at dusk, 40 at 84 lux). A
   level of 0 is the monitor's darkest in any room.
-- **Contrast follows brightness**: √2 × brightness, so brightness 0 is
-  contrast 0 too, the monitor's darkest. The presets' own line had the same slope plus 7.8
-  (R² 0.82, against 0.71 for √2 ×).
+- **Contrast follows brightness** at a multiple you set by dragging the
+  Contrast slider: it starts at √2 × brightness, and a drag keeps the
+  multiple that gives what you chose, so brightness 0 is still contrast 0, the
+  monitor's darkest. The presets' own line had the slope √2 plus 7.8 (R² 0.82,
+  against 0.71 for √2 ×).
 - **Night Shift follows the clock**, fitted to the presets' evening values
   (R² 0.98): off until 5:13 PM, rising ~14% an hour to full at 12:11 AM, full
   until 6:30 AM, then off.
@@ -28,8 +30,9 @@ presets; Schedule (the presets) is the other.
   Shift. Big changes are meant to be seen; most are small.
 - **No reading.** With the lid closed or no sensor, Auto keeps the last room
   it saw (100 lux before the first) and the Room row says "no reading".
-- **Room log.** One line a minute, and one each time you let go of the slider
-  (with the level saved), in `room-log.csv` next to `config.json`.
+- **Room log.** One line a minute, and one each time you let go of a slider
+  (with the level or contrast multiple saved), in `room-log.csv` next to
+  `config.json`.
 - **Auto | Schedule** under the header picks which one drives the monitor.
 
 ## How to get to it
@@ -45,8 +48,8 @@ Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 a harness. It checks that brightness is the level times the room's fourth
 root (the evening's settings at 2, 19-32 and 84 lux, never past 100, level 0
 darkest), that a set
-brightness comes back in the same room and scales in another, that contrast
-is √2 × brightness, that Night Shift lands near the presets it was fitted to, that the blinds
+brightness comes back in the same room and scales in another, that a set
+contrast comes back at the same brightness and scales with it, that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
 spike or dip (a hand at the notch) leaves the average where it was.
 
@@ -119,3 +122,8 @@ row.
   night, where it gave 0 and the brightness set was 17-22, and every drag
   there saved a level that would have meant 100 by day. Full darkness is a
   level of 0 instead. Applies *Just right for the room*.
+- 2026-10-26 23:43, 1.0.3. Contrast gets its own slider, so its log shows what fits instead of
+  following a fixed √2. The aim is the curves that need the fewest
+  interventions: "I'm trying to find the minimal interventions curves that
+  fit my eyes." A few days of drags come first, then a curve fitted to them,
+  maybe two anchors. Applies *Just right for the room*.

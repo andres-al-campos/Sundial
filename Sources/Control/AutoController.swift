@@ -67,14 +67,31 @@ final class AutoController {
         guard let state else { return }
         let lux = state.roomLux ?? RoomLight.referenceLux
         state.autoLevel = RoomLight.level(forBrightness: Double(brightness), lux: lux)
-        let contrast = RoomLight.contrast(brightness: Double(brightness))
+        let contrast = RoomLight.contrast(brightness: Double(brightness), scale: state.autoContrastScale)
         shown = (Double(brightness), contrast, shown?.nightShift ?? Double(state.autoNightShift))
         state.autoBrightness = brightness
+        state.autoContrast = Int(contrast.rounded())
         write("hardwareBrightness", brightness)
         write("hardwareContrast", Int(contrast.rounded()))
         if done {
             state.save()
-            log(force: true)
+            log(force: true, set: .brightness)
+        }
+    }
+
+    /// Contrast set by hand from Auto's slider: shown at once, and kept as the
+    /// contrast for this brightness, so other brightnesses scale from it. Saved
+    /// and logged once, when the drag ends (`done`).
+    func setContrast(_ contrast: Int, done: Bool) {
+        guard let state else { return }
+        let brightness = shown?.brightness ?? Double(state.autoBrightness)
+        state.autoContrastScale = RoomLight.contrastScale(forContrast: Double(contrast), brightness: brightness)
+        shown = (brightness, Double(contrast), shown?.nightShift ?? Double(state.autoNightShift))
+        state.autoContrast = contrast
+        write("hardwareContrast", contrast)
+        if done {
+            state.save()
+            log(force: true, set: .contrast)
         }
     }
 
@@ -116,7 +133,7 @@ final class AutoController {
         let brightness = RoomLight.brightness(level: state.autoLevel, lux: lux)
         let comps = Calendar.current.dateComponents([.hour, .minute], from: now)
         let target = (brightness: brightness,
-                      contrast: RoomLight.contrast(brightness: brightness),
+                      contrast: RoomLight.contrast(brightness: brightness, scale: state.autoContrastScale),
                       nightShift: RoomLight.nightShift(minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0)))
 
         var s = shown ?? target
@@ -125,13 +142,14 @@ final class AutoController {
         s.nightShift = RoomLight.step(s.nightShift, toward: target.nightShift, maxStep: Self.maxStep.nightShift * dt)
         shown = s
         send(state)
-        log(force: false)
+        log(force: false, set: nil)
     }
 
     private func send(_ state: AppState) {
         guard let s = shown else { return }
         let b = Int(s.brightness.rounded()), c = Int(s.contrast.rounded()), n = Int(s.nightShift.rounded())
         if state.autoBrightness != b { state.autoBrightness = b }
+        if state.autoContrast != c { state.autoContrast = c }
         if state.autoNightShift != n { state.autoNightShift = n }
         write("hardwareBrightness", b)
         write("hardwareContrast", c)
@@ -146,15 +164,16 @@ final class AutoController {
 
     // MARK: - Log
 
-    /// One line a minute, and one whenever you set the brightness, so a few days
-    /// of use show what you chose against how bright the room was. Kept next to
-    /// config.json as room-log.csv.
+    /// One line a minute, and one whenever you set the brightness or contrast,
+    /// so a few days of use show what you chose against how bright the room
+    /// was. Kept next to config.json as room-log.csv.
+    private enum Setting { case brightness, contrast }
     private static let logURL: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return support.appendingPathComponent("Sundial/room-log.csv")
     }()
 
-    private func log(force: Bool) {
+    private func log(force: Bool, set: Setting?) {
         guard let state, let s = shown else { return }
         let now = Date()
         guard force || now.timeIntervalSince(lastLogged) >= 60 else { return }
@@ -167,12 +186,13 @@ final class AutoController {
             String(Int(s.brightness.rounded())),
             String(Int(s.contrast.rounded())),
             String(Int(s.nightShift.rounded())),
-            force ? String(format: "%.1f", state.autoLevel) : "",
+            set == .brightness ? String(format: "%.1f", state.autoLevel) : "",
+            set == .contrast ? String(format: "%.3f", state.autoContrastScale) : "",
         ]
         let line = fields.joined(separator: ",") + "\n"
         let fm = FileManager.default
         if !fm.fileExists(atPath: Self.logURL.path) {
-            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set\n".utf8))
+            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set\n".utf8))
         }
         guard let handle = try? FileHandle(forWritingTo: Self.logURL) else { return }
         defer { try? handle.close() }

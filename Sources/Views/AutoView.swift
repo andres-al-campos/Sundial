@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Auto mode's panel: how bright the room is, the one control (brightness,
-/// which you set once and the room scales), and what follows from it.
+/// Auto mode's panel: how bright the room is, the two controls (brightness,
+/// which you set once and the room scales, and contrast, which follows
+/// brightness at the multiple you set), and Night Shift by the clock.
 ///
 /// Every row has a fixed height whatever the state, so the sensor dropping out
 /// never resizes the popup.
@@ -11,8 +12,8 @@ struct AutoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             room
-            LevelSlider()
-            row("Contrast", "\(contrast)% · follows brightness")
+            AutoSlider(label: "Brightness", current: appState.autoBrightness) { appState.onSetBrightness?($0, $1) }
+            AutoSlider(label: "Contrast", current: appState.autoContrast) { appState.onSetContrast?($0, $1) }
             row("Night Shift", "\(appState.autoNightShift)% · warms \(time(RoomLight.warmFrom)) → \(time(RoomLight.warmFull)), off \(time(RoomLight.warmOff))")
         }
         .padding(.horizontal, 14)
@@ -64,10 +65,6 @@ struct AutoView: View {
         lux < 9.95 ? String(format: "%.1f", lux) : "\(Int(lux.rounded()))"
     }
 
-    private var contrast: Int {
-        Int(RoomLight.contrast(brightness: Double(appState.autoBrightness)).rounded())
-    }
-
     private func time(_ minuteOfDay: Int) -> String {
         var c = DateComponents()
         c.hour = (minuteOfDay / 60) % 24
@@ -103,30 +100,34 @@ private struct RoomMeter: View {
     }
 }
 
-// MARK: - Brightness
+// MARK: - Sliders
 
-/// The one control. Dragging moves the monitor at once, and the value is kept:
-/// Sundial stores it as your level for this room, and other rooms scale from
-/// it. Between drags it shows what Auto has the monitor at.
-private struct LevelSlider: View {
-    @EnvironmentObject var appState: AppState
+/// One of Auto's two controls. Dragging moves the monitor at once, and the
+/// value is kept: Sundial stores it as a rule (your level for brightness, a
+/// multiple of brightness for contrast) so other rooms scale from it. Between
+/// drags it shows what Auto has the monitor at.
+private struct AutoSlider: View {
+    let label: String
+    let current: Int
+    /// The value, and true when the drag ends.
+    let onSet: (Int, Bool) -> Void
     @State private var value = 0
     @State private var dragging = false
 
     var body: some View {
         LabeledSlider(
-            label: "Brightness",
+            label: label,
             value: $value,
-            onLiveChange: { appState.onSetBrightness?($0, false) },
+            onLiveChange: { onSet($0, false) },
             onEditingBegan: { dragging = true },
             onCommit: {
                 dragging = false
-                appState.onSetBrightness?(value, true)
+                onSet(value, true)
             }
         )
         .frame(height: 20)
-        .onAppear { value = appState.autoBrightness }
-        .onChange(of: appState.autoBrightness) { _, newValue in
+        .onAppear { value = current }
+        .onChange(of: current) { _, newValue in
             if !dragging { value = newValue }
         }
     }

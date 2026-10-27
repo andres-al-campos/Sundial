@@ -52,6 +52,7 @@ struct SundialApp: App {
         state.onScheduleChanged = { sched.recompute() }
         state.onAutoChanged = { auto.refresh() }
         state.onSetBrightness = { auto.setBrightness($0, done: $1) }
+        state.onSetContrast = { auto.setContrast($0, done: $1) }
     }
 
     var body: some Scene {

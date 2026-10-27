@@ -49,6 +49,10 @@ check("a brightness set at night saves a level that is sane by day", RoomLight.b
 check("contrast at brightness 0 is 0", RoomLight.contrast(brightness: 0) == 0, RoomLight.contrast(brightness: 0))
 check("contrast at 42 is about 59", near(RoomLight.contrast(brightness: 42), 59.4, 0.1), RoomLight.contrast(brightness: 42))
 check("contrast never passes 100", RoomLight.contrast(brightness: 90) == 100, RoomLight.contrast(brightness: 90))
+let k = RoomLight.contrastScale(forContrast: 30, brightness: 20)
+check("a set contrast comes back at the same brightness", near(RoomLight.contrast(brightness: 20, scale: k), 30, 0.001), RoomLight.contrast(brightness: 20, scale: k))
+check("and scales with brightness", near(RoomLight.contrast(brightness: 10, scale: k), 15, 0.001), RoomLight.contrast(brightness: 10, scale: k))
+check("contrast can be set at brightness 0", RoomLight.contrastScale(forContrast: 5, brightness: 0).isFinite, RoomLight.contrastScale(forContrast: 5, brightness: 0))
 
 // Night Shift by the clock, against the presets it was fitted to.
 func ns(_ h: Int, _ m: Int) -> Double { RoomLight.nightShift(minuteOfDay: h * 60 + m) }
@@ -105,4 +109,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is √2 × brightness, Night Shift matches the fitted presets, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, Night Shift matches the fitted presets, it lands in ~20s, and a passing hand is ignored"

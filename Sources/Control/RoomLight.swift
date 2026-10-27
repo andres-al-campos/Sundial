@@ -44,10 +44,20 @@ enum RoomLight {
 
     // MARK: - Contrast
 
-    /// Contrast is √2 × brightness, so brightness 0 is contrast 0 too, the
-    /// monitor's darkest. The presets' own line has the same slope plus 7.8.
-    static func contrast(brightness: Double) -> Double {
-        clamp(2.0.squareRoot() * brightness)
+    /// Contrast is a multiple of brightness, so brightness 0 is contrast 0 too,
+    /// the monitor's darkest. √2 to start: the presets' own line had that slope
+    /// plus 7.8. Dragging Contrast sets the multiple.
+    static let defaultContrastScale = 2.0.squareRoot()
+
+    static func contrast(brightness: Double, scale: Double = defaultContrastScale) -> Double {
+        clamp(scale * brightness)
+    }
+
+    /// The multiple that gives `contrast` at `brightness`: what a drag of the
+    /// Contrast slider saves. At brightness 0 every multiple gives 0, so it's
+    /// worked out as if brightness were 1.
+    static func contrastScale(forContrast contrast: Double, brightness: Double) -> Double {
+        contrast / max(brightness, 1)
     }
 
     // MARK: - Night Shift
