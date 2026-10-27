@@ -234,7 +234,12 @@ struct HoverButton: View {
     var body: some View {
         Button(action: action) {
             if let systemImage {
-                Label(label, systemImage: systemImage)
+                // Not a Label: its gap between icon and text is wide enough to
+                // read as two things in a footer.
+                HStack(spacing: 4) {
+                    Image(systemName: systemImage)
+                    Text(label)
+                }
             } else {
                 Text(label)
             }
