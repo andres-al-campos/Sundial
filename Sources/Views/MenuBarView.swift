@@ -106,7 +106,9 @@ extension MenuBarView {
     private func setMode(_ newMode: AppState.Mode) {
         guard newMode != appState.mode else { return }
         appState.previewingPresetID = nil
-        appState.mode = newMode
+        // The popup resizes to the other mode's panel as Settings does, eased,
+        // not in one jump.
+        withAnimation(.easeInOut(duration: 0.15)) { appState.mode = newMode }
         appState.save()
         // Whichever mode is now on takes the monitor at once, in full.
         if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
