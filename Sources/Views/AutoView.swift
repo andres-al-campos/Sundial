@@ -65,9 +65,12 @@ struct AutoView: View {
         lux < 9.95 ? String(format: "%.1f", lux) : "\(Int(lux.rounded()))"
     }
 
+    /// Night Shift now and the one change coming next, not the whole schedule.
     private var nightShiftText: String {
         let s = SunClock.schedule()
-        return "\(appState.autoNightShift)% · warms \(time(s.from)) → \(time(s.full)), off \(time(s.off))"
+        let now = appState.autoNightShift
+        let next = now == 0 ? "warms at \(time(s.from))" : now < 100 ? "full at \(time(s.full))" : "off at \(time(s.off))"
+        return "\(now)% · \(next)"
     }
 
     private func time(_ minuteOfDay: Int) -> String {
