@@ -87,7 +87,9 @@ preview, add, delete).
 - 2026-10-21 21:31, 1.0.3. Jitter on the first open after launch counts too,
   though nothing is kept yet: the list's first height is computed from its
   rows. A case of walled_garden's "A menu bar popup opens at its final size".
-- 2026-10-27 02:03, 1.1.0. Add Preset sits in the footer on the right and Quit on the left, in every
+- 2026-10-27 02:25, 1.1.0. Add Preset sits in the footer on the right and Quit on the left, in every
   panel, so the list ends on its last card instead of a button that scrolls
-  in under it, and Quit stays in one place across modes. Applies *Never a
+  in under it, and Quit stays in one place across modes. Add Preset is
+  blue, white on hover ("blue and white on hover"), in the link blue: the
+  accent blue was too dark to read on the glass. Applies *Never a
   fight with the controls*.
