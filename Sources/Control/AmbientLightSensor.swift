@@ -12,6 +12,10 @@ import IOKit
 ///
 /// A camera cover can sit over the sensor too: one read a flat 0 lux. Turned
 /// round so it covered only the lens, the same cover read normally.
+///
+/// In the dark the lux level is whole numbers, so it reads 0 from a dim lamp
+/// down to black. Below 10 lux the reading comes from a raw detector count
+/// instead, which tells apart steps a tenth of a lux apart.
 enum AmbientLightSensor {
     @_silgen_name("IOHIDEventSystemClientCreate")
     private static func IOHIDEventSystemClientCreate(_ allocator: CFAllocator?) -> Unmanaged<AnyObject>?
@@ -24,9 +28,19 @@ enum AmbientLightSensor {
     @_silgen_name("IOHIDEventGetFloatValue")
     private static func IOHIDEventGetFloatValue(_ event: AnyObject, _ field: Int32) -> Double
 
-    /// kIOHIDEventTypeAmbientLightSensor, and its level field (type << 16).
+    /// kIOHIDEventTypeAmbientLightSensor, its level field (type << 16) and the
+    /// fourth field after it, a raw detector count.
     private static let eventType: Int64 = 12
     private static let levelField: Int32 = 12 << 16
+    private static let rawField: Int32 = 12 << 16 | 4
+
+    /// Below this the level is too coarse to use: it counts whole lux, so a
+    /// dark room reads 0, 1 or 2. The raw count resolves about a tenth of a
+    /// lux there.
+    private static let fineBelowLux = 10.0
+    /// Raw counts per lux, measured 2026-10-26 against an LED's six settings:
+    /// 22 at 2 lux, 70 at 7, 112 at 12. Below about 0.1 lux both read 0.
+    private static let countsPerLux = 10.0
 
     /// Apple vendor usage page, ambient light sensor usage. The client is kept
     /// with the service: the service doesn't keep its client alive, and reading
@@ -52,7 +66,9 @@ enum AmbientLightSensor {
         guard !lidClosed() else { return nil }
         guard let sensor,
               let event = IOHIDServiceClientCopyEvent(sensor.service, eventType, 0, 0)?.takeRetainedValue() else { return nil }
-        return IOHIDEventGetFloatValue(event, levelField)
+        let level = IOHIDEventGetFloatValue(event, levelField)
+        guard level < fineBelowLux else { return level }
+        return IOHIDEventGetFloatValue(event, rawField) / countsPerLux
     }
 
     /// A closed lid covers the sensor, and its 0 lux would read as a dark room.

@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 22:39, at 1.0.3.
+Updated 2026-10-26 23:21, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -11,8 +11,8 @@ presets; Schedule (the presets) is the other.
 - **Brightness is your level times the room.** You set it once with the
   Brightness slider and it stays: Sundial saves it as your level (the
   brightness at 100 lux), and the room scales it by the fourth root of its
-  light: sixteen times the light gives twice the brightness. Readings under 1
-  lux count as 1. The default level, 45, fits the brightnesses set on the
+  light: sixteen times the light gives twice the brightness. Readings under
+  0.1 lux count as 0.1. The default level, 45, fits the brightnesses set on the
   evening of 2026-10-26 (17-22 at 2 lux, 25-30 at dusk, 40 at 84 lux). A
   level of 0 is the monitor's darkest in any room.
 - **Contrast follows brightness**: √2 × brightness, so brightness 0 is
@@ -70,9 +70,11 @@ row.
 - On 2026-10-12 the sensor gave no reading at all while the laptop's own
   screen was at 0 nits. If that holds, a fully dark laptop screen freezes Auto
   on the last room it saw.
-- At night the sensor reads 0-3 lux, lit by the monitor alone (2026-10-26),
-  so the bottom of the curve is noise; that's why readings under 1 count as
-  1. A lamp-lit room may read as bright as a dim afternoon; Night Shift is on
+- The sensor's lux counts whole numbers, so a dark room reads 0 from a dim
+  lamp down to black. Below 10 lux Sundial reads a raw detector count
+  instead (about 10 per lux), which told apart an LED's settings at 0.15,
+  2.2, 7 and 11 lux where lux read 0, 0, 2 and 7 (2026-10-26). Below about
+  0.1 lux both read 0, so the two lowest settings look the same. A lamp-lit room may read as bright as a dim afternoon; Night Shift is on
   the clock, brightness isn't.
 - The monitor's own light reaches the sensor. A brighter monitor reads as a
   brighter room; small at the levels seen so far.

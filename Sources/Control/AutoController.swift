@@ -162,8 +162,8 @@ final class AutoController {
         let stamp = ISO8601DateFormatter.string(from: now, timeZone: .current, formatOptions: [.withInternetDateTime])
         let fields = [
             stamp,
-            lastRawLux.map { String(format: "%.0f", $0) } ?? "",
-            state.roomLux.map { String(format: "%.0f", $0) } ?? "",
+            lastRawLux.map { String(format: "%.1f", $0) } ?? "",
+            state.roomLux.map { String(format: "%.1f", $0) } ?? "",
             String(Int(s.brightness.rounded())),
             String(Int(s.contrast.rounded())),
             String(Int(s.nightShift.rounded())),

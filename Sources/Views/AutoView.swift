@@ -29,7 +29,7 @@ struct AutoView: View {
                     .opacity(appState.sensorReading ? 1 : 0.4)
                 // Same width as the sliders' values below, so the meter and the
                 // sliders end at one line.
-                Text(appState.sensorReading ? "\(Int(lux.rounded()))" : "—")
+                Text(appState.sensorReading ? Self.luxText(lux) : "—")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .frame(width: 32, alignment: .trailing)
@@ -57,6 +57,11 @@ struct AutoView: View {
             Spacer(minLength: 0)
         }
         .frame(height: 20)
+    }
+
+    /// Tenths below 10 lux, where the sensor tells them apart; whole lux above.
+    static func luxText(_ lux: Double) -> String {
+        lux < 9.95 ? String(format: "%.1f", lux) : "\(Int(lux.rounded()))"
     }
 
     private var contrast: Int {

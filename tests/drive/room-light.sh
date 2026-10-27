@@ -30,7 +30,8 @@ func b(_ lux: Double) -> Double { RoomLight.brightness(level: lvl, lux: lux) }
 check("the default level gives the 17-22 set at night (2 lux)", b(2) >= 15 && b(2) <= 22, b(2))
 check("and the 25-30 set at dusk (19-32 lux)", b(19) >= 25 && b(32) <= 36, (b(19), b(32)))
 check("and the 40 set at 84 lux", near(b(84), 40, 5), b(84))
-check("a reading of 0 at night counts as 1 lux, not black", b(0) == b(1) && b(0) > 10, b(0))
+check("a reading of 0 counts as 0.1 lux, the darkest measured, not black", b(0) == b(0.1) && b(0) > 5, b(0))
+check("the LED's dark settings (0.15, 2.2, 7 lux) give three different brightnesses", b(0.15) + 3 < b(2.2) && b(2.2) + 3 < b(7), (b(0.15), b(2.2), b(7)))
 check("16x the light gives 2x the brightness",
       near(RoomLight.brightness(level: 10, lux: 1600) / RoomLight.brightness(level: 10, lux: 100), 2, 0.01), "")
 check("the level is the brightness at 100 lux", near(RoomLight.brightness(level: 30, lux: 100), 30, 0.001), "")

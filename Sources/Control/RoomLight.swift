@@ -18,9 +18,9 @@ enum RoomLight {
     /// brightnesses set on the evening of 2026-10-26, from 60 at 133 lux to
     /// 17-22 at 2 lux; a square root dimmed the dark room far below them.
     static let exponent = 0.25
-    /// Readings below this count as this: at night the sensor reads 0-3 lux,
-    /// and the difference is noise, not the room.
-    static let floorLux = 1.0
+    /// Readings below this count as this: under about 0.1 lux the sensor reads
+    /// 0, so lower isn't darker, only unmeasured.
+    static let floorLux = 0.1
 
     /// The level those seven settings fit: 17 at 2 lux, 30 at 30, 43 at 84.
     static let defaultLevel = 45.0
@@ -72,11 +72,12 @@ enum RoomLight {
 
     // MARK: - The room
 
-    /// Where the room sits on the popup's meter, 0 to 1, from 5 lux to 500 on a
-    /// log scale. For showing only; brightness uses `factor`.
+    /// Where the room sits on the popup's meter, 0 to 1, from 0.1 lux to 1000
+    /// on a log scale, so the dark steps the sensor can tell apart show. For
+    /// showing only; brightness uses `factor`.
     static func meterPosition(lux: Double) -> Double {
-        let lo = log(6.0), hi = log(501.0)
-        return min(max((log(max(lux, 0) + 1) - lo) / (hi - lo), 0), 1)
+        let lo = log10(0.1), hi = log10(1000.0)
+        return min(max((log10(max(lux, 0.1)) - lo) / (hi - lo), 0), 1)
     }
 
     /// Averages the sensor so the monitor follows the room, not the reading.
