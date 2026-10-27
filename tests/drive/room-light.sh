@@ -3,8 +3,8 @@
 #
 # Compiles the app's RoomLight with a harness and feeds it lux readings and
 # times, so it runs without a sensor or a monitor. The lux cases use readings
-# logged on 2026-10-26 (lit room ~550, blinds shut ~35, a hand passing the notch
-# spiking to 3000+); the Night Shift and contrast cases are the presets the
+# logged on 2026-10-26 (lit room ~550, blinds shut ~35, night 0-3, a hand passing
+# the notch spiking to 3000+) and the brightnesses set that evening; the Night Shift and contrast cases are the presets the
 # curves were fitted to. It can't see whether the sensor reads, or how the
 # change feels on the monitor; dev/features/auto.md says how to check those.
 
@@ -23,26 +23,26 @@ func check(_ what: String, _ ok: Bool, _ got: Any) {
 }
 func near(_ a: Double, _ b: Double, _ tol: Double) -> Bool { abs(a - b) <= tol }
 
-// Brightness: your level times the room.
+// Brightness: your level times the room, fitted to the brightnesses set on
+// 2026-10-26's evening.
 let lvl = RoomLight.defaultLevel
-check("the default level gives the Morning preset (42) in the lit room (550 lux)",
-      near(RoomLight.brightness(level: lvl, lux: 550), 42, 1.5), RoomLight.brightness(level: lvl, lux: 550))
-check("any level reaches the monitor's darkest (0) in a dark room",
-      RoomLight.brightness(level: 100, lux: RoomLight.darkLux) == 0, RoomLight.brightness(level: 100, lux: RoomLight.darkLux))
-check("and is just above it a little lighter",
-      RoomLight.brightness(level: lvl, lux: 5) > 0 && RoomLight.brightness(level: lvl, lux: 5) < 3, RoomLight.brightness(level: lvl, lux: 5))
-check("the level is the brightness at 100 lux",
-      near(RoomLight.brightness(level: 30, lux: 100), 30, 0.001), RoomLight.brightness(level: 30, lux: 100))
-check("more light, more brightness",
-      RoomLight.brightness(level: 10, lux: 35) < RoomLight.brightness(level: 10, lux: 100)
-        && RoomLight.brightness(level: 10, lux: 100) < RoomLight.brightness(level: 10, lux: 550), "")
+func b(_ lux: Double) -> Double { RoomLight.brightness(level: lvl, lux: lux) }
+check("the default level gives the 17-22 set at night (2 lux)", b(2) >= 15 && b(2) <= 22, b(2))
+check("and the 25-30 set at dusk (19-32 lux)", b(19) >= 25 && b(32) <= 36, (b(19), b(32)))
+check("and the 40 set at 84 lux", near(b(84), 40, 5), b(84))
+check("a reading of 0 at night counts as 1 lux, not black", b(0) == b(1) && b(0) > 10, b(0))
+check("16x the light gives 2x the brightness",
+      near(RoomLight.brightness(level: 10, lux: 1600) / RoomLight.brightness(level: 10, lux: 100), 2, 0.01), "")
+check("the level is the brightness at 100 lux", near(RoomLight.brightness(level: 30, lux: 100), 30, 0.001), "")
+check("level 0 is the monitor's darkest in any room",
+      RoomLight.brightness(level: 0, lux: 2000) == 0 && RoomLight.contrast(brightness: 0) == 0, "")
 check("brightness never passes 100", RoomLight.brightness(level: 80, lux: 10_000) == 100, RoomLight.brightness(level: 80, lux: 10_000))
 // Setting a brightness keeps it: the level saved gives it back in the same room,
 // and scales it in another.
 let set = RoomLight.level(forBrightness: 8, lux: 240)
 check("a set brightness comes back in the same room", near(RoomLight.brightness(level: set, lux: 240), 8, 0.001), RoomLight.brightness(level: set, lux: 240))
 check("and is lower with the blinds shut", RoomLight.brightness(level: set, lux: 35) < 8, RoomLight.brightness(level: set, lux: 35))
-check("a level can be set in a pitch-dark room", RoomLight.level(forBrightness: 5, lux: 0).isFinite, RoomLight.level(forBrightness: 5, lux: 0))
+check("a brightness set at night saves a level that is sane by day", RoomLight.brightness(level: RoomLight.level(forBrightness: 17, lux: 2), lux: 550) < 80, RoomLight.brightness(level: RoomLight.level(forBrightness: 17, lux: 2), lux: 550))
 
 // Contrast is √2 × brightness, so both reach 0 together.
 check("contrast at brightness 0 is 0", RoomLight.contrast(brightness: 0) == 0, RoomLight.contrast(brightness: 0))
@@ -104,4 +104,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room down to 0 in the dark, a set level keeps, contrast is √2 × brightness, Night Shift matches the fitted presets, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is √2 × brightness, Night Shift matches the fitted presets, it lands in ~20s, and a passing hand is ignored"

@@ -4,7 +4,7 @@ import Foundation
 /// UI so they can be checked with plain numbers (`tests/drive/room-light.sh`).
 ///
 /// One number is yours, the level: how bright you like the screen. The room's
-/// light multiplies it, down to the monitor's darkest at night; contrast
+/// light multiplies it; contrast
 /// follows brightness, and Night Shift follows the clock. None of it needs
 /// presets.
 enum RoomLight {
@@ -13,38 +13,33 @@ enum RoomLight {
     /// The room's light that the level is stated at: at 100 lux, brightness is
     /// the level itself.
     static let referenceLux = 100.0
-    /// At or below this the monitor goes to its darkest, brightness 0 and
-    /// contrast 0, as Schedule's darkest presets did. A guess, before any night
-    /// readings: a room lit only by the screen should read about here.
-    static let darkLux = 2.0
-    /// How strongly the room moves brightness. 0.5 is a square root: sixteen
-    /// times the light gives about four times the brightness, as eyes compress
-    /// light.
-    static let exponent = 0.5
+    /// How strongly the room moves brightness. 0.25 is a fourth root: sixteen
+    /// times the light gives twice the brightness. Fitted to the seven
+    /// brightnesses set on the evening of 2026-10-26, from 60 at 133 lux to
+    /// 17-22 at 2 lux; a square root dimmed the dark room far below them.
+    static let exponent = 0.25
+    /// Readings below this count as this: at night the sensor reads 0-3 lux,
+    /// and the difference is noise, not the room.
+    static let floorLux = 1.0
 
-    /// Level 16.4 gives the old Morning preset's 42 in the lit room (~550 lux,
-    /// measured 2026-10-26).
-    static let defaultLevel = 16.4
+    /// The level those seven settings fit: 17 at 2 lux, 30 at 30, 43 at 84.
+    static let defaultLevel = 45.0
 
-    /// The room's multiplier on your level: 0 at `darkLux`, 1 at 100 lux.
-    /// The square root, shifted so it reaches 0 at `darkLux` and scaled so it
-    /// still reads 1 at 100 lux.
+    /// The room's multiplier on your level: 1 at 100 lux.
     static func factor(lux: Double) -> Double {
-        let dark = pow(darkLux / referenceLux, exponent)
-        let raw = pow(max(lux, 0) / referenceLux, exponent)
-        return max(0, (raw - dark) / (1 - dark))
+        pow(max(lux, floorLux) / referenceLux, exponent)
     }
 
+    /// The monitor's darkest, brightness 0 and contrast 0, is a level of 0, in
+    /// any room.
     static func brightness(level: Double, lux: Double) -> Double {
         clamp(level * factor(lux: lux))
     }
 
     /// The level that gives `brightness` in this room: what a drag of the
-    /// Brightness slider saves, so the choice carries to every other room. At
-    /// `darkLux` every level gives 0, so the level is worked out as if the room
-    /// were just above it.
+    /// Brightness slider saves, so the choice carries to every other room.
     static func level(forBrightness brightness: Double, lux: Double) -> Double {
-        brightness / max(factor(lux: lux), factor(lux: darkLux * 1.5))
+        brightness / factor(lux: lux)
     }
 
     // MARK: - Contrast

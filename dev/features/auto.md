@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 18:09, at 1.0.3.
+Updated 2026-10-26 22:39, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -10,12 +10,13 @@ presets; Schedule (the presets) is the other.
 
 - **Brightness is your level times the room.** You set it once with the
   Brightness slider and it stays: Sundial saves it as your level (the
-  brightness at 100 lux), and the room scales it by the square root of its
-  light, shifted so it reaches 0 at 2 lux (a guess at a room lit only by the
-  screen). The default level, 16.4, gives the old Morning preset's 42 in the
-  lit room (~550 lux).
-- **Contrast follows brightness**: √2 × brightness, so at night both reach
-  0, the monitor's darkest. The presets' own line had the same slope plus 7.8
+  brightness at 100 lux), and the room scales it by the fourth root of its
+  light: sixteen times the light gives twice the brightness. Readings under 1
+  lux count as 1. The default level, 45, fits the brightnesses set on the
+  evening of 2026-10-26 (17-22 at 2 lux, 25-30 at dusk, 40 at 84 lux). A
+  level of 0 is the monitor's darkest in any room.
+- **Contrast follows brightness**: √2 × brightness, so brightness 0 is
+  contrast 0 too, the monitor's darkest. The presets' own line had the same slope plus 7.8
   (R² 0.82, against 0.71 for √2 ×).
 - **Night Shift follows the clock**, fitted to the presets' evening values
   (R² 0.98): off until 5:13 PM, rising ~14% an hour to full at 12:11 AM, full
@@ -41,8 +42,9 @@ the control under the header.
 Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 
 `./build.sh drive room-light` (~5s): compiles the app's room-light rules with
-a harness. It checks that brightness is the level times the room's square
-root (Morning's 42 at 550 lux, 0 at 2 lux, never past 100), that a set
+a harness. It checks that brightness is the level times the room's fourth
+root (the evening's settings at 2, 19-32 and 84 lux, never past 100, level 0
+darkest), that a set
 brightness comes back in the same room and scales in another, that contrast
 is √2 × brightness, that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
@@ -68,8 +70,10 @@ row.
 - On 2026-10-12 the sensor gave no reading at all while the laptop's own
   screen was at 0 nits. If that holds, a fully dark laptop screen freezes Auto
   on the last room it saw.
-- Night readings aren't known yet. A lamp-lit room at night may read as bright
-  as a dim afternoon; Night Shift is on the clock, brightness isn't.
+- At night the sensor reads 0-3 lux, lit by the monitor alone (2026-10-26),
+  so the bottom of the curve is noise; that's why readings under 1 count as
+  1. A lamp-lit room may read as bright as a dim afternoon; Night Shift is on
+  the clock, brightness isn't.
 - The monitor's own light reaches the sensor. A brighter monitor reads as a
   brighter room; small at the levels seen so far.
 - Auto writes only when a value changes, so a change made with the monitor's
@@ -107,3 +111,9 @@ row.
   teleport") and the other half glows faintly on hover. The header's right side is
   bare in both modes: the control says the mode, and Schedule opens on the
   preset in force.
+- 2026-10-26 22:39, 1.0.3. Brightness follows the fourth root of the room's light, fitted to seven
+  brightnesses set across one evening. The square root, shifted to reach 0
+  at 2 lux, was a guess before any night readings; the room read 2 lux at
+  night, where it gave 0 and the brightness set was 17-22, and every drag
+  there saved a level that would have meant 100 by day. Full darkness is a
+  level of 0 instead. Applies *Just right for the room*.
