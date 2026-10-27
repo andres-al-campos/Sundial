@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-27 01:55, at 1.1.0.
+Updated 2026-10-27 02:15, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -55,9 +55,11 @@ preview, add, delete).
 - The note takes the slider's place instead of adding a line, so the card
   keeps its height whether HDR is on or off.
 - The list shows one expanded card, its line and one collapsed card before it
-  scrolls. The expanded card's height is measured each open and the cap
-  follows it; the 195 it starts from was a guess that had drifted, and left a
-  strip of the Add button peeking under the last card (fixed 2026-10-27).
+  scrolls. The expanded card's height is measured and the cap follows
+  it. The old fixed 195 had drifted from the real 189 and left a strip of the
+  Add button peeking under the last card (fixed 2026-10-27). Each expand
+  first reports 195, then 189 about 40ms later, so the cap takes a height
+  only after it has held for 0.1s.
 - The note is not a system tooltip: one was tried first and never appeared in
   the menu. The "Active" badge still uses one and may have the same problem.
 - The lock follows an HDR toggle after a short delay.

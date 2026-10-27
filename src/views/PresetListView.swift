@@ -7,10 +7,11 @@ private enum Row {
     /// Collapsed card: pinned with a frame on the header row.
     static let collapsed: CGFloat = 56
     /// Expanded card: collapsed header + inline editor (time/toggle row, three
-    /// sliders, actions row) + its 12pt bottom padding. Only the first open's
-    /// start: the rendered card is measured (`ExpandedHeightKey`) and that wins,
-    /// so an editor change can't leave a gap or cut a card.
-    static let expanded: CGFloat = 195
+    /// sliders, actions row) + its 12pt bottom padding, as measured on
+    /// 2026-10-27. Only the first open's start: the rendered card is measured
+    /// (`ExpandedHeightKey`) and that wins, so an editor change can't leave a
+    /// gap or cut a card.
+    static let expanded: CGFloat = 189
     /// "No presets yet" block. Estimated.
     static let emptyState: CGFloat = 70
     /// One expanded card, its divider and one collapsed card.
@@ -33,6 +34,7 @@ struct PresetListView: View {
     /// popup opens at the size it closed at.
     @MainActor private static var lastExpanded = Row.expanded
     @State private var expandedHeight = PresetListView.lastExpanded
+    @State private var settleTask: Task<Void, Never>?
     /// The list's height before its first measurement, worked out from the rows.
     private let initialHeight: CGFloat
 
@@ -96,11 +98,18 @@ struct PresetListView: View {
             }
             .measureContentHeight()
         }
+        // A card's first layout reports 195, its settled one 189 ~40ms later
+        // (probably its AppKit controls sizing themselves), so the cap takes a height
+        // only once it has held for 0.1s; following each would bounce the popup.
         .onPreferenceChange(ExpandedHeightKey.self) { height in
             guard height > Row.collapsed else { return }
-            expandedHeight = height
-            Self.lastExpanded = height
-            NSLog("[Sundial] expanded card height %.1f", height)
+            settleTask?.cancel()
+            settleTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled, height != expandedHeight else { return }
+                expandedHeight = height
+                Self.lastExpanded = height
+            }
         }
         // Concrete, self-sizing height — a maxHeight-only frame collapses to 0 inside
         // MenuBarExtra(.window) on macOS 26. Cap = 1 expanded card + 1 collapsed card
@@ -608,7 +617,7 @@ struct LabeledSlider: View {
     /// Why the slider can't be moved right now, or nil when it can. A lock
     /// sits beside the label and the note is shown where the slider would be:
     /// a slider that can't move has nothing to show. It takes the slider's
-    /// place because the expanded card's height is pinned (see `Row`), and it
+    /// place so the card keeps its height either way (see `Row`), and it
     /// isn't a `.help` tooltip because those don't appear in this menu. Keep
     /// it short: the slot is ~170pt.
     var lockedNote: String?
