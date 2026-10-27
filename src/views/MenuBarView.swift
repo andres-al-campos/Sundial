@@ -68,7 +68,7 @@ struct MenuBarView: View {
                 }
                 Spacer()
                 if appState.isSetUp && !showSettings && appState.mode == .schedule {
-                    HoverButton("Add Preset", systemImage: "plus", action: addPreset)
+                    HoverButton("Add Preset", systemImage: "plus", rest: HoverButton.createBlue, action: addPreset)
                 }
             }
             .font(.subheadline)
@@ -211,16 +211,23 @@ struct HeaderButton: View {
 
 // MARK: - Hover Button
 
-/// A footer action: secondary text that brightens under the pointer.
+/// A footer action: dimmed text that turns primary under the pointer.
 struct HoverButton: View {
     let label: String
     let systemImage: String?
+    /// The colour at rest: secondary, or blue for an action that creates
+    /// something. The link blue, not the accent: the accent is too dark to
+    /// read on the popup's glass.
+    let rest: Color
     let action: () -> Void
     @State private var isHovered = false
 
-    init(_ label: String, systemImage: String? = nil, action: @escaping () -> Void) {
+    static let createBlue = Color(nsColor: .linkColor)
+
+    init(_ label: String, systemImage: String? = nil, rest: Color = .secondary, action: @escaping () -> Void) {
         self.label = label
         self.systemImage = systemImage
+        self.rest = rest
         self.action = action
     }
 
@@ -233,7 +240,7 @@ struct HoverButton: View {
             }
         }
         .buttonStyle(.plain)
-        .foregroundStyle(isHovered ? .primary : .secondary)
+        .foregroundStyle(isHovered ? Color.primary : rest)
         .onHover { isHovered = $0 }
     }
 }
