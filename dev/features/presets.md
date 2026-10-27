@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-26 18:09, at 1.0.3.
+Updated 2026-10-27 01:55, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -13,7 +13,8 @@ passed. Auto mode doesn't use them (see auto.md).
 - The active preset's sliders move the monitor as you drag.
 - Dragging a slider on another preset previews that preset on the monitor; the
   Preview button does the same. Collapsing the row or closing the menu ends it.
-- Add and delete presets.
+- Add a preset from the footer (it opens expanded, scrolled into view), and
+  delete one from its card.
 - **Contrast locks in HDR.** While the configured display is in HDR, the
   Contrast slider is replaced by the text "Locked by monitor in HDR", with a
   lock beside the label. The value stays visible. The schedule still sends contrast: the
@@ -51,9 +52,12 @@ preview, add, delete).
 - The lock applies to any display in HDR, on the assumption that monitors
   generally lock contrast there. Only the M27Q was observed.
 - Brightness is not locked. Whether the M27Q honours it in HDR is not known.
-- The note takes the slider's place instead of adding a line, because the
-  expanded card's height is pinned and a new line would push the card below
-  it out of view.
+- The note takes the slider's place instead of adding a line, so the card
+  keeps its height whether HDR is on or off.
+- The list shows one expanded card, its line and one collapsed card before it
+  scrolls. The expanded card's height is measured each open and the cap
+  follows it; the 195 it starts from was a guess that had drifted, and left a
+  strip of the Add button peeking under the last card (fixed 2026-10-27).
 - The note is not a system tooltip: one was tried first and never appeared in
   the menu. The "Active" badge still uses one and may have the same problem.
 - The lock follows an HDR toggle after a short delay.
@@ -81,3 +85,7 @@ preview, add, delete).
 - 2026-10-21 21:31, 1.0.3. Jitter on the first open after launch counts too,
   though nothing is kept yet: the list's first height is computed from its
   rows. A case of walled_garden's "A menu bar popup opens at its final size".
+- 2026-10-27 01:55, 1.1.0. Add Preset sits in the footer on the left and Quit on the right, in every
+  panel, so the list ends on its last card instead of a button that scrolls
+  in under it, and Quit stays in one place across modes. Applies *Never a
+  fight with the controls*.

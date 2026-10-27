@@ -60,11 +60,23 @@ struct MenuBarView: View {
 
             Divider()
 
-            HoverButton("Quit Sundial") {
-                NSApplication.shared.terminate(nil)
+            // Quit holds the right in every panel; Add Preset takes the left in
+            // Schedule, so the list ends on its last card.
+            HStack {
+                if appState.isSetUp && !showSettings && appState.mode == .schedule {
+                    Button(action: addPreset) {
+                        Label("Add Preset", systemImage: "plus")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.accentColor)
+                }
+                Spacer()
+                HoverButton("Quit Sundial") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .foregroundStyle(.secondary)
             }
             .font(.subheadline)
-            .foregroundStyle(.secondary)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
         }
@@ -101,6 +113,20 @@ extension MenuBarView {
         ModeSegments(mode: appState.mode, onPick: setMode)
             .padding(.horizontal, 14)
             .padding(.bottom, 8)
+    }
+
+    /// A new preset at noon, opened for editing; the list scrolls to it.
+    private func addPreset() {
+        let newPreset = Preset(
+            name: "New Preset",
+            hardwareBrightness: 70,
+            hardwareContrast: 75,
+            nightShift: 0
+        )
+        appState.addPreset(newPreset)
+        appState.addScheduleEntry(ScheduleEntry(presetID: newPreset.id, hour: 12, minute: 0))
+        appState.onScheduleChanged?()
+        withAnimation(.easeInOut(duration: 0.15)) { expandedPresetID = newPreset.id }
     }
 
     private func setMode(_ newMode: AppState.Mode) {
