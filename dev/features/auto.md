@@ -122,7 +122,7 @@ row.
   between them; the selection slides between the halves ("nothing should
   teleport") and the other half glows faintly on hover. The header's right side is
   bare in both modes: the control says the mode, and Schedule opens on the
-  preset in force.
+  preset in force. Applies *Never a fight with the controls*.
 - 2026-10-26 22:39, 1.0.3. Brightness follows the fourth root of the room's light, fitted to seven
   brightnesses set across one evening. The square root, shifted to reach 0
   at 2 lux, was a guess before any night readings; the room read 2 lux at
