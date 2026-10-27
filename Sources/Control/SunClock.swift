@@ -9,8 +9,9 @@ enum SunClock {
     private static var cached: (key: String, schedule: RoomLight.WarmSchedule)?
 
     static func schedule(on date: Date = Date()) -> RoomLight.WarmSchedule {
-        let zone = TimeZone.current
-        let cal = Calendar.current
+        // Autoupdating, so a time zone change while traveling is seen at once.
+        let zone = TimeZone.autoupdatingCurrent
+        let cal = Calendar.autoupdatingCurrent
         let d = cal.dateComponents(in: zone, from: date)
         let key = "\(zone.identifier) \(d.year ?? 0)-\(d.month ?? 0)-\(d.day ?? 0)"
         if let cached, cached.key == key { return cached.schedule }

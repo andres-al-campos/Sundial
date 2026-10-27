@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 23:50, at 1.0.3.
+Updated 2026-10-27 00:41, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -27,7 +27,9 @@ presets; Schedule (the presets) is the other.
   point macOS's time zone table gives your time zone (Chicago for
   America/Chicago), so no location permission; each degree of longitude from
   that point moves them about 4 minutes. A zone with no point (UTC) keeps the
-  fixed 5:13 PM and 6:30 AM.
+  fixed 5:13 PM and 6:30 AM. When the Mac changes time zone (traveling, with
+  "Set time zone automatically" on), the clock and the sun move to the new
+  zone at once.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
   rest, so a big change (blinds, a cloud) lands in about 20 seconds. The

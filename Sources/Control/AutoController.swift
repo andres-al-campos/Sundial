@@ -44,6 +44,13 @@ final class AutoController {
                 }
             }
         }
+        // Traveling: the clock and the sun move to the new zone at once, not at
+        // the next launch. Resetting the system zone updates every cached
+        // `TimeZone.current` and `Calendar.current`, the schedule's included.
+        NotificationCenter.default.addObserver(forName: .NSSystemTimeZoneDidChange, object: nil, queue: .main) { [weak self] _ in
+            NSTimeZone.resetSystemTimeZone()
+            Task { @MainActor in self?.forceApply() }
+        }
         tick()
     }
 
@@ -131,7 +138,7 @@ final class AutoController {
 
         let lux = state.roomLux ?? RoomLight.referenceLux
         let brightness = RoomLight.brightness(level: state.autoLevel, lux: lux)
-        let comps = Calendar.current.dateComponents([.hour, .minute], from: now)
+        let comps = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: now)
         let target = (brightness: brightness,
                       contrast: RoomLight.contrast(brightness: brightness, scale: state.autoContrastScale),
                       nightShift: RoomLight.nightShift(minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0),
