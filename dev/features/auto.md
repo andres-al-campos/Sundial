@@ -96,11 +96,11 @@ row.
 - 2026-10-26 17:25, 1.0.3. Easing is quick, about 20 seconds for a big change: "big changes are
   supposed to be salient, and most will not be." It replaced a minute or more.
   Applies *Just right for the room*.
-- 2026-10-26 17:28, 1.0.3. The scaling can reach the monitor's darkest, brightness 0 and contrast 0,
+- 2026-10-26 22:40, 1.0.3. The scaling can reach the monitor's darkest, brightness 0 and contrast 0,
   as Schedule's darkest presets did: "I do want to be able to have a scaling
   that can still give me maximum darkness." So contrast is √2 × brightness
   with no offset, though the presets' line had one ("the preset is 1
-  datapoint"), and brightness reaches 0 at 2 lux. Applies *Just right for the
+  datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
 - 2026-10-26 18:36, 1.0.3. Auto | Schedule is a full-width segmented control under the header. A
   switch was wrong because it changed the whole popup ("what toggle does
