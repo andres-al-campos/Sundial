@@ -6,7 +6,8 @@
 #                              # (set INSTALL_DIR in build.local.env to install elsewhere)
 #   ./build.sh --no-install    # build only, stage into ./build/Sundial.app
 #   ./build.sh -n              # short form of --no-install
-#   ./build.sh check           # run the laws in tests/ and every drive (no build)
+#   ./build.sh check           # run the laws in tests/ (no build)
+#   ./build.sh check --drives  # the laws, then every drive in tests/drive/
 #   ./build.sh drive [name]    # run every feature check in tests/drive/, or one
 #   ./build.sh -v              # verbose xcodebuild output
 #   ./build.sh -n -v           # both
@@ -21,6 +22,7 @@ INSTALL=1
 VERBOSE=0
 MODE=build   # build | check | drive
 DRIVE_NAME=""
+DRIVES=0   # check runs the drives only with --drives
 
 for arg in "$@"; do
     # The word after `drive` is the feature to drive, not a flag.
@@ -31,10 +33,11 @@ for arg in "$@"; do
     case "$arg" in
         check)           MODE=check ;;
         drive)           MODE=drive ;;
+        --drives)        DRIVES=1 ;;
         -n|--no-install) INSTALL=0 ;;
         -v|--verbose)    VERBOSE=1 ;;
         -h|--help)
-            sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         *)
@@ -80,7 +83,11 @@ if [ "$MODE" = "check" ]; then
     for law in tests/*.sh; do
         "$law" || failed=1
     done
-    drive "" || failed=1
+    if [ "$DRIVES" = 1 ]; then
+        drive "" || failed=1
+    else
+        echo "The drives didn't run: ./build.sh check --drives runs them."
+    fi
     exit $failed
 fi
 
