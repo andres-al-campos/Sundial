@@ -8,8 +8,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    MARKETING_VERSION: "1.0.3"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "1.1.0"
+    CURRENT_PROJECT_VERSION: "5"
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
@@ -20,11 +20,11 @@ targets:
     platform: macOS
     deploymentTarget: "14.0"
     sources:
-      - path: Sources
+      - path: src
         excludes:
           - "Info.plist"
     info:
-      path: Sources/Info.plist
+      path: src/Info.plist
       properties:
         CFBundleDisplayName: Sundial
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
@@ -37,6 +37,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.aurende.sundial
         GENERATE_INFOPLIST_FILE: NO
-        INFOPLIST_FILE: Sources/Info.plist
+        INFOPLIST_FILE: src/Info.plist
         ENABLE_APP_SANDBOX: NO
         ENABLE_USER_SCRIPT_SANDBOXING: NO

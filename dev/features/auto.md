@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 18:09, at 1.0.3.
+Updated 2026-10-27 01:24, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -10,16 +10,26 @@ presets; Schedule (the presets) is the other.
 
 - **Brightness is your level times the room.** You set it once with the
   Brightness slider and it stays: Sundial saves it as your level (the
-  brightness at 100 lux), and the room scales it by the square root of its
-  light, shifted so it reaches 0 at 2 lux (a guess at a room lit only by the
-  screen). The default level, 16.4, gives the old Morning preset's 42 in the
-  lit room (~550 lux).
-- **Contrast follows brightness**: √2 × brightness, so at night both reach
-  0, the monitor's darkest. The presets' own line had the same slope plus 7.8
-  (R² 0.82, against 0.71 for √2 ×).
-- **Night Shift follows the clock**, fitted to the presets' evening values
-  (R² 0.98): off until 5:13 PM, rising ~14% an hour to full at 12:11 AM, full
-  until 6:30 AM, then off.
+  brightness at 100 lux), and the room scales it by the fourth root of its
+  light: sixteen times the light gives twice the brightness. Readings under
+  0.1 lux count as 0.1. The default level, 45, fits the brightnesses set on the
+  evening of 2026-10-26 (17-22 at 2 lux, 25-30 at dusk, 40 at 84 lux). A
+  level of 0 is the monitor's darkest in any room.
+- **Contrast follows brightness** at a multiple you set by dragging the
+  Contrast slider: it starts at √2 × brightness, and a drag keeps the
+  multiple that gives what you chose, so brightness 0 is still contrast 0, the
+  monitor's darkest. The presets' own line had the slope √2 plus 7.8 (R² 0.82,
+  against 0.71 for √2 ×).
+- **Night Shift follows the sun**: it starts warming 40 minutes before
+  sunset, rises evenly to full at midnight, and turns off 46 minutes before
+  sunrise. Fitted to the presets' evening values (R² 0.98) on 2026-10-26,
+  when that was 5:13 PM to 6:30 AM. Sunrise and sunset are computed for the
+  point macOS's time zone table gives your time zone (Chicago for
+  America/Chicago), so no location permission; each degree of longitude from
+  that point moves them about 4 minutes. A zone with no point (UTC) keeps the
+  fixed 5:13 PM and 6:30 AM. When the Mac changes time zone (traveling, with
+  "Set time zone automatically" on), the clock and the sun move to the new
+  zone at once.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
   rest, so a big change (blinds, a cloud) lands in about 20 seconds. The
@@ -27,8 +37,9 @@ presets; Schedule (the presets) is the other.
   Shift. Big changes are meant to be seen; most are small.
 - **No reading.** With the lid closed or no sensor, Auto keeps the last room
   it saw (100 lux before the first) and the Room row says "no reading".
-- **Room log.** One line a minute, and one each time you let go of the slider
-  (with the level saved), in `room-log.csv` next to `config.json`.
+- **Room log.** One line a minute, and one each time you let go of a slider
+  (with the level or contrast multiple saved), in `room-log.csv` next to
+  `config.json`.
 - **Auto | Schedule** under the header picks which one drives the monitor.
 
 ## How to get to it
@@ -41,14 +52,17 @@ the control under the header.
 Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 
 `./build.sh drive room-light` (~5s): compiles the app's room-light rules with
-a harness. It checks that brightness is the level times the room's square
-root (Morning's 42 at 550 lux, 0 at 2 lux, never past 100), that a set
-brightness comes back in the same room and scales in another, that contrast
-is √2 × brightness, that Night Shift lands near the presets it was fitted to, that the blinds
+a harness. It checks that brightness is the level times the room's fourth
+root (the evening's settings at 2, 19-32 and 84 lux, never past 100, level 0
+darkest), that a set
+brightness comes back in the same room and scales in another, that a set
+contrast comes back at the same brightness and scales with it, that sunrise
+and sunset for Chicago land on its solstice times (and zone.tab's point
+parses), that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
 spike or dip (a hand at the notch) leaves the average where it was.
 
-Last driven: 2026-10-26, macOS. Passed; failed as expected with the Night
+Last driven: 2026-10-27, macOS. Passed; on 2026-10-26 it failed as expected with the Night
 Shift ramp an hour late, and with the median removed.
 
 Seen on the real thing 2026-10-26: installed, it read 27 lux, stayed up, and
@@ -68,8 +82,12 @@ row.
 - On 2026-10-12 the sensor gave no reading at all while the laptop's own
   screen was at 0 nits. If that holds, a fully dark laptop screen freezes Auto
   on the last room it saw.
-- Night readings aren't known yet. A lamp-lit room at night may read as bright
-  as a dim afternoon; Night Shift is on the clock, brightness isn't.
+- The sensor's lux counts whole numbers, so a dark room reads 0 from a dim
+  lamp down to black. Below 10 lux Sundial reads a raw detector count
+  instead (about 10 per lux), which told apart an LED's settings at 0.15,
+  2.2, 7 and 11 lux where lux read 0, 0, 2 and 7 (2026-10-26). Below about
+  0.1 lux both read 0, so the two lowest settings look the same. A lamp-lit room may read as bright as a dim afternoon; Night Shift is on
+  the clock, brightness isn't.
 - The monitor's own light reaches the sensor. A brighter monitor reads as a
   brighter room; small at the levels seen so far.
 - Auto writes only when a value changes, so a change made with the monitor's
@@ -92,11 +110,11 @@ row.
 - 2026-10-26 17:25, 1.0.3. Easing is quick, about 20 seconds for a big change: "big changes are
   supposed to be salient, and most will not be." It replaced a minute or more.
   Applies *Just right for the room*.
-- 2026-10-26 17:28, 1.0.3. The scaling can reach the monitor's darkest, brightness 0 and contrast 0,
+- 2026-10-26 22:40, 1.0.3. The scaling can reach the monitor's darkest, brightness 0 and contrast 0,
   as Schedule's darkest presets did: "I do want to be able to have a scaling
   that can still give me maximum darkness." So contrast is √2 × brightness
   with no offset, though the presets' line had one ("the preset is 1
-  datapoint"), and brightness reaches 0 at 2 lux. Applies *Just right for the
+  datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
 - 2026-10-26 18:36, 1.0.3. Auto | Schedule is a full-width segmented control under the header. A
   switch was wrong because it changed the whole popup ("what toggle does
@@ -107,3 +125,17 @@ row.
   teleport") and the other half glows faintly on hover. The header's right side is
   bare in both modes: the control says the mode, and Schedule opens on the
   preset in force. Applies *Never a fight with the controls*.
+- 2026-10-26 22:39, 1.0.3. Brightness follows the fourth root of the room's light, fitted to seven
+  brightnesses set across one evening. The square root, shifted to reach 0
+  at 2 lux, was a guess before any night readings; the room read 2 lux at
+  night, where it gave 0 and the brightness set was 17-22, and every drag
+  there saved a level that would have meant 100 by day. Full darkness is a
+  level of 0 instead. Applies *Just right for the room*.
+- 2026-10-26 23:43, 1.0.3. Contrast gets its own slider, so its log shows what fits instead of
+  following a fixed √2. The aim is the curves that need the fewest
+  interventions: "I'm trying to find the minimal interventions curves that
+  fit my eyes." A few days of drags come first, then a curve fitted to them,
+  maybe two anchors. Applies *Just right for the room*.
+- 2026-10-27 01:02, 1.0.3. Night Shift's start and end follow sunset and sunrise, located by the time
+  zone rather than Location Services: "timezone is good enough". Full warmth
+  stays at midnight ("just midnight is fine"), which the sun doesn't move. Applies *Just right for the room*.

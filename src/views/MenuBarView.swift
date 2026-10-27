@@ -60,11 +60,18 @@ struct MenuBarView: View {
 
             Divider()
 
-            HoverButton("Quit Sundial") {
-                NSApplication.shared.terminate(nil)
+            // Quit holds the left in every panel; Add Preset takes the right in
+            // Schedule, so the list ends on its last card.
+            HStack {
+                HoverButton("Quit Sundial") {
+                    NSApplication.shared.terminate(nil)
+                }
+                Spacer()
+                if appState.isSetUp && !showSettings && appState.mode == .schedule {
+                    HoverButton("Add Preset", systemImage: "plus", rest: HoverButton.createBlue, action: addPreset)
+                }
             }
             .font(.subheadline)
-            .foregroundStyle(.secondary)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
         }
@@ -103,10 +110,26 @@ extension MenuBarView {
             .padding(.bottom, 8)
     }
 
+    /// A new preset at noon, opened for editing; the list scrolls to it.
+    private func addPreset() {
+        let newPreset = Preset(
+            name: "New Preset",
+            hardwareBrightness: 70,
+            hardwareContrast: 75,
+            nightShift: 0
+        )
+        appState.addPreset(newPreset)
+        appState.addScheduleEntry(ScheduleEntry(presetID: newPreset.id, hour: 12, minute: 0))
+        appState.onScheduleChanged?()
+        withAnimation(.easeInOut(duration: 0.15)) { expandedPresetID = newPreset.id }
+    }
+
     private func setMode(_ newMode: AppState.Mode) {
         guard newMode != appState.mode else { return }
         appState.previewingPresetID = nil
-        appState.mode = newMode
+        // The popup resizes to the other mode's panel as Settings does, eased,
+        // not in one jump.
+        withAnimation(.easeInOut(duration: 0.15)) { appState.mode = newMode }
         appState.save()
         // Whichever mode is now on takes the monitor at once, in full.
         if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
@@ -188,22 +211,41 @@ struct HeaderButton: View {
 
 // MARK: - Hover Button
 
+/// A footer action: dimmed text that turns primary under the pointer.
 struct HoverButton: View {
     let label: String
+    let systemImage: String?
+    /// The colour at rest: secondary, or blue for an action that creates
+    /// something. The link blue, not the accent: the accent is too dark to
+    /// read on the popup's glass.
+    let rest: Color
     let action: () -> Void
     @State private var isHovered = false
 
-    init(_ label: String, action: @escaping () -> Void) {
+    static let createBlue = Color(nsColor: .linkColor)
+
+    init(_ label: String, systemImage: String? = nil, rest: Color = .secondary, action: @escaping () -> Void) {
         self.label = label
+        self.systemImage = systemImage
+        self.rest = rest
         self.action = action
     }
 
     var body: some View {
         Button(action: action) {
-            Text(label)
+            if let systemImage {
+                // Not a Label: its gap between icon and text is wide enough to
+                // read as two things in a footer.
+                HStack(spacing: 4) {
+                    Image(systemName: systemImage)
+                    Text(label)
+                }
+            } else {
+                Text(label)
+            }
         }
         .buttonStyle(.plain)
-        .foregroundStyle(isHovered ? .primary : .secondary)
+        .foregroundStyle(isHovered ? Color.primary : rest)
         .onHover { isHovered = $0 }
     }
 }

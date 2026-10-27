@@ -18,6 +18,8 @@ class AppState: ObservableObject {
     /// How bright you like the screen, as the brightness at 100 lux. The room's
     /// light multiplies it (see `RoomLight`). Set by dragging Auto's slider.
     @Published var autoLevel: Double = RoomLight.defaultLevel
+    /// Contrast per point of brightness. Set by dragging Auto's Contrast slider.
+    @Published var autoContrastScale: Double = RoomLight.defaultContrastScale
 
     // Auto's live state, set by AutoController and not saved.
 
@@ -28,6 +30,8 @@ class AppState: ObservableObject {
     @Published var sensorReading = false
     /// The brightness Auto has the monitor at right now.
     @Published var autoBrightness: Int = 0
+    /// The contrast Auto has the monitor at right now.
+    @Published var autoContrast: Int = 0
     /// The Night Shift Auto has set right now.
     @Published var autoNightShift: Int = 0
 
@@ -41,6 +45,9 @@ class AppState: ObservableObject {
     /// Set by the app at startup: show this brightness now, and keep it as the
     /// level for this room. The flag is true when the drag ends.
     var onSetBrightness: ((Int, Bool) -> Void)?
+    /// Set by the app at startup: show this contrast now, and keep it as the
+    /// contrast for this brightness. The flag is true when the drag ends.
+    var onSetContrast: ((Int, Bool) -> Void)?
 
     /// True once the BetterDisplay path + display name have been verified against
     /// real hardware (a DDC read succeeded). Until then, the menu bar shows the
@@ -85,6 +92,7 @@ class AppState: ObservableObject {
         var isSetUp: Bool?
         var mode: Mode?
         var autoLevel: Double?
+        var autoContrastScale: Double?
     }
 
     func save() {
@@ -97,7 +105,8 @@ class AppState: ObservableObject {
             launchAtLogin: launchAtLogin,
             isSetUp: isSetUp,
             mode: mode,
-            autoLevel: autoLevel
+            autoLevel: autoLevel,
+            autoContrastScale: autoContrastScale
         )
         do {
             let data = try JSONEncoder().encode(config)
@@ -122,6 +131,7 @@ class AppState: ObservableObject {
         isSetUp = config.isSetUp ?? false
         mode = config.mode ?? .auto
         autoLevel = config.autoLevel ?? RoomLight.defaultLevel
+        autoContrastScale = config.autoContrastScale ?? RoomLight.defaultContrastScale
     }
 
     // MARK: - Setup validation

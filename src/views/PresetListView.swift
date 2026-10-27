@@ -1,27 +1,40 @@
 import SwiftUI
 
-/// Fixed row heights so the panel cap is exact rather than measured/estimated.
-/// The viewport shows `expanded + collapsed` (one expanded card + one collapsed
-/// neighbor) before scrolling — see `cap` on the ScrollView below.
+/// Row heights for the list's cap: the viewport shows one expanded card, the
+/// line under it and one collapsed neighbour before scrolling, with nothing
+/// peeking below.
 private enum Row {
-    /// Collapsed card: name + subtitle + 10pt vertical padding top & bottom.
+    /// Collapsed card: pinned with a frame on the header row.
     static let collapsed: CGFloat = 56
     /// Expanded card: collapsed header + inline editor (time/toggle row, three
-    /// sliders, actions row) + its 12pt bottom padding. Measured from the rendered
-    /// card via a GeometryReader (settles at ~195pt).
-    static let expanded: CGFloat = 195
-    /// Viewport before scrolling: one expanded card and one collapsed neighbor.
-    static let cap: CGFloat = expanded + collapsed
-    /// "Add Preset": a text line plus 10pt padding top and bottom. Estimated.
-    static let addButton: CGFloat = 36
+    /// sliders, actions row) + its 12pt bottom padding, as measured on
+    /// 2026-10-27. Only the first open's start: the rendered card is measured
+    /// (`ExpandedHeightKey`) and that wins, so an editor change can't leave a
+    /// gap or cut a card.
+    static let expanded: CGFloat = 189
     /// "No presets yet" block. Estimated.
     static let emptyState: CGFloat = 70
+    /// One expanded card, its divider and one collapsed card.
+    static func cap(expanded: CGFloat) -> CGFloat { expanded + 1 + collapsed }
+}
+
+/// Carries the expanded card's rendered height up to the list's cap.
+private struct ExpandedHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
 
 struct PresetListView: View {
     @EnvironmentObject var appState: AppState
     @Binding var expandedPresetID: UUID?
     @State private var sortedPresets: [Preset]
+    /// The expanded card's height as last rendered, kept across opens so the
+    /// popup opens at the size it closed at.
+    @MainActor private static var lastExpanded = Row.expanded
+    @State private var expandedHeight = PresetListView.lastExpanded
+    @State private var settleTask: Task<Void, Never>?
     /// The list's height before its first measurement, worked out from the rows.
     private let initialHeight: CGFloat
 
@@ -32,7 +45,7 @@ struct PresetListView: View {
         _expandedPresetID = expandedPresetID
         let sorted = Self.sorted(appState)
         _sortedPresets = State(initialValue: sorted)
-        initialHeight = Self.estimatedHeight(sorted, expanded: expandedPresetID.wrappedValue)
+        initialHeight = Self.estimatedHeight(sorted, expanded: expandedPresetID.wrappedValue, expandedHeight: Self.lastExpanded)
     }
 
     var body: some View {
@@ -79,43 +92,30 @@ struct PresetListView: View {
                         }
                     )
                     .id(preset.id)
-                    Divider()
+                    // The last card's line would double the footer's.
+                    if preset.id != sortedPresets.last?.id { Divider() }
                 }
-
-                Button {
-                    let newPreset = Preset(
-                        name: "New Preset",
-                        hardwareBrightness: 70,
-                        hardwareContrast: 75,
-                        nightShift: 0
-                    )
-                    appState.addPreset(newPreset)
-                    appState.addScheduleEntry(
-                        ScheduleEntry(presetID: newPreset.id, hour: 12, minute: 0)
-                    )
-                    appState.onScheduleChanged?()
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        expandedPresetID = newPreset.id
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        withAnimation { proxy.scrollTo(newPreset.id, anchor: .top) }
-                    }
-                } label: {
-                    Label("Add Preset", systemImage: "plus")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.accentColor)
             }
             .measureContentHeight()
+        }
+        // A card's first layout reports 195, its settled one 189 ~40ms later
+        // (probably its AppKit controls sizing themselves), so the cap takes a height
+        // only once it has held for 0.1s; following each would bounce the popup.
+        .onPreferenceChange(ExpandedHeightKey.self) { height in
+            guard height > Row.collapsed else { return }
+            settleTask?.cancel()
+            settleTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled, height != expandedHeight else { return }
+                expandedHeight = height
+                Self.lastExpanded = height
+            }
         }
         // Concrete, self-sizing height — a maxHeight-only frame collapses to 0 inside
         // MenuBarExtra(.window) on macOS 26. Cap = 1 expanded card + 1 collapsed card
         // (heights pinned via Row above), so expanding a card shows itself + exactly one
         // collapsed neighbor, then scrolls. Grows to fit content below the cap.
-        .scrollContentHeight("presets", cap: Row.cap, initial: initialHeight)
+        .scrollContentHeight("presets", cap: Row.cap(expanded: expandedHeight), initial: initialHeight)
         .onAppear {
             refreshSort()
             // Scroll the currently-active preset to the top of the viewport on open.
@@ -126,7 +126,15 @@ struct PresetListView: View {
                 }
             }
         }
-        .onChange(of: appState.presets.count) { refreshSort() }
+        .onChange(of: appState.presets.count) { old, new in
+            refreshSort()
+            // A preset added from the footer opens expanded: bring it into view.
+            if new > old, let id = expandedPresetID {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    withAnimation { proxy.scrollTo(id, anchor: .top) }
+                }
+            }
+        }
         }
     }
 
@@ -147,15 +155,15 @@ struct PresetListView: View {
         }
     }
 
-    /// Rows plus their dividers plus the Add button, capped. With two or more
-    /// presets and one expanded this is the cap, so the guessed parts
-    /// (`Row.addButton`, `Row.emptyState`) only matter for a list of 0 or 1.
-    private static func estimatedHeight(_ presets: [Preset], expanded: UUID?) -> CGFloat {
+    /// Rows plus the dividers between them, capped. With two or more presets
+    /// and one expanded this is the cap, so `Row.emptyState`, a guess, only
+    /// matters for an empty list.
+    private static func estimatedHeight(_ presets: [Preset], expanded: UUID?, expandedHeight: CGFloat) -> CGFloat {
+        guard !presets.isEmpty else { return Row.emptyState }
         let rows = presets.reduce(CGFloat(0)) { sum, p in
-            sum + (p.id == expanded ? Row.expanded : Row.collapsed) + 1
+            sum + (p.id == expanded ? expandedHeight : Row.collapsed)
         }
-        let body = presets.isEmpty ? Row.emptyState : rows
-        return min(body + Row.addButton, Row.cap)
+        return min(rows + CGFloat(presets.count - 1), Row.cap(expanded: expandedHeight))
     }
 }
 
@@ -182,6 +190,13 @@ private struct PresetCardRow: View {
             }
         }
         .background(isHovered ? Color.primary.opacity(0.06) : Color.clear)
+        .background {
+            if isExpanded {
+                GeometryReader { proxy in
+                    Color.clear.preference(key: ExpandedHeightKey.self, value: proxy.size.height)
+                }
+            }
+        }
         .onHover { isHovered = $0 }
         .onAppear { nameDraft = preset.name }
         // Closing the popup ends a name edit (and commits it), so it doesn't
@@ -602,7 +617,7 @@ struct LabeledSlider: View {
     /// Why the slider can't be moved right now, or nil when it can. A lock
     /// sits beside the label and the note is shown where the slider would be:
     /// a slider that can't move has nothing to show. It takes the slider's
-    /// place because the expanded card's height is pinned (see `Row`), and it
+    /// place so the card keeps its height either way (see `Row`), and it
     /// isn't a `.help` tooltip because those don't appear in this menu. Keep
     /// it short: the slot is ~170pt.
     var lockedNote: String?
