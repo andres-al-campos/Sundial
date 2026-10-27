@@ -72,14 +72,15 @@ enum RoomLight {
     }
 
     /// Fitted to the presets' evening values (31% at 7:17 PM, 42% at 8:07, 67%
-    /// at 10:17, 100% at 11:57; R² 0.98): off until 5:13 PM, rising ~14% an hour
-    /// to full at 12:11 AM, full until 6:30 AM. Used as is when the sun's times
-    /// aren't known.
-    static let fittedSchedule = WarmSchedule(from: 17 * 60 + 13, full: 24 * 60 + 11, off: 6 * 60 + 30)
+    /// at 10:17, 100% at 11:57; R² 0.98): off until 5:13 PM, rising ~15% an hour
+    /// to full at midnight, full until 6:30 AM. The fit said 12:11 AM; midnight
+    /// is plainer and moves no preset more than 8%. Used as is when the sun's
+    /// times aren't known.
+    static let fittedSchedule = WarmSchedule(from: 17 * 60 + 13, full: 24 * 60, off: 6 * 60 + 30)
     /// The fitted times against Chicago's sun on the day they were fitted
     /// (2026-10-26, sunset 5:53 PM, sunrise 7:16 AM): warming starts 40
     /// minutes before sunset and ends 46 minutes before sunrise. Full stays at
-    /// 12:11 AM, a bedtime, which the sun doesn't move.
+    /// midnight, a bedtime, which the sun doesn't move.
     static let warmBeforeSunset = 40.0
     static let offBeforeSunrise = 46.0
 
