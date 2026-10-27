@@ -118,13 +118,13 @@ if !failures.isEmpty {
 }
 SWIFT
 
-if ! swiftc -o "$work/room" Sources/Control/RoomLight.swift "$work/main.swift" 2> "$work/err"; then
+if ! swiftc -o "$work/room" src/control/RoomLight.swift "$work/main.swift" 2> "$work/err"; then
     echo "✗ room-light: the harness didn't compile. RoomLight's API probably changed; update tests/drive/room-light.sh to match."
     sed 's/^/    /' "$work/err"
     exit 1
 fi
 if ! "$work/room" > "$work/out"; then
-    echo "✗ room-light: Auto decided wrongly. Fix it in Sources/Control/RoomLight.swift, or the case here if the rule changed on purpose:"
+    echo "✗ room-light: Auto decided wrongly. Fix it in src/control/RoomLight.swift, or the case here if the rule changed on purpose:"
     cat "$work/out"
     exit 1
 fi

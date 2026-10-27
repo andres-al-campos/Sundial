@@ -39,13 +39,13 @@ for (what, name, screens, want) in cases {
 if failed { exit(1) }
 SWIFT
 
-if ! swiftc -o "$work/hdr" Sources/Control/HDRState.swift "$work/main.swift" 2> "$work/err"; then
+if ! swiftc -o "$work/hdr" src/control/HDRState.swift "$work/main.swift" 2> "$work/err"; then
     echo "✗ hdr-contrast-lock: the harness didn't compile. HDRState's signature probably changed; update tests/drive/hdr-contrast-lock.sh to match."
     sed 's/^/    /' "$work/err"
     exit 1
 fi
 if ! "$work/hdr" > "$work/out"; then
-    echo "✗ hdr-contrast-lock: HDRState.isOn decided wrongly. Fix it in Sources/Control/HDRState.swift:"
+    echo "✗ hdr-contrast-lock: HDRState.isOn decided wrongly. Fix it in src/control/HDRState.swift:"
     cat "$work/out"
     exit 1
 fi
