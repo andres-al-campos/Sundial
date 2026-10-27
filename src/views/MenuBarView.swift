@@ -66,14 +66,9 @@ struct MenuBarView: View {
                 HoverButton("Quit Sundial") {
                     NSApplication.shared.terminate(nil)
                 }
-                .foregroundStyle(.secondary)
                 Spacer()
                 if appState.isSetUp && !showSettings && appState.mode == .schedule {
-                    Button(action: addPreset) {
-                        Label("Add Preset", systemImage: "plus")
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Color.accentColor)
+                    HoverButton("Add Preset", systemImage: "plus", action: addPreset)
                 }
             }
             .font(.subheadline)
@@ -216,19 +211,26 @@ struct HeaderButton: View {
 
 // MARK: - Hover Button
 
+/// A footer action: secondary text that brightens under the pointer.
 struct HoverButton: View {
     let label: String
+    let systemImage: String?
     let action: () -> Void
     @State private var isHovered = false
 
-    init(_ label: String, action: @escaping () -> Void) {
+    init(_ label: String, systemImage: String? = nil, action: @escaping () -> Void) {
         self.label = label
+        self.systemImage = systemImage
         self.action = action
     }
 
     var body: some View {
         Button(action: action) {
-            Text(label)
+            if let systemImage {
+                Label(label, systemImage: systemImage)
+            } else {
+                Text(label)
+            }
         }
         .buttonStyle(.plain)
         .foregroundStyle(isHovered ? .primary : .secondary)
