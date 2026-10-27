@@ -134,7 +134,8 @@ final class AutoController {
         let comps = Calendar.current.dateComponents([.hour, .minute], from: now)
         let target = (brightness: brightness,
                       contrast: RoomLight.contrast(brightness: brightness, scale: state.autoContrastScale),
-                      nightShift: RoomLight.nightShift(minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0)))
+                      nightShift: RoomLight.nightShift(minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0),
+                                                    schedule: SunClock.schedule(on: now)))
 
         var s = shown ?? target
         s.brightness = RoomLight.step(s.brightness, toward: target.brightness, maxStep: Self.maxStep.brightness * dt)

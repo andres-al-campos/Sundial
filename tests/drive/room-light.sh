@@ -65,6 +65,25 @@ check("near Midnight's 100 at 11:57 PM", near(ns(23, 57), 100, 5), ns(23, 57))
 check("full after midnight", ns(3, 0) == 100, ns(3, 0))
 check("off from 6:30 AM", ns(6, 30) == 0 && ns(6, 29) == 100, (ns(6, 29), ns(6, 30)))
 
+// The sun, at the point macOS's time zone table gives America/Chicago.
+let chi = RoomLight.coordinates(iso6709: "+415100-0873900")
+check("the zone table's point parses", chi != nil && near(chi!.latitude, 41.85, 0.001) && near(chi!.longitude, -87.65, 0.001), chi as Any)
+func sun(_ y: Int, _ m: Int, _ d: Int, _ off: Double) -> RoomLight.SunTimes? {
+    RoomLight.sunTimes(year: y, month: m, day: d, latitude: 41.85, longitude: -87.65, utcOffset: off)
+}
+if let june = sun(2026, 6, 21, -5), let dec = sun(2026, 12, 21, -6) {
+    check("Chicago's June solstice: sunrise ~5:15, sunset ~8:29 PM", near(june.sunrise, 315, 3) && near(june.sunset, 20 * 60 + 29, 3), june)
+    check("Chicago's December solstice: sunrise ~7:15, sunset ~4:22 PM", near(dec.sunrise, 435, 3) && near(dec.sunset, 16 * 60 + 22, 3), dec)
+    let w = RoomLight.warmSchedule(sun: dec)
+    check("in December Night Shift starts warming earlier and stays full to bedtime", w.from < RoomLight.fittedSchedule.from && w.full == RoomLight.fittedSchedule.full, w)
+} else { check("Chicago has a sunrise and sunset", false, "nil") }
+if let today = sun(2026, 10, 26, -5) {
+    let w = RoomLight.warmSchedule(sun: today)
+    check("on the day it was fitted, the sun's schedule is the fitted one (±2 min)",
+          abs(w.from - RoomLight.fittedSchedule.from) <= 2 && abs(w.off - RoomLight.fittedSchedule.off) <= 2, w)
+}
+check("no sun times, the fitted schedule", RoomLight.warmSchedule(sun: nil) == RoomLight.fittedSchedule, "")
+
 // Easing: the blinds shutting (as logged, 237 → 35 lux over 8 s) lands in about
 // 20 seconds: not instantly, and not dragging on.
 var s = RoomLight.Smoother()
@@ -109,4 +128,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, Night Shift matches the fitted presets, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"

@@ -14,7 +14,7 @@ struct AutoView: View {
             room
             AutoSlider(label: "Brightness", current: appState.autoBrightness) { appState.onSetBrightness?($0, $1) }
             AutoSlider(label: "Contrast", current: appState.autoContrast) { appState.onSetContrast?($0, $1) }
-            row("Night Shift", "\(appState.autoNightShift)% · warms \(time(RoomLight.warmFrom)) → \(time(RoomLight.warmFull)), off \(time(RoomLight.warmOff))")
+            row("Night Shift", nightShiftText)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -63,6 +63,11 @@ struct AutoView: View {
     /// Tenths below 10 lux, where the sensor tells them apart; whole lux above.
     static func luxText(_ lux: Double) -> String {
         lux < 9.95 ? String(format: "%.1f", lux) : "\(Int(lux.rounded()))"
+    }
+
+    private var nightShiftText: String {
+        let s = SunClock.schedule()
+        return "\(appState.autoNightShift)% · warms \(time(s.from)) → \(time(s.full)), off \(time(s.off))"
     }
 
     private func time(_ minuteOfDay: Int) -> String {

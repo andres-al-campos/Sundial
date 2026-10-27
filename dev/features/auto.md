@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-26 23:43, at 1.0.3.
+Updated 2026-10-26 23:50, at 1.0.3.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -20,9 +20,14 @@ presets; Schedule (the presets) is the other.
   multiple that gives what you chose, so brightness 0 is still contrast 0, the
   monitor's darkest. The presets' own line had the slope √2 plus 7.8 (R² 0.82,
   against 0.71 for √2 ×).
-- **Night Shift follows the clock**, fitted to the presets' evening values
-  (R² 0.98): off until 5:13 PM, rising ~14% an hour to full at 12:11 AM, full
-  until 6:30 AM, then off.
+- **Night Shift follows the sun**: it starts warming 40 minutes before
+  sunset, rises evenly to full at 12:11 AM, and turns off 46 minutes before
+  sunrise. Fitted to the presets' evening values (R² 0.98) on 2026-10-26,
+  when that was 5:13 PM to 6:30 AM. Sunrise and sunset are computed for the
+  point macOS's time zone table gives your time zone (Chicago for
+  America/Chicago), so no location permission; each degree of longitude from
+  that point moves them about 4 minutes. A zone with no point (UTC) keeps the
+  fixed 5:13 PM and 6:30 AM.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
   rest, so a big change (blinds, a cloud) lands in about 20 seconds. The
@@ -127,3 +132,6 @@ row.
   interventions: "I'm trying to find the minimal interventions curves that
   fit my eyes." A few days of drags come first, then a curve fitted to them,
   maybe two anchors. Applies *Just right for the room*.
+- 2026-10-26 23:50, 1.0.3. Night Shift's start and end follow sunset and sunrise, located by the time
+  zone rather than Location Services: "timezone is good enough". Full warmth
+  stays at a fixed bedtime. Applies *Just right for the room*.

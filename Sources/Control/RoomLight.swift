@@ -62,22 +62,100 @@ enum RoomLight {
 
     // MARK: - Night Shift
 
-    /// Night Shift by the clock, fitted to the presets' evening values
-    /// (31% at 7:17 PM, 42% at 8:07, 67% at 10:17, 100% at 11:57; R² 0.98):
-    /// off until 5:13 PM, rising ~14% an hour to full at 12:11 AM, full until
-    /// 6:30 AM, then off.
-    static let warmFrom = 17 * 60 + 13
-    static let warmFull = 24 * 60 + 11
-    static let warmOff = 6 * 60 + 30
+    /// When Night Shift warms, in minutes after midnight: off until `from`,
+    /// rising evenly to full at `full` (past 1440 is after midnight), full until
+    /// `off`, then off.
+    struct WarmSchedule: Equatable {
+        var from: Int
+        var full: Int
+        var off: Int
+    }
 
-    static func nightShift(minuteOfDay m: Int) -> Double {
+    /// Fitted to the presets' evening values (31% at 7:17 PM, 42% at 8:07, 67%
+    /// at 10:17, 100% at 11:57; R² 0.98): off until 5:13 PM, rising ~14% an hour
+    /// to full at 12:11 AM, full until 6:30 AM. Used as is when the sun's times
+    /// aren't known.
+    static let fittedSchedule = WarmSchedule(from: 17 * 60 + 13, full: 24 * 60 + 11, off: 6 * 60 + 30)
+    /// The fitted times against Chicago's sun on the day they were fitted
+    /// (2026-10-26, sunset 5:53 PM, sunrise 7:16 AM): warming starts 40
+    /// minutes before sunset and ends 46 minutes before sunrise. Full stays at
+    /// 12:11 AM, a bedtime, which the sun doesn't move.
+    static let warmBeforeSunset = 40.0
+    static let offBeforeSunrise = 46.0
+
+    /// The fitted schedule moved with the season: start and end follow the sun.
+    static func warmSchedule(sun: SunTimes?) -> WarmSchedule {
+        guard let sun else { return fittedSchedule }
+        return WarmSchedule(from: Int((sun.sunset - warmBeforeSunset).rounded()),
+                            full: fittedSchedule.full,
+                            off: Int((sun.sunrise - offBeforeSunrise).rounded()))
+    }
+
+    static func nightShift(minuteOfDay m: Int, schedule: WarmSchedule = fittedSchedule) -> Double {
         // Minutes since the ramp began, counting past midnight.
-        let since = (m - warmFrom + 24 * 60) % (24 * 60)
-        let ramp = warmFull - warmFrom
-        let offAfter = (warmOff - warmFrom + 24 * 60) % (24 * 60)
+        let since = (m - schedule.from + 24 * 60) % (24 * 60)
+        let ramp = schedule.full - schedule.from
+        let offAfter = (schedule.off - schedule.from + 24 * 60) % (24 * 60)
         if since <= ramp { return 100 * Double(since) / Double(ramp) }
         if since < offAfter { return 100 }
         return 0
+    }
+
+    // MARK: - The sun
+
+    /// Sunrise and sunset in minutes after local midnight.
+    struct SunTimes: Equatable {
+        var sunrise: Double
+        var sunset: Double
+    }
+
+    /// Sunrise and sunset on a day at a place, by NOAA's solar formulas (within
+    /// a minute or two of their tables). `utcOffset` is the place's offset from
+    /// UTC in hours on that day; longitude is east-positive. Nil where the sun
+    /// doesn't rise or set that day.
+    static func sunTimes(year: Int, month: Int, day: Int, latitude: Double, longitude: Double, utcOffset: Double) -> SunTimes? {
+        let rad = Double.pi / 180
+        let a = (14 - month) / 12, y = year + 4800 - a, mo = month + 12 * a - 3
+        let jdn = day + (153 * mo + 2) / 5 + 365 * y + y / 4 - y / 100 + y / 400 - 32045
+        // Local noon, in Julian centuries since 2000.
+        let t = (Double(jdn) - utcOffset / 24 - 2_451_545) / 36525
+        let l = (280.46646 + t * (36000.76983 + t * 0.0003032)).truncatingRemainder(dividingBy: 360)
+        let m = 357.52911 + t * (35999.05029 - 0.0001537 * t)
+        let e = 0.016708634 - t * (0.000042037 + 0.0000001267 * t)
+        let c = sin(m * rad) * (1.914602 - t * (0.004817 + 0.000014 * t))
+            + sin(2 * m * rad) * (0.019993 - 0.000101 * t) + sin(3 * m * rad) * 0.000289
+        let omega = (125.04 - 1934.136 * t) * rad
+        let lambda = l + c - 0.00569 - 0.00478 * sin(omega)
+        let eps = 23 + (26 + (21.448 - t * (46.815 + t * (0.00059 - t * 0.001813))) / 60) / 60 + 0.00256 * cos(omega)
+        let decl = asin(sin(eps * rad) * sin(lambda * rad))
+        let yv = pow(tan(eps * rad / 2), 2)
+        let eqTime = 4 / rad * (yv * sin(2 * l * rad) - 2 * e * sin(m * rad)
+            + 4 * e * yv * sin(m * rad) * cos(2 * l * rad)
+            - 0.5 * yv * yv * sin(4 * l * rad) - 1.25 * e * e * sin(2 * m * rad))
+        let cosHA = cos(90.833 * rad) / (cos(latitude * rad) * cos(decl)) - tan(latitude * rad) * tan(decl)
+        guard abs(cosHA) <= 1 else { return nil }
+        let ha = acos(cosHA) / rad
+        let noon = 720 - 4 * longitude - eqTime + utcOffset * 60
+        return SunTimes(sunrise: noon - 4 * ha, sunset: noon + 4 * ha)
+    }
+
+    /// A place from the time zone table (`zone.tab`): "+415100-0873900" is
+    /// 41°51'00" N, 87°39'00" W. Nil when it doesn't parse.
+    static func coordinates(iso6709 text: String) -> (latitude: Double, longitude: Double)? {
+        let chars = Array(text)
+        guard let split = chars.indices.dropFirst().first(where: { chars[$0] == "+" || chars[$0] == "-" }) else { return nil }
+        func parse(_ part: ArraySlice<Character>, degreeDigits: Int) -> Double? {
+            guard let sign = part.first, sign == "+" || sign == "-" else { return nil }
+            let digits = Array(part.dropFirst())
+            guard digits.count >= degreeDigits + 2, digits.allSatisfy(\.isNumber) else { return nil }
+            let d = Double(String(digits[0..<degreeDigits]))!
+            let mi = Double(String(digits[degreeDigits..<degreeDigits + 2]))!
+            let se = digits.count >= degreeDigits + 4 ? Double(String(digits[degreeDigits + 2..<degreeDigits + 4]))! : 0
+            return (sign == "-" ? -1 : 1) * (d + mi / 60 + se / 3600)
+        }
+        guard let lat = parse(chars[..<split], degreeDigits: 2),
+              let lon = parse(chars[split...], degreeDigits: 3) else { return nil }
+        return (lat, lon)
     }
 
     // MARK: - The room
