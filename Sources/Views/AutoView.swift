@@ -27,10 +27,13 @@ struct AutoView: View {
             if let lux = appState.roomLux {
                 RoomMeter(position: RoomLight.meterPosition(lux: lux))
                     .opacity(appState.sensorReading ? 1 : 0.4)
-                Text(appState.sensorReading ? "\(Int(lux.rounded())) lux" : "no reading")
+                // Same width as the sliders' values below, so the meter and the
+                // sliders end at one line.
+                Text(appState.sensorReading ? "\(Int(lux.rounded()))" : "—")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .frame(width: 64, alignment: .trailing)
+                    .frame(width: 32, alignment: .trailing)
+                    .help(appState.sensorReading ? "Lux, from the light sensor beside the camera" : "No reading: the lid may be closed")
             } else {
                 Text("No reading yet: the lid may be closed")
                     .font(.caption)
