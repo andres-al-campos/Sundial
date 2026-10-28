@@ -65,6 +65,17 @@ final class LampController {
         }
     }
 
+    /// "Between MidNight and DuskLight", or the scene itself while one holds.
+    private static func `where`(_ frames: [LampBlend.Keyframe], _ minute: Int) -> String {
+        let sorted = frames.sorted { $0.minute < $1.minute }
+        guard let i = sorted.lastIndex(where: { $0.minute <= minute }) ?? sorted.indices.last else { return "" }
+        let a = sorted[i], b = sorted[(i + 1) % sorted.count]
+        let gap = (b.minute - a.minute + 24 * 60) % (24 * 60)
+        let since = (minute - a.minute + 24 * 60) % (24 * 60)
+        if sorted.count == 1 || (a.holds && since < gap - LampBlend.settle) { return "lamps at \(a.name)" }
+        return "lamps between \(a.name) and \(b.name)"
+    }
+
     private func tick() async {
         guard let state, !busy else { return }
         guard let bridge, bridge.isPaired else {
@@ -72,7 +83,7 @@ final class LampController {
             return
         }
         guard state.lampsFollow else {
-            state.lampStatus = "Paired, not following"
+            state.lampStatus = "Paired · not following"
             return
         }
         busy = true
@@ -99,7 +110,7 @@ final class LampController {
                 try await bridge.set(lamp: id, to: target, fade: Self.interval)
                 sent[id] = target
             }
-            state.lampStatus = "Following \(frames.count) scenes"
+            state.lampStatus = "Paired · " + Self.where(frames, minute)
         } catch {
             state.lampStatus = error.localizedDescription
         }

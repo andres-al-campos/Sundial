@@ -57,10 +57,15 @@ struct SettingsView: View {
                 }
                 // Two lines held whatever the status says, so a status change
                 // never resizes the popup.
-                Text(appState.lampStatus)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2, reservesSpace: true)
+                Label {
+                    Text(appState.lampStatus)
+                        .lineLimit(2, reservesSpace: true)
+                } icon: {
+                    Image(systemName: appState.lampStatus.hasPrefix("Paired") ? "checkmark.circle.fill" : "circle.dashed")
+                        .foregroundStyle(appState.lampStatus.hasPrefix("Paired") ? .green : .secondary)
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
 
             Divider()
