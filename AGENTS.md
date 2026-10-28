@@ -1,7 +1,8 @@
 # Sundial
 
-A person comes to Sundial so their screen is never too bright or too dark for
-the room, at any time of day, without touching a slider. They open it only to
+A person comes to Sundial so the artificial light in the room, the screen and
+the smart lights, matches the natural light, at any time of day, without
+touching anything. They open it only to
 change a preset or its time.
 
 What a user can do, and the checks for each, are in `dev/features/`. Build, check
