@@ -20,6 +20,12 @@ class AppState: ObservableObject {
     @Published var autoLevel: Double = RoomLight.defaultLevel
     /// Contrast per point of brightness. Set by dragging Auto's Contrast slider.
     @Published var autoContrastScale: Double = RoomLight.defaultContrastScale
+    /// The Hue lamps follow the day's scenes (see `LampController`).
+    @Published var lampsFollow: Bool = false
+    /// The paired Hue Bridge's host name; its key is in the Keychain.
+    @Published var hueHost: String?
+    /// What the lamps are doing, or why they aren't, for Settings.
+    @Published var lampStatus: String = "Not paired"
 
     // Auto's live state, set by AutoController and not saved.
 
@@ -48,6 +54,10 @@ class AppState: ObservableObject {
     /// Set by the app at startup: show this contrast now, and keep it as the
     /// contrast for this brightness. The flag is true when the drag ends.
     var onSetContrast: ((Int, Bool) -> Void)?
+    /// Set by the app at startup: find the bridge and pair with it.
+    var onPairLamps: (() -> Void)?
+    /// Set by the app at startup: set the lamps for now, not on the next tick.
+    var onLampsChanged: (() -> Void)?
 
     /// True once the BetterDisplay path + display name have been verified against
     /// real hardware (a DDC read succeeded). Until then, the menu bar shows the
@@ -93,6 +103,8 @@ class AppState: ObservableObject {
         var mode: Mode?
         var autoLevel: Double?
         var autoContrastScale: Double?
+        var lampsFollow: Bool?
+        var hueHost: String?
     }
 
     func save() {
@@ -106,7 +118,9 @@ class AppState: ObservableObject {
             isSetUp: isSetUp,
             mode: mode,
             autoLevel: autoLevel,
-            autoContrastScale: autoContrastScale
+            autoContrastScale: autoContrastScale,
+            lampsFollow: lampsFollow,
+            hueHost: hueHost
         )
         do {
             let data = try JSONEncoder().encode(config)
@@ -132,6 +146,8 @@ class AppState: ObservableObject {
         mode = config.mode ?? .auto
         autoLevel = config.autoLevel ?? RoomLight.defaultLevel
         autoContrastScale = config.autoContrastScale ?? RoomLight.defaultContrastScale
+        lampsFollow = config.lampsFollow ?? false
+        hueHost = config.hueHost
     }
 
     // MARK: - Setup validation

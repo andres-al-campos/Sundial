@@ -6,15 +6,24 @@ import Foundation
 /// point moves the times about 4 minutes. Without a place (a zone like UTC),
 /// the fitted fixed times.
 enum SunClock {
-    private static var cached: (key: String, schedule: RoomLight.WarmSchedule)?
+    private static var cached: (key: String, schedule: RoomLight.WarmSchedule, sun: RoomLight.SunTimes?)?
 
     static func schedule(on date: Date = Date()) -> RoomLight.WarmSchedule {
+        today(date).schedule
+    }
+
+    /// Today's sunrise and sunset, or nil without a place for the time zone.
+    static func sun(on date: Date = Date()) -> RoomLight.SunTimes? {
+        today(date).sun
+    }
+
+    private static func today(_ date: Date) -> (schedule: RoomLight.WarmSchedule, sun: RoomLight.SunTimes?) {
         // Autoupdating, so a time zone change while traveling is seen at once.
         let zone = TimeZone.autoupdatingCurrent
         let cal = Calendar.autoupdatingCurrent
         let d = cal.dateComponents(in: zone, from: date)
         let key = "\(zone.identifier) \(d.year ?? 0)-\(d.month ?? 0)-\(d.day ?? 0)"
-        if let cached, cached.key == key { return cached.schedule }
+        if let cached, cached.key == key { return (cached.schedule, cached.sun) }
 
         var sun: RoomLight.SunTimes?
         if let place = place(of: zone.identifier), let year = d.year, let month = d.month, let day = d.day {
@@ -24,8 +33,8 @@ enum SunClock {
                                      utcOffset: Double(zone.secondsFromGMT(for: noon)) / 3600)
         }
         let schedule = RoomLight.warmSchedule(sun: sun)
-        cached = (key, schedule)
-        return schedule
+        cached = (key, schedule, sun)
+        return (schedule, sun)
     }
 
     /// The time zone table's point for this zone, or nil when it isn't listed.

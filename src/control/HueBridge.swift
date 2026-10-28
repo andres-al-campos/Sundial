@@ -1,0 +1,201 @@
+import Foundation
+import Security
+
+/// The Hue Bridge on the local network, over its own API (CLIP v2). Needs the
+/// home network, not the internet.
+final class HueBridge: NSObject, URLSessionDelegate {
+    let host: String
+    private var key: String?
+    private lazy var session = URLSession(configuration: .ephemeral, delegate: self, delegateQueue: nil)
+
+    init(host: String, key: String?) {
+        self.host = host
+        self.key = key
+    }
+
+    var isPaired: Bool { key != nil }
+
+    // MARK: - Finding and pairing
+
+    /// The first bridge Bonjour finds (`_hue._tcp`), as a host name, or nil
+    /// after `timeout` seconds.
+    @MainActor
+    static func discover(timeout: TimeInterval = 5) async -> String? {
+        await Finder().find(timeout: timeout)
+    }
+
+    /// Ask for a key until the bridge's link button has been pressed, for up to
+    /// `timeout` seconds (the bridge allows 30 after a press). Saves it in the
+    /// Keychain.
+    func pair(timeout: TimeInterval = 30) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            var req = URLRequest(url: URL(string: "https://\(host)/api")!)
+            req.httpMethod = "POST"
+            req.httpBody = Data(#"{"devicetype":"sundial#mac"}"#.utf8)
+            if let (data, _) = try? await session.data(for: req),
+               let reply = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+               let user = (reply.first?["success"] as? [String: Any])?["username"] as? String {
+                key = user
+                Self.saveKey(user, host: host)
+                return
+            }
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+        throw HueError("The bridge didn't answer with a key. Press the round button on top of the bridge, then pair again within 30 seconds.")
+    }
+
+    // MARK: - Reading and setting
+
+    struct Scene { var name: String; var lamps: [String: LampBlend.LampState] }
+
+    func scenes() async throws -> [Scene] {
+        let data = try await get("scene")
+        return data.compactMap { s in
+            guard let name = (s["metadata"] as? [String: Any])?["name"] as? String,
+                  let actions = s["actions"] as? [[String: Any]] else { return nil }
+            var lamps: [String: LampBlend.LampState] = [:]
+            for a in actions {
+                guard let id = (a["target"] as? [String: Any])?["rid"] as? String,
+                      let act = a["action"] as? [String: Any] else { continue }
+                let b = ((act["dimming"] as? [String: Any])?["brightness"] as? Double)
+                    ?? (((act["on"] as? [String: Any])?["on"] as? Bool) == true ? 100 : nil)
+                let xy: LampBlend.XY?
+                if let c = (act["color"] as? [String: Any])?["xy"] as? [String: Any],
+                   let x = c["x"] as? Double, let y = c["y"] as? Double {
+                    xy = .init(x: x, y: y)
+                } else if let m = (act["color_temperature"] as? [String: Any])?["mirek"] as? Double {
+                    xy = LampBlend.xy(mirek: m)
+                } else {
+                    xy = nil
+                }
+                if let b, let xy { lamps[id] = .init(brightness: b, xy: xy) }
+            }
+            return Scene(name: name, lamps: lamps)
+        }
+    }
+
+    /// Fade a lamp to `state` over `fade` seconds.
+    func set(lamp id: String, to state: LampBlend.LampState, fade: TimeInterval) async throws {
+        let body: [String: Any] = [
+            "on": ["on": true],
+            "dimming": ["brightness": state.brightness],
+            "color": ["xy": ["x": state.xy.x, "y": state.xy.y]],
+            "dynamics": ["duration": Int(fade * 1000)],
+        ]
+        var req = try request("light/\(id)")
+        req.httpMethod = "PUT"
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, resp) = try await session.data(for: req)
+        try check(resp, data)
+    }
+
+    private func get(_ resource: String) async throws -> [[String: Any]] {
+        let (data, resp) = try await session.data(for: try request(resource))
+        try check(resp, data)
+        return (try JSONSerialization.jsonObject(with: data) as? [String: Any])?["data"] as? [[String: Any]] ?? []
+    }
+
+    private func request(_ resource: String) throws -> URLRequest {
+        guard let key else { throw HueError("Sundial isn't paired with the bridge. Open Settings → Lamps and pair it.") }
+        var req = URLRequest(url: URL(string: "https://\(host)/clip/v2/resource/\(resource)")!, timeoutInterval: 5)
+        req.setValue(key, forHTTPHeaderField: "hue-application-key")
+        return req
+    }
+
+    private func check(_ resp: URLResponse, _ data: Data) throws {
+        let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        if code == 403 {
+            key = nil
+            Self.deleteKey(host: host)
+            throw HueError("The bridge no longer accepts Sundial's key (it was removed in the Hue app, or the bridge was reset). Open Settings → Lamps and pair again.")
+        }
+        guard (200..<300).contains(code) else {
+            throw HueError("The bridge answered \(code): \(String(decoding: data.prefix(200), as: UTF8.self)). Check the bridge is on and reachable, then try again.")
+        }
+    }
+
+    /// The bridge's certificate is signed by Signify's own root, not one macOS
+    /// trusts, so it's accepted for the bridge's host and nothing else.
+    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        let space = challenge.protectionSpace
+        if space.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           space.host == host, let trust = space.serverTrust {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+
+    // MARK: - Keychain
+
+    private static let service = "com.aurende.sundial.hue"
+
+    static func savedKey(host: String) -> String? {
+        let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                                kSecAttrAccount as String: host, kSecReturnData as String: true]
+        var out: AnyObject?
+        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let d = out as? Data else { return nil }
+        return String(decoding: d, as: UTF8.self)
+    }
+
+    private static func saveKey(_ key: String, host: String) {
+        deleteKey(host: host)
+        let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                                kSecAttrAccount as String: host, kSecValueData as String: Data(key.utf8)]
+        SecItemAdd(q as CFDictionary, nil)
+    }
+
+    private static func deleteKey(host: String) {
+        let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
+                                kSecAttrAccount as String: host]
+        SecItemDelete(q as CFDictionary)
+    }
+
+    // MARK: - Bonjour
+
+    @MainActor
+    private final class Finder: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
+        private let browser = NetServiceBrowser()
+        private var services: [NetService] = []
+        private var done: CheckedContinuation<String?, Never>?
+
+        func find(timeout: TimeInterval) async -> String? {
+            await withCheckedContinuation { c in
+                done = c
+                browser.delegate = self
+                browser.searchForServices(ofType: "_hue._tcp.", inDomain: "local.")
+                DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.finish(nil) }
+            }
+        }
+
+        private func finish(_ host: String?) {
+            browser.stop()
+            done?.resume(returning: host)
+            done = nil
+        }
+
+        nonisolated func netServiceBrowser(_ b: NetServiceBrowser, didFind s: NetService, moreComing: Bool) {
+            MainActor.assumeIsolated {
+                services.append(s)
+                s.delegate = self
+                s.resolve(withTimeout: 5)
+            }
+        }
+
+        nonisolated func netServiceDidResolveAddress(_ s: NetService) {
+            MainActor.assumeIsolated {
+                // "ecb5fa98e9ef.local." → without the trailing dot, so it
+                // matches the host URLSession reports.
+                if let name = s.hostName { finish(name.hasSuffix(".") ? String(name.dropLast()) : name) }
+            }
+        }
+    }
+}
+
+struct HueError: LocalizedError {
+    let message: String
+    init(_ message: String) { self.message = message }
+    var errorDescription: String? { message }
+}

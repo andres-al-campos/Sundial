@@ -37,6 +37,34 @@ struct SettingsView: View {
 
             Divider()
 
+            // Lamps
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Lamps")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Toggle("Follow the day's scenes", isOn: $appState.lampsFollow)
+                        .controlSize(.small)
+                        .disabled(appState.hueHost == nil)
+                        .onChange(of: appState.lampsFollow) { _, _ in
+                            appState.save()
+                            appState.onLampsChanged?()
+                        }
+                    Spacer()
+                    Button(appState.hueHost == nil ? "Pair Hue Bridge" : "Pair again") { appState.onPairLamps?() }
+                        .controlSize(.small)
+                }
+                // Two lines held whatever the status says, so a status change
+                // never resizes the popup.
+                Text(appState.lampStatus)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2, reservesSpace: true)
+            }
+
+            Divider()
+
             // Behavior
             VStack(alignment: .leading, spacing: 8) {
                 Text("Behavior")
