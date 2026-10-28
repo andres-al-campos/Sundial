@@ -142,7 +142,7 @@ final class AutoController {
         let target = (brightness: brightness,
                       contrast: RoomLight.contrast(brightness: brightness, scale: state.autoContrastScale),
                       nightShift: RoomLight.nightShift(minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0),
-                                                    schedule: SunClock.schedule(on: now)))
+                                                    schedule: SunClock.schedule(on: now, bedtime: state.bedtime)))
 
         var s = shown ?? target
         s.brightness = RoomLight.step(s.brightness, toward: target.brightness, maxStep: Self.maxStep.brightness * dt)

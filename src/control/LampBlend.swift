@@ -28,8 +28,10 @@ enum LampBlend {
     /// The scenes Sundial places, in day order, and when: tied to the sun
     /// where the day is, to the bedtime ramp at night. Twilight sits where
     /// Night Shift starts warming and MidNight where it's full, so the screen
-    /// and the lamps are always at the same point of the evening. The others
-    /// are guesses until there's an editor to set them.
+    /// and the lamps are always at the same point of the evening, and
+    /// DuskLight, the dimmest, at bedtime, where Night Shift is full. Night and
+    /// MidNight two hours and one before bedtime are guesses until there's an
+    /// editor to set them.
     static func defaultTimes(warm: RoomLight.WarmSchedule, sun: RoomLight.SunTimes?) -> [(name: String, minute: Int, holds: Bool)] {
         let sunrise = sun.map { Int($0.sunrise.rounded()) } ?? 7 * 60
         let lastLight = sun.map { Int(($0.sunset + 30).rounded()) } ?? warm.from + 70
@@ -39,9 +41,9 @@ enum LampBlend {
             ("Noon", 12 * 60, true),
             ("Twilight", warm.from, false),
             ("Evening", lastLight, false),
-            ("Night", 22 * 60, false),
-            ("MidNight", bed, false),
-            ("DuskLight", (bed + 60) % (24 * 60), true),
+            ("Night", (bed - 120 + 24 * 60) % (24 * 60), false),
+            ("MidNight", (bed - 60 + 24 * 60) % (24 * 60), false),
+            ("DuskLight", bed, true),
         ]
     }
 

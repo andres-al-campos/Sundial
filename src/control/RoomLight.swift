@@ -84,12 +84,15 @@ enum RoomLight {
     static let warmBeforeSunset = 40.0
     static let offBeforeSunrise = 46.0
 
-    /// The fitted schedule moved with the season: start and end follow the sun.
-    static func warmSchedule(sun: SunTimes?) -> WarmSchedule {
-        guard let sun else { return fittedSchedule }
-        return WarmSchedule(from: Int((sun.sunset - warmBeforeSunset).rounded()),
-                            full: fittedSchedule.full,
-                            off: Int((sun.sunrise - offBeforeSunrise).rounded()))
+    /// The fitted schedule moved with the season: start and end follow the sun,
+    /// and full warmth is at your bedtime (minutes after midnight; past
+    /// midnight counts as the same night).
+    static func warmSchedule(sun: SunTimes?, bedtime: Int = fittedSchedule.full) -> WarmSchedule {
+        let base = sun.map { WarmSchedule(from: Int(($0.sunset - warmBeforeSunset).rounded()),
+                                          full: fittedSchedule.full,
+                                          off: Int(($0.sunrise - offBeforeSunrise).rounded())) } ?? fittedSchedule
+        let bed = bedtime % (24 * 60)
+        return WarmSchedule(from: base.from, full: bed <= base.from ? bed + 24 * 60 : bed, off: base.off)
     }
 
     static func nightShift(minuteOfDay m: Int, schedule: WarmSchedule = fittedSchedule) -> Double {

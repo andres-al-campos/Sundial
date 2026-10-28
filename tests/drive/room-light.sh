@@ -83,6 +83,8 @@ if let today = sun(2026, 10, 26, -5) {
           abs(w.from - RoomLight.fittedSchedule.from) <= 2 && abs(w.off - RoomLight.fittedSchedule.off) <= 2, w)
 }
 check("no sun times, the fitted schedule", RoomLight.warmSchedule(sun: nil) == RoomLight.fittedSchedule, "")
+check("a 23:00 bedtime is full warmth at 23:00", RoomLight.nightShift(minuteOfDay: 23 * 60, schedule: RoomLight.warmSchedule(sun: nil, bedtime: 23 * 60)) == 100, "")
+check("a 1:00 bedtime is the same night, not before warming starts", RoomLight.warmSchedule(sun: nil, bedtime: 60).full == 25 * 60, RoomLight.warmSchedule(sun: nil, bedtime: 60))
 
 // Easing: the blinds shutting (as logged, 237 → 35 lux over 8 s) lands in about
 // 20 seconds: not instantly, and not dragging on.

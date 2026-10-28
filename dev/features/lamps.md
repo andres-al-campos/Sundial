@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-10-28 00:07, at 1.1.0.
+Updated 2026-10-28 00:22, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -10,13 +10,14 @@ artificial light follows the natural light along with the screen.
 - **Scenes are keyframes.** Sundial reads the scenes on the Hue Bridge and
   places seven of them, by name, on the day: Morning at sunrise, Noon at 12:00,
   Twilight where Night Shift starts warming, Evening at last light (30 minutes
-  after sunset), Night at 22:00, MidNight at bedtime (where Night Shift is
-  full), and DuskLight, the dimmest, an hour after. A scene that isn't on the
+  after sunset), Night two hours before bedtime, MidNight one hour before,
+  and DuskLight, the dimmest, at bedtime, where Night Shift is full. Bedtime
+  is set in Auto (midnight by default). A scene that isn't on the
   bridge is left out. The times aren't settable yet.
 - **Blending.** Between two scenes each lamp moves in brightness and colour
   along a straight line in the bridge's colour space (CIE xy), with its own
   brightness from each scene. Whites stored as colour temperature are
-  converted to xy first. From Twilight to MidNight the blend runs the whole
+  converted to xy first. From Twilight to DuskLight the blend runs the whole
   way; Morning, Noon and DuskLight hold until 30 minutes before the next
   scene, so the lamps don't brighten all night.
 - **Continuous fade.** Every 30 seconds each lamp is sent a 30-second fade to
@@ -40,7 +41,8 @@ and checks that a lamp on a keyframe is that scene, halfway between two is
 halfway in brightness and xy, each lamp keeps its own brightness, the blend
 wraps midnight, DuskLight holds until 30 minutes before Morning, a lamp
 missing from a scene takes the other's value, 2000 K and 6400 K land on the
-right whites, and the scenes sit on the sun and Night Shift's ramp.
+right whites, and the scenes sit on the sun and Night Shift's ramp, with
+DuskLight at bedtime and the night scenes moving with it.
 
 Last driven: 2026-10-28, macOS. Passed; it failed as expected with a wrong
 halfway value.
@@ -51,7 +53,7 @@ in the room.
 ## Gotchas
 
 - A lamp changed in the Hue app is set back within 30 seconds while Follow is on.
-- The scene times are fixed in `LampBlend.defaultTimes` until there's an editor.
+- Apart from bedtime, the scene times are fixed in `LampBlend.defaultTimes` until there's an editor.
 - macOS asks for local network access the first time Sundial looks for the bridge.
   Refused, no bridge is found. Allow it in System Settings → Privacy & Security
   → Local Network.

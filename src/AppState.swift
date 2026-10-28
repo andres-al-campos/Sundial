@@ -20,6 +20,9 @@ class AppState: ObservableObject {
     @Published var autoLevel: Double = RoomLight.defaultLevel
     /// Contrast per point of brightness. Set by dragging Auto's Contrast slider.
     @Published var autoContrastScale: Double = RoomLight.defaultContrastScale
+    /// When Night Shift is full and the lamps reach their dimmest scene, in
+    /// minutes after midnight. Set in Auto.
+    @Published var bedtime: Int = 24 * 60
     /// The Hue lamps follow the day's scenes (see `LampController`).
     @Published var lampsFollow: Bool = false
     /// The paired Hue Bridge's host name; its key is in the Keychain.
@@ -104,6 +107,7 @@ class AppState: ObservableObject {
         var autoLevel: Double?
         var autoContrastScale: Double?
         var lampsFollow: Bool?
+        var bedtime: Int?
         var hueHost: String?
     }
 
@@ -120,6 +124,7 @@ class AppState: ObservableObject {
             autoLevel: autoLevel,
             autoContrastScale: autoContrastScale,
             lampsFollow: lampsFollow,
+            bedtime: bedtime,
             hueHost: hueHost
         )
         do {
@@ -147,6 +152,7 @@ class AppState: ObservableObject {
         autoLevel = config.autoLevel ?? RoomLight.defaultLevel
         autoContrastScale = config.autoContrastScale ?? RoomLight.defaultContrastScale
         lampsFollow = config.lampsFollow ?? false
+        bedtime = config.bedtime ?? 24 * 60
         hueHost = config.hueHost
     }
 

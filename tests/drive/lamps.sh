@@ -52,7 +52,10 @@ let times = LampBlend.defaultTimes(warm: warmSched, sun: RoomLight.SunTimes(sunr
 func t(_ n: String) -> Int { times.first { $0.name == n }!.minute }
 check("Twilight is where Night Shift starts warming", t("Twilight") == warmSched.from, t("Twilight"))
 check("Evening is last light, 30 minutes after sunset", t("Evening") == 18 * 60 + 23, t("Evening"))
-check("MidNight is the bedtime, where Night Shift is full", t("MidNight") == 0, t("MidNight"))
+check("DuskLight, the dimmest, is the bedtime, where Night Shift is full", t("DuskLight") == 0, t("DuskLight"))
+check("MidNight an hour before, Night two", t("MidNight") == 23 * 60 && t("Night") == 22 * 60, (t("MidNight"), t("Night")))
+let late = LampBlend.defaultTimes(warm: RoomLight.warmSchedule(sun: nil, bedtime: 60), sun: nil)
+check("a 1:00 bedtime moves the night scenes with it", late.first { $0.name == "DuskLight" }!.minute == 60 && late.first { $0.name == "Night" }!.minute == 23 * 60, late)
 check("Morning is sunrise", t("Morning") == 7 * 60 + 16, t("Morning"))
 
 if !failures.isEmpty {
@@ -71,4 +74,4 @@ if ! "$work/lamps" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp"
+echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime"

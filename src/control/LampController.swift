@@ -94,7 +94,7 @@ final class LampController {
                 scenesRead = Date()
             }
             let now = Date()
-            let frames = LampBlend.defaultTimes(warm: SunClock.schedule(on: now), sun: SunClock.sun(on: now))
+            let frames = LampBlend.defaultTimes(warm: SunClock.schedule(on: now, bedtime: state.bedtime), sun: SunClock.sun(on: now))
                 .compactMap { t in
                     scenes.first { $0.name == t.name }.map {
                         LampBlend.Keyframe(minute: t.minute, name: t.name, lamps: $0.lamps, holds: t.holds)

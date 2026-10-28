@@ -15,6 +15,7 @@ struct AutoView: View {
             AutoSlider(label: "Brightness", current: appState.autoBrightness) { appState.onSetBrightness?($0, $1) }
             AutoSlider(label: "Contrast", current: appState.autoContrast) { appState.onSetContrast?($0, $1) }
             row("Night Shift", nightShiftText)
+            bedtimeRow
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -60,6 +61,36 @@ struct AutoView: View {
         .frame(height: 20)
     }
 
+    /// When Night Shift is full and the lamps reach DuskLight.
+    private var bedtimeRow: some View {
+        HStack(spacing: 8) {
+            Text("Bedtime")
+                .font(.caption)
+                .frame(width: 72, alignment: .leading)
+            DatePicker("Bedtime", selection: bedtimeBinding, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .datePickerStyle(.field)
+                .controlSize(.small)
+            Spacer(minLength: 0)
+        }
+        .frame(height: 20)
+    }
+
+    private var bedtimeBinding: Binding<Date> {
+        Binding(
+            get: { Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(appState.bedtime % (24 * 60)) * 60) },
+            set: { date in
+                let c = Calendar.current.dateComponents([.hour, .minute], from: date)
+                let m = (c.hour ?? 0) * 60 + (c.minute ?? 0)
+                // Midnight stays 24:00, the end of the evening, not its start.
+                appState.bedtime = m == 0 ? 24 * 60 : m
+                appState.save()
+                appState.onAutoChanged?()
+                appState.onLampsChanged?()
+            }
+        )
+    }
+
     /// Tenths below 10 lux, where the sensor tells them apart; whole lux above.
     static func luxText(_ lux: Double) -> String {
         lux < 9.95 ? String(format: "%.1f", lux) : "\(Int(lux.rounded()))"
@@ -67,7 +98,7 @@ struct AutoView: View {
 
     /// Night Shift now and the one change coming next, not the whole schedule.
     private var nightShiftText: String {
-        let s = SunClock.schedule()
+        let s = SunClock.schedule(bedtime: appState.bedtime)
         let now = appState.autoNightShift
         let next = now == 0 ? "warms at \(time(s.from))" : now < 100 ? "full at \(time(s.full))" : "off at \(time(s.off))"
         return "\(now)% · \(next)"
