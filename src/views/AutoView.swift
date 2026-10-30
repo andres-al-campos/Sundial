@@ -57,9 +57,10 @@ struct AutoView: View {
             Text("\(appState.autoNightShift)% · darkest at")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
+            // The Schedule cards' time picker, stepper and all, so it reads as
+            // a time you can change.
             DatePicker("Bedtime", selection: bedtimeBinding, displayedComponents: .hourAndMinute)
                 .labelsHidden()
-                .datePickerStyle(.field)
                 .controlSize(.small)
             Spacer(minLength: 0)
         }
