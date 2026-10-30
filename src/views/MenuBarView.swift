@@ -76,6 +76,14 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 320)
+        // A time picker's hour or minute stays selected after a click
+        // elsewhere: SwiftUI's empty space doesn't take keyboard focus. A
+        // click on the popup's background ends the edit, as in any window.
+        .background {
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture { NSApp.keyWindow?.makeFirstResponder(nil) }
+        }
         .onDisappear {
             // Popover closed — always end any active preview so the monitor
             // snaps back to the scheduled preset.
@@ -89,8 +97,10 @@ struct MenuBarView: View {
         // value only counts once, and onDisappear doesn't fire on every close.
         // Resigning key is the close signal that always arrives: reset the
         // expanded card there, so the next open shows the active preset.
-        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { note in
             expandedPresetID = appState.activePresetID
+            // Reopen with no field still selected.
+            (note.object as? NSWindow)?.makeFirstResponder(nil)
         }
         // The schedule can move on while the popup is closed.
         .onChange(of: appState.activePresetID) { _, newValue in
