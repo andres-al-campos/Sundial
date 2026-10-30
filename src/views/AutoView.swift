@@ -54,15 +54,19 @@ struct AutoView: View {
             Text("Night Shift")
                 .font(.caption)
                 .frame(width: 72, alignment: .leading)
-            Text("\(appState.autoNightShift)% · darkest at")
+            Text("\(appState.autoNightShift)%")
                 .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            // Bedtime sits at the right edge, where the sliders' values end.
+            Text("darkest at")
+                .font(.caption)
                 .foregroundStyle(.secondary)
             // The Schedule cards' time picker, stepper and all, so it reads as
             // a time you can change.
             DatePicker("Bedtime", selection: bedtimeBinding, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .controlSize(.small)
-            Spacer(minLength: 0)
         }
         .frame(height: 20)
     }
