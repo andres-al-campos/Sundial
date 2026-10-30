@@ -45,9 +45,10 @@ enum RoomLight {
     // MARK: - Contrast
 
     /// Contrast is a multiple of brightness, so brightness 0 is contrast 0 too,
-    /// the monitor's darkest. √2 to start: the presets' own line had that slope
-    /// plus 7.8. Dragging Contrast sets the multiple.
-    static let defaultContrastScale = 2.0.squareRoot()
+    /// the monitor's darkest. Dragging Contrast sets the multiple. π to start:
+    /// four days of drags (2026-10-26 to 30) fitted 3.0, and settled between
+    /// 3.5 and 4 from the 28th on; √2, from the presets' line, was too flat.
+    static let defaultContrastScale = Double.pi
 
     static func contrast(brightness: Double, scale: Double = defaultContrastScale) -> Double {
         clamp(scale * brightness)
@@ -58,6 +59,45 @@ enum RoomLight {
     /// worked out as if brightness were 1.
     static func contrastScale(forContrast contrast: Double, brightness: Double) -> Double {
         contrast / max(brightness, 1)
+    }
+
+    // MARK: - The dark
+
+    /// Where a dark room ends up by bedtime: the brightness most nights of
+    /// 2026-10-26 to 30 were dragged down to (1 on six nights of seven). A drag
+    /// after bedtime in the dark sets it.
+    static let defaultNightMinimum = 1.0
+
+    /// How far the screen has gone from the room's brightness to the night
+    /// minimum: 0 to 1. Below `floorLux` the sensor can't tell darker from
+    /// dark, and the drags showed the screen still wanted dimming after the
+    /// room read 0, so the clock carries on: from when the room went dark
+    /// (`darkSince`, minutes after midnight) to bedtime, evenly, then the
+    /// minimum until Night Shift turns off. Outside Night Shift's hours, 0.
+    static func darkFraction(minuteOfDay m: Int, darkSince d: Int, schedule s: WarmSchedule) -> Double {
+        let day = 24 * 60
+        func night(_ x: Int) -> Int { (x - s.from + 2 * day) % day }
+        let now = night(m), bed = s.full - s.from, off = night(s.off)
+        guard now < off else { return 0 }
+        if now >= bed { return 1 }
+        // Dark since before the evening began counts from its start.
+        let since = night(d) > now ? 0 : night(d)
+        return Double(now - since) / Double(bed - since)
+    }
+
+    /// The room's brightness, moved `dark` of the way to the night minimum
+    /// (never up to it, when the room's is already lower).
+    static func brightness(level: Double, lux: Double, dark: Double, nightMinimum: Double) -> Double {
+        let lit = brightness(level: level, lux: lux)
+        return lit + (min(nightMinimum, lit) - lit) * min(max(dark, 0), 1)
+    }
+
+    /// The level that gives `brightness` this far into the dark: what a drag
+    /// saves before bedtime. Past it (`dark` 1) the drag sets the night
+    /// minimum instead, and this isn't used.
+    static func level(forBrightness brightness: Double, lux: Double, dark: Double, nightMinimum: Double) -> Double {
+        let f = min(max(dark, 0), 0.99)
+        return max(0, (brightness - nightMinimum * f) / (1 - f)) / factor(lux: lux)
     }
 
     // MARK: - Night Shift

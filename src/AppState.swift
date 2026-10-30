@@ -20,6 +20,9 @@ class AppState: ObservableObject {
     @Published var autoLevel: Double = RoomLight.defaultLevel
     /// Contrast per point of brightness. Set by dragging Auto's Contrast slider.
     @Published var autoContrastScale: Double = RoomLight.defaultContrastScale
+    /// The brightness a dark room reaches by bedtime. Set by dragging
+    /// Brightness after bedtime in the dark.
+    @Published var autoNightMinimum: Double = RoomLight.defaultNightMinimum
     /// When Night Shift is full and the lamps reach their dimmest scene, in
     /// minutes after midnight. Set in Auto.
     @Published var bedtime: Int = 24 * 60
@@ -108,6 +111,7 @@ class AppState: ObservableObject {
         var autoContrastScale: Double?
         var lampsFollow: Bool?
         var bedtime: Int?
+        var autoNightMinimum: Double?
         var hueHost: String?
     }
 
@@ -125,6 +129,7 @@ class AppState: ObservableObject {
             autoContrastScale: autoContrastScale,
             lampsFollow: lampsFollow,
             bedtime: bedtime,
+            autoNightMinimum: autoNightMinimum,
             hueHost: hueHost
         )
         do {
@@ -153,6 +158,7 @@ class AppState: ObservableObject {
         autoContrastScale = config.autoContrastScale ?? RoomLight.defaultContrastScale
         lampsFollow = config.lampsFollow ?? false
         bedtime = config.bedtime ?? 24 * 60
+        autoNightMinimum = config.autoNightMinimum ?? RoomLight.defaultNightMinimum
         hueHost = config.hueHost
     }
 

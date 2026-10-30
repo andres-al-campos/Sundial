@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-28 00:22, at 1.1.0.
+Updated 2026-10-30 17:34, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -16,13 +16,14 @@ presets; Schedule (the presets) is the other.
   evening of 2026-10-26 (17-22 at 2 lux, 25-30 at dusk, 40 at 84 lux). A
   level of 0 is the monitor's darkest in any room.
 - **Contrast follows brightness** at a multiple you set by dragging the
-  Contrast slider: it starts at √2 × brightness, and a drag keeps the
+  Contrast slider: it starts at π × brightness, and a drag keeps the
   multiple that gives what you chose, so brightness 0 is still contrast 0, the
-  monitor's darkest. The presets' own line had the slope √2 plus 7.8 (R² 0.82,
-  against 0.71 for √2 ×).
+  monitor's darkest. Four days of drags (2026-10-26 to 30) fitted 3.0 × and
+  settled at 3.5-4 × from the 28th; a curve bent no better (power 0.99).
 - **Night Shift follows the sun**: it starts warming 40 minutes before
-  sunset, rises evenly to full at your bedtime (the Bedtime row, midnight by
-  default; past midnight counts as the same night), and turns off 46 minutes before
+  sunset, rises evenly to full at your bedtime (the time in the Night Shift
+  row, "darkest at", midnight by default; past midnight counts as the same
+  night), and turns off 46 minutes before
   sunrise. Fitted to the presets' evening values (R² 0.98) on 2026-10-26,
   when that was 5:13 PM to 6:30 AM. Sunrise and sunset are computed for the
   point macOS's time zone table gives your time zone (Chicago for
@@ -31,6 +32,13 @@ presets; Schedule (the presets) is the other.
   fixed 5:13 PM and 6:30 AM. When the Mac changes time zone (traveling, with
   "Set time zone automatically" on), the clock and the sun move to the new
   zone at once.
+- **The dark dims to bedtime.** Below 0.1 lux the sensor reads 0, however
+  dark. When the room goes that dark during Night Shift's hours, brightness
+  slides evenly from the room's to the night minimum (brightness 1 to start)
+  by bedtime, and stays there until Night Shift turns off; going dark after
+  bedtime is the minimum at once. A drag of Brightness before bedtime saves a
+  level as usual (worked back through the slide); after bedtime in the dark it
+  sets the night minimum. Waking the Mac starts the slide over from then.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
   rest, so a big change (blinds, a cloud) lands in about 20 seconds. The
@@ -39,8 +47,11 @@ presets; Schedule (the presets) is the other.
 - **No reading.** With the lid closed or no sensor, Auto keeps the last room
   it saw (100 lux before the first) and the Room row says "no reading".
 - **Room log.** One line a minute, and one each time you let go of a slider
-  (with the level or contrast multiple saved), in `room-log.csv` next to
-  `config.json`.
+  (with the level, contrast multiple or night minimum saved), in
+  `room-log.csv` next to `config.json`. The last column, `dark`, is how far
+  into the dark slide it was (0 to 1). Rows from 2026-10-30 on carry the
+  night minimum and `dark` columns; a log started before then has the older
+  header.
 - **Auto | Schedule** under the header picks which one drives the monitor.
 
 ## How to get to it
@@ -55,7 +66,8 @@ Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 `./build.sh drive room-light` (~5s): compiles the app's room-light rules with
 a harness. It checks that brightness is the level times the room's fourth
 root (the evening's settings at 2, 19-32 and 84 lux, never past 100, level 0
-darkest), that a set
+darkest), that a dark room slides to the night minimum by bedtime and not
+outside Night Shift's hours, that a set
 brightness comes back in the same room and scales in another, that a set
 contrast comes back at the same brightness and scales with it, that sunrise
 and sunset for Chicago land on its solstice times (and zone.tab's point
@@ -88,7 +100,7 @@ row.
   instead (about 10 per lux), which told apart an LED's settings at 0.15,
   2.2, 7 and 11 lux where lux read 0, 0, 2 and 7 (2026-10-26). Below about
   0.1 lux both read 0, so the two lowest settings look the same. A lamp-lit room may read as bright as a dim afternoon; Night Shift is on
-  the clock, brightness isn't.
+  the clock; brightness is only below 0.1 lux, in the dark slide.
 - The monitor's own light reaches the sensor. A brighter monitor reads as a
   brighter room; small at the levels seen so far.
 - Auto writes only when a value changes, so a change made with the monitor's
@@ -144,4 +156,19 @@ row.
   the lamps' dimmest scene lands on it too: "it should be the same as night
   shift ... and the auto mode night shift should be customizable too". It
   replaces the fixed midnight above, which stays the default. Applies *Just
+  right for the room*.
+- 2026-10-30 17:34, 1.1.0. Bedtime lives in the Night Shift row as "darkest at [time]", not its own
+  row: one time is where Night Shift is full, the lamps reach DuskLight and a
+  dark room has the screen at its dimmest, and a Bedtime row repeated Night
+  Shift's "full at" ("the bedtime line is kind of redundant ... still make it
+  obvious the value means at this time you get min brightness"). The row
+  drops "warms at" and "off at", which follow the sun and can't be set.
+  Applies *Just right for the room*.
+- 2026-10-30 17:34, 1.1.0. When the room reads 0 before bedtime, brightness keeps falling by the clock
+  to the night minimum at bedtime ("if lux is 0 before midnight it should
+  interpolate"). The log showed it: the room read 0 from 22:30-23:00 every
+  night, and 30-60 minutes later the last drag took the screen to 1 (six
+  nights of seven). Applies *Just right for the room*.
+- 2026-10-30 17:34, 1.1.0. Contrast starts at π × brightness ("how about a multiple of pi?"), between
+  the 3 × the drags fitted and the 3.5-4 × of the last days. Applies *Just
   right for the room*.

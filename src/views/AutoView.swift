@@ -14,8 +14,7 @@ struct AutoView: View {
             room
             AutoSlider(label: "Brightness", current: appState.autoBrightness) { appState.onSetBrightness?($0, $1) }
             AutoSlider(label: "Contrast", current: appState.autoContrast) { appState.onSetContrast?($0, $1) }
-            row("Night Shift", nightShiftText)
-            bedtimeRow
+            nightShiftRow
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -46,27 +45,18 @@ struct AutoView: View {
         .frame(height: 20)
     }
 
-    private func row(_ label: String, _ value: String) -> some View {
+    /// Night Shift now, and bedtime: one time where Night Shift is full, the
+    /// lamps reach DuskLight and a dark room has the screen at its dimmest.
+    /// "Darkest" names all three; a separate Bedtime row repeated Night
+    /// Shift's "full at".
+    private var nightShiftRow: some View {
         HStack(spacing: 8) {
-            Text(label)
+            Text("Night Shift")
                 .font(.caption)
                 .frame(width: 72, alignment: .leading)
-            Text(value)
+            Text("\(appState.autoNightShift)% · darkest at")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Spacer(minLength: 0)
-        }
-        .frame(height: 20)
-    }
-
-    /// When Night Shift is full and the lamps reach DuskLight.
-    private var bedtimeRow: some View {
-        HStack(spacing: 8) {
-            Text("Bedtime")
-                .font(.caption)
-                .frame(width: 72, alignment: .leading)
             DatePicker("Bedtime", selection: bedtimeBinding, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .datePickerStyle(.field)
@@ -94,24 +84,6 @@ struct AutoView: View {
     /// Tenths below 10 lux, where the sensor tells them apart; whole lux above.
     static func luxText(_ lux: Double) -> String {
         lux < 9.95 ? String(format: "%.1f", lux) : "\(Int(lux.rounded()))"
-    }
-
-    /// Night Shift now and the one change coming next, not the whole schedule.
-    private var nightShiftText: String {
-        let s = SunClock.schedule(bedtime: appState.bedtime)
-        let now = appState.autoNightShift
-        let next = now == 0 ? "warms at \(time(s.from))" : now < 100 ? "full at \(time(s.full))" : "off at \(time(s.off))"
-        return "\(now)% · \(next)"
-    }
-
-    private func time(_ minuteOfDay: Int) -> String {
-        var c = DateComponents()
-        c.hour = (minuteOfDay / 60) % 24
-        c.minute = minuteOfDay % 60
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US")
-        f.dateFormat = "h:mm a"
-        return Calendar.current.date(from: c).map { f.string(from: $0) } ?? ""
     }
 }
 

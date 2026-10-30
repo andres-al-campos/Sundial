@@ -45,9 +45,9 @@ check("a set brightness comes back in the same room", near(RoomLight.brightness(
 check("and is lower with the blinds shut", RoomLight.brightness(level: set, lux: 35) < 8, RoomLight.brightness(level: set, lux: 35))
 check("a brightness set at night saves a level that is sane by day", RoomLight.brightness(level: RoomLight.level(forBrightness: 17, lux: 2), lux: 550) < 80, RoomLight.brightness(level: RoomLight.level(forBrightness: 17, lux: 2), lux: 550))
 
-// Contrast is √2 × brightness, so both reach 0 together.
+// Contrast is π × brightness to start, so both reach 0 together.
 check("contrast at brightness 0 is 0", RoomLight.contrast(brightness: 0) == 0, RoomLight.contrast(brightness: 0))
-check("contrast at 42 is about 59", near(RoomLight.contrast(brightness: 42), 59.4, 0.1), RoomLight.contrast(brightness: 42))
+check("contrast at 20 is about 63, near the 3-4x dragged to", near(RoomLight.contrast(brightness: 20), 62.8, 0.1), RoomLight.contrast(brightness: 20))
 check("contrast never passes 100", RoomLight.contrast(brightness: 90) == 100, RoomLight.contrast(brightness: 90))
 let k = RoomLight.contrastScale(forContrast: 30, brightness: 20)
 check("a set contrast comes back at the same brightness", near(RoomLight.contrast(brightness: 20, scale: k), 30, 0.001), RoomLight.contrast(brightness: 20, scale: k))
@@ -64,6 +64,28 @@ check("near Night's 67 at 10:17 PM", near(ns(22, 17), 67, 8), ns(22, 17))
 check("near Midnight's 100 at 11:57 PM", near(ns(23, 57), 100, 5), ns(23, 57))
 check("full after midnight", ns(3, 0) == 100, ns(3, 0))
 check("off from 6:30 AM", ns(6, 30) == 0 && ns(6, 29) == 100, (ns(6, 29), ns(6, 30)))
+
+// The dark: below what the sensor sees, the clock dims to the night minimum by
+// bedtime (the fitted schedule: warming from 5:13 PM, full at midnight, off 6:30 AM).
+let night = RoomLight.fittedSchedule
+func dk(_ h: Int, _ m: Int, since sh: Int, _ sm: Int) -> Double {
+    RoomLight.darkFraction(minuteOfDay: h * 60 + m, darkSince: sh * 60 + sm, schedule: night)
+}
+check("dark at 10:30 PM starts at the room's brightness", dk(22, 30, since: 22, 30) == 0, dk(22, 30, since: 22, 30))
+check("and is halfway at 11:15", near(dk(23, 15, since: 22, 30), 0.5, 0.001), dk(23, 15, since: 22, 30))
+check("and at the minimum by bedtime and after", dk(0, 0, since: 22, 30) == 1 && dk(3, 0, since: 22, 30) == 1, (dk(0, 0, since: 22, 30), dk(3, 0, since: 22, 30)))
+check("going dark after bedtime is the minimum at once", dk(1, 0, since: 1, 0) == 1, dk(1, 0, since: 1, 0))
+check("a dark morning after Night Shift ends isn't dimmed", dk(7, 0, since: 22, 30) == 0, dk(7, 0, since: 22, 30))
+check("a dark afternoon isn't dimmed", dk(14, 0, since: 13, 0) == 0, dk(14, 0, since: 13, 0))
+check("dark since before the evening counts from its start", near(dk(20, 36, since: 15, 0), 0.5, 0.01), dk(20, 36, since: 15, 0))
+let litB = RoomLight.brightness(level: 15, lux: 0)
+check("the dark's minimum is reached at bedtime", RoomLight.brightness(level: 15, lux: 0, dark: 1, nightMinimum: 1) == 1, "")
+check("halfway, halfway between", near(RoomLight.brightness(level: 15, lux: 0, dark: 0.5, nightMinimum: 1), (litB + 1) / 2, 0.001), litB)
+check("a room already dimmer than the minimum isn't brightened",
+      RoomLight.brightness(level: 2, lux: 0, dark: 1, nightMinimum: 1) == RoomLight.brightness(level: 2, lux: 0), "")
+let darkLevel = RoomLight.level(forBrightness: 2, lux: 0, dark: 0.5, nightMinimum: 1)
+check("a brightness set halfway into the dark comes back there",
+      near(RoomLight.brightness(level: darkLevel, lux: 0, dark: 0.5, nightMinimum: 1), 2, 0.001), darkLevel)
 
 // The sun, at the point macOS's time zone table gives America/Chicago.
 let chi = RoomLight.coordinates(iso6709: "+415100-0873900")
@@ -130,4 +152,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, a dark room dims to the night minimum by bedtime, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"
