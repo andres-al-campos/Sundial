@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-10-27 02:15, at 1.1.0.
+Updated 2026-10-31 14:10, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -77,6 +77,12 @@ preview, add, delete).
   from the window resigning key, which resets the expanded card to the active
   preset and ends a name edit. An active-preset change while closed also moves
   the expanded card.
+
+- A time picker's hour or minute stayed selected after a click elsewhere,
+  until the panel was rebuilt: SwiftUI's empty space and plain views don't
+  take keyboard focus. A tap on the popup's background fixed Auto but not the
+  cards, whose list catches the clicks first, so `EditFocus` watches every
+  click and ends an edit on anything that isn't a field (2026-10-31).
 
 ## Calls
 

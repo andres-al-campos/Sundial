@@ -76,14 +76,6 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 320)
-        // A time picker's hour or minute stays selected after a click
-        // elsewhere: SwiftUI's empty space doesn't take keyboard focus. A
-        // click on the popup's background ends the edit, as in any window.
-        .background {
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture { NSApp.keyWindow?.makeFirstResponder(nil) }
-        }
         .onDisappear {
             // Popover closed — always end any active preview so the monitor
             // snaps back to the scheduled preset.

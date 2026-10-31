@@ -23,6 +23,8 @@ class AppState: ObservableObject {
     /// The brightness a dark room reaches by bedtime. Set by dragging
     /// Brightness after bedtime in the dark.
     @Published var autoNightMinimum: Double = RoomLight.defaultNightMinimum
+    /// The contrast with it. Set by dragging Contrast after bedtime in the dark.
+    @Published var autoNightContrast: Double = RoomLight.defaultNightContrast
     /// When Night Shift is full and the lamps reach their dimmest scene, in
     /// minutes after midnight. Set in Auto.
     @Published var bedtime: Int = 24 * 60
@@ -112,6 +114,7 @@ class AppState: ObservableObject {
         var lampsFollow: Bool?
         var bedtime: Int?
         var autoNightMinimum: Double?
+        var autoNightContrast: Double?
         var hueHost: String?
     }
 
@@ -130,6 +133,7 @@ class AppState: ObservableObject {
             lampsFollow: lampsFollow,
             bedtime: bedtime,
             autoNightMinimum: autoNightMinimum,
+            autoNightContrast: autoNightContrast,
             hueHost: hueHost
         )
         do {
@@ -159,6 +163,7 @@ class AppState: ObservableObject {
         lampsFollow = config.lampsFollow ?? false
         bedtime = config.bedtime ?? 24 * 60
         autoNightMinimum = config.autoNightMinimum ?? RoomLight.defaultNightMinimum
+        autoNightContrast = config.autoNightContrast ?? RoomLight.defaultNightContrast
         hueHost = config.hueHost
     }
 

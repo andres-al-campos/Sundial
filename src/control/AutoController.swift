@@ -28,6 +28,10 @@ final class AutoController {
     /// How far into the dark the last tick was (`RoomLight.darkFraction`), so
     /// a drag knows what it's setting.
     private var dark = 0.0
+    /// Set on wake and login: the next reading starts a fresh average and the
+    /// monitor goes straight to it. Easing 20 seconds from last night's
+    /// screen to this morning's was "the 20 second thing again".
+    private var snapOnNextReading = false
 
     /// Per-second limits on how fast the monitor moves: brightness and contrast
     /// cross their full range in 20 seconds, Night Shift in ~1.5 minutes.
@@ -42,11 +46,13 @@ final class AutoController {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
-        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
+                     NSWorkspace.sessionDidBecomeActiveNotification] {
             NSWorkspace.shared.notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 Task { @MainActor in
                     guard let self else { return }
                     self.darkSince = nil
+                    self.snapOnNextReading = true
                     guard self.state?.applyOnWake == true else { return }
                     self.forceApply()
                 }
@@ -88,7 +94,9 @@ final class AutoController {
             state.autoLevel = RoomLight.level(forBrightness: Double(brightness), lux: lux,
                                               dark: dark, nightMinimum: state.autoNightMinimum)
         }
-        let contrast = RoomLight.contrast(brightness: Double(brightness), scale: state.autoContrastScale)
+        let contrast = dark >= 1 ? state.autoNightContrast
+            : RoomLight.contrast(litBrightness: RoomLight.brightness(level: state.autoLevel, lux: lux),
+                                 scale: state.autoContrastScale, dark: dark, nightContrast: state.autoNightContrast)
         shown = (Double(brightness), contrast, shown?.nightShift ?? Double(state.autoNightShift))
         state.autoBrightness = brightness
         state.autoContrast = Int(contrast.rounded())
@@ -106,13 +114,23 @@ final class AutoController {
     func setContrast(_ contrast: Int, done: Bool) {
         guard let state else { return }
         let brightness = shown?.brightness ?? Double(state.autoBrightness)
-        state.autoContrastScale = RoomLight.contrastScale(forContrast: Double(contrast), brightness: brightness)
+        let lux = state.roomLux ?? RoomLight.referenceLux
+        var saved: Setting?
+        if dark >= 1 {
+            state.autoNightContrast = Double(contrast)
+            saved = .nightContrast
+        } else if let k = RoomLight.contrastScale(forContrast: Double(contrast),
+                                                  litBrightness: RoomLight.brightness(level: state.autoLevel, lux: lux),
+                                                  dark: dark, nightContrast: state.autoNightContrast) {
+            state.autoContrastScale = k
+            saved = .contrast
+        }
         shown = (brightness, Double(contrast), shown?.nightShift ?? Double(state.autoNightShift))
         state.autoContrast = contrast
         write("hardwareContrast", contrast)
         if done {
             state.save()
-            log(force: true, set: .contrast)
+            log(force: true, set: saved)
         }
     }
 
@@ -133,9 +151,15 @@ final class AutoController {
             return
         }
 
+        var snap = false
         if let raw = AmbientLightSensor.lux() {
             missedReadings = 0
             lastRawLux = raw
+            if snapOnNextReading {
+                smoother = RoomLight.Smoother()
+                snapOnNextReading = false
+                snap = true
+            }
             state.roomLux = smoother.add(lux: raw, dt: dt)
             if !state.sensorReading { state.sensorReading = true }
         } else {
@@ -160,11 +184,14 @@ final class AutoController {
             darkSince = nil
         }
         dark = darkSince.map { RoomLight.darkFraction(minuteOfDay: minute, darkSince: $0, schedule: schedule) } ?? 0
+        let lit = RoomLight.brightness(level: state.autoLevel, lux: lux)
         let brightness = RoomLight.brightness(level: state.autoLevel, lux: lux, dark: dark, nightMinimum: state.autoNightMinimum)
         let target = (brightness: brightness,
-                      contrast: RoomLight.contrast(brightness: brightness, scale: state.autoContrastScale),
+                      contrast: RoomLight.contrast(litBrightness: lit, scale: state.autoContrastScale,
+                                                   dark: dark, nightContrast: state.autoNightContrast),
                       nightShift: RoomLight.nightShift(minuteOfDay: minute, schedule: schedule))
 
+        if snap { shown = nil }
         var s = shown ?? target
         s.brightness = RoomLight.step(s.brightness, toward: target.brightness, maxStep: Self.maxStep.brightness * dt)
         s.contrast = RoomLight.step(s.contrast, toward: target.contrast, maxStep: Self.maxStep.contrast * dt)
@@ -196,7 +223,7 @@ final class AutoController {
     /// One line a minute, and one whenever you set the brightness or contrast,
     /// so a few days of use show what you chose against how bright the room
     /// was. Kept next to config.json as room-log.csv.
-    private enum Setting { case brightness, contrast, nightMinimum }
+    private enum Setting { case brightness, contrast, nightMinimum, nightContrast }
     private static let logURL: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return support.appendingPathComponent("Sundial/room-log.csv")
@@ -219,11 +246,12 @@ final class AutoController {
             set == .contrast ? String(format: "%.3f", state.autoContrastScale) : "",
             set == .nightMinimum ? String(format: "%.1f", state.autoNightMinimum) : "",
             String(format: "%.2f", dark),
+            set == .nightContrast ? String(format: "%.1f", state.autoNightContrast) : "",
         ]
         let line = fields.joined(separator: ",") + "\n"
         let fm = FileManager.default
         if !fm.fileExists(atPath: Self.logURL.path) {
-            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark\n".utf8))
+            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark,night_contrast_set\n".utf8))
         }
         guard let handle = try? FileHandle(forWritingTo: Self.logURL) else { return }
         defer { try? handle.close() }

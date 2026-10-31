@@ -19,6 +19,8 @@ struct SundialApp: App {
         let autoCtrl = AutoController()
         let lampCtrl = LampController()
 
+        EditFocus.endOnOtherClicks()
+
         // Wire callbacks before start so the scheduler can call them on first tick.
         Self.wire(state, sched, autoCtrl, lampCtrl)
 

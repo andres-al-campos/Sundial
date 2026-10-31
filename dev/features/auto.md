@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-30 17:34, at 1.1.0.
+Updated 2026-10-31 14:10, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -20,6 +20,8 @@ presets; Schedule (the presets) is the other.
   multiple that gives what you chose, so brightness 0 is still contrast 0, the
   monitor's darkest. Four days of drags (2026-10-26 to 30) fitted 3.0 × and
   settled at 3.5-4 × from the 28th; a curve bent no better (power 0.99).
+  Below brightness 1 a drag leaves the multiple alone: every multiple gives
+  0 there.
 - **Night Shift follows the sun**: it starts warming 40 minutes before
   sunset, rises evenly to full at your bedtime (the time in the Night Shift
   row, "darkest at", midnight by default; past midnight counts as the same
@@ -34,23 +36,27 @@ presets; Schedule (the presets) is the other.
   zone at once.
 - **The dark dims to bedtime.** Below 0.1 lux the sensor reads 0, however
   dark. When the room goes that dark during Night Shift's hours, brightness
-  slides evenly from the room's to the night minimum (brightness 1 to start)
-  by bedtime, and stays there until Night Shift turns off; going dark after
-  bedtime is the minimum at once. A drag of Brightness before bedtime saves a
-  level as usual (worked back through the slide); after bedtime in the dark it
-  sets the night minimum. Waking the Mac starts the slide over from then.
+  and contrast slide evenly from the room's to the night pair (brightness 1,
+  contrast 3 to start) by bedtime, and stay there until Night Shift turns
+  off; going dark after bedtime is the night pair at once. Contrast at night
+  is its own number, not a multiple, so brightness 0 can still have some. A
+  drag before bedtime saves the level or multiple as usual (worked back
+  through the slide); after bedtime in the dark it sets the night pair.
+  Waking the Mac starts the slide over from then.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
-  rest, so a big change (blinds, a cloud) lands in about 20 seconds. The
+  rest, so a big change (blinds, a cloud) lands in about 20 seconds. Waking
+  the Mac or logging in skips both: the first reading after is the room, and
+  the monitor goes straight to it. The
   monitor moves at most 5 a second for brightness and contrast, 1 for Night
   Shift. Big changes are meant to be seen; most are small.
 - **No reading.** With the lid closed or no sensor, Auto keeps the last room
   it saw (100 lux before the first) and the Room row says "no reading".
 - **Room log.** One line a minute, and one each time you let go of a slider
-  (with the level, contrast multiple or night minimum saved), in
+  (with the level, contrast multiple, night brightness or night contrast saved), in
   `room-log.csv` next to `config.json`. The last column, `dark`, is how far
   into the dark slide it was (0 to 1). Rows from 2026-10-30 on carry the
-  night minimum and `dark` columns; a log started before then has the older
+  night minimum and `dark` columns, and from 2026-10-31 night contrast; a log started before then has the older
   header.
 - **Auto | Schedule** under the header picks which one drives the monitor.
 
@@ -172,3 +178,13 @@ row.
 - 2026-10-30 17:34, 1.1.0. Contrast starts at π × brightness ("how about a multiple of pi?"), between
   the 3 × the drags fitted and the 3.5-4 × of the last days. Applies *Just
   right for the room*.
+- 2026-10-31 14:10, 1.1.0. Waking the Mac or logging in goes straight to the room's brightness instead
+  of easing for 20 seconds from the night's: "immediately go to the new day's
+  brightness every time I wake up and log in." The screen was off, so the
+  jump is nothing anyone sees change. Applies *Just right for the room*.
+- 2026-10-31 14:10, 1.1.0. The dark's minimum is a brightness and a contrast of their own, both set by
+  dragging after bedtime in the dark. Contrast as a multiple made brightness
+  0 contrast 0, and a nudge of Contrast there saved the multiple as 1: "when
+  brightness and contrast both go to 0 it messes up the multiplication and
+  now everything is one to one" (2026-10-31). The nights' drags wanted
+  contrast 3 at brightness 0. Applies *Never a fight with the controls*.
