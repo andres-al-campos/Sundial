@@ -13,7 +13,7 @@ enum MainWindow {
         NSApp.setActivationPolicy(.regular)
         if window == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 620),
-                             styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                              backing: .buffered, defer: false)
             w.title = "Sundial"
             w.isReleasedWhenClosed = false
@@ -54,7 +54,7 @@ private struct MainWindowView: View {
     var body: some View {
         NavigationSplitView {
             List(WindowSection.allCases, selection: Binding(get: { appState.windowSection }, set: { if let s = $0 { appState.windowSection = s } })) { s in
-                Label(s.title, systemImage: s.icon).tag(Optional(s))
+                Label(s.title, systemImage: s.icon)
             }
             .navigationSplitViewColumnWidth(min: 140, ideal: 160, max: 200)
         } detail: {

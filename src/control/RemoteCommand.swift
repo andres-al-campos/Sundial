@@ -3,7 +3,7 @@ import Foundation
 /// A section of the desktop window.
 enum WindowSection: String, CaseIterable, Identifiable {
     case lights, presets, settings
-    var id: String { rawValue }
+    var id: Self { self }
 }
 
 /// What can be asked of Sundial from outside it, as `sundial://` URLs

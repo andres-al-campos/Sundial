@@ -42,6 +42,9 @@ refused("sundial://brightness/low", saying: "0 to 100")
 refused("sundial://open/lamps", saying: "lights, presets or settings")
 refused("sundial://dance", saying: "Use status")
 refused("http://status", saying: "Use status")
+if WindowSection.ID.self != WindowSection.self {
+    failures.append("WindowSection's id must be WindowSection itself: a List only selects rows whose id has its selection's type, so the window's sidebar ignores clicks otherwise")
+}
 
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
@@ -59,4 +62,8 @@ if ! "$work/remote" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ remote: every sundial:// command parses to what it says, and a wrong one is refused saying what would work"
+if ! grep -q 'fullSizeContentView' src/views/MainWindow.swift; then
+    echo "✗ remote: MainWindow's NSWindow lost .fullSizeContentView. Without it a NavigationSplitView's title bar blur lands on the content's top 50pt, hiding what's there. Put it back in the style mask in src/views/MainWindow.swift."
+    exit 1
+fi
+echo "✓ remote: every sundial:// command parses to what it says, a wrong one is refused saying what would work, and the window's sidebar can select and its top row stays clear of the title bar"
