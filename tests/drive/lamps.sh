@@ -58,13 +58,41 @@ let late = LampBlend.defaultTimes(warm: RoomLight.warmSchedule(sun: nil, bedtime
 check("a 1:00 bedtime moves the night scenes with it", late.first { $0.name == "DuskLight" }!.minute == 60 && late.first { $0.name == "Night" }!.minute == 23 * 60, late)
 check("Morning is sunrise", t("Morning") == 7 * 60 + 16, t("Morning"))
 
+// The Lights window's day: importing the scenes must not change what the lamps do.
+let scenes = Dictionary(uniqueKeysWithValues: frames.map { ($0.name, $0.lamps) })
+let sceneTimes = LampBlend.defaultTimes(warm: warmSched, sun: RoomLight.SunTimes(sunrise: 7 * 60 + 16, sunset: 17 * 60 + 53))
+let marks = LightDay.Marks(warm: warmSched, sun: RoomLight.SunTimes(sunrise: 7 * 60 + 16, sunset: 17 * 60 + 53))
+let oldFrames = sceneTimes.compactMap { t in scenes[t.name].map { LampBlend.Keyframe(minute: t.minute, name: t.name, lamps: $0, holds: t.holds) } }
+let days = LightDay.imported(scenes: scenes, times: sceneTimes, marks: marks)
+var worst = 0.0
+for minute in 0..<LightDay.day {
+    guard let want = LampBlend.blend(oldFrames, at: minute)["1"], let got = LightDay.state(days["1"] ?? [], at: Double(minute), marks: marks) else { continue }
+    worst = max(worst, abs(want.brightness - got.brightness) / 100, abs(want.xy.x - got.xy.x), abs(want.xy.y - got.xy.y))
+}
+check("importing the scenes reproduces the old blend at every minute", worst < 0.001, worst)
+let moved = LightDay.Marks(sunrise: 5 * 60 + 30, sunset: 20 * 60 + 30, darkest: 0)
+let order = (days["1"] ?? []).map { LightDay.minute(of: $0, marks: moved) }
+check("a hold's end moves with the sun, so it can't pass the keyframe it leads to", (days["1"] ?? []).contains { $0.anchor?.mark == .sunrise && $0.anchor?.offset == -30 }, order)
+
+func key(_ m: Int, _ b: Double, on: Bool = true, _ a: LightDay.Anchor? = nil) -> LightDay.Key { .init(minute: m, anchor: a, on: on, brightness: b, x: 0.5, y: 0.4) }
+let k = [key(600, 50), key(720, 100), key(840, 0, on: false)]
+let m0 = LightDay.Marks(sunrise: 420, sunset: 1080, darkest: 0)
+check("a keyframe's line runs straight to the next", near(LightDay.state(k, at: 660, marks: m0)!.brightness, 75, 0.01), LightDay.state(k, at: 660, marks: m0) as Any)
+check("fading to an off keyframe goes through dimming", near(LightDay.state(k, at: 780, marks: m0)!.brightness, 50, 0.01) && LightDay.state(k, at: 780, marks: m0)!.on, LightDay.state(k, at: 780, marks: m0) as Any)
+check("the bulb is off on and after an off keyframe with nothing lit ahead", !LightDay.state(k, at: 840, marks: m0)!.on, LightDay.state(k, at: 840, marks: m0) as Any)
+check("a dragged keyframe is left out of what it samples", near(LightDay.state(k, at: 720, marks: m0, without: k[1].id)!.brightness, 25, 0.01), LightDay.state(k, at: 720, marks: m0, without: k[1].id) as Any)
+check("no keyframes, no state: Sundial leaves the bulb alone", LightDay.state([], at: 0, marks: m0) == nil, "state")
+check("within 10 minutes snaps to a mark, across midnight too", LightDay.snap(1435, marks: m0)?.mark == .darkest && LightDay.snap(1000, marks: m0) == nil, "snap")
+check("an anchored keyframe follows its mark", LightDay.minute(of: key(0, 1, .init(mark: .sunset, offset: -40)), marks: m0) == 1040, "anchor")
+check("whites read back as a temperature, colours don't", LightDay.kelvin(LampBlend.xy(mirek: 500)) == 2000 && LightDay.kelvin(.init(x: 0.17, y: 0.7)) == nil, "kelvin")
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)
 }
 SWIFT
 
-if ! swiftc -o "$work/lamps" src/control/RoomLight.swift src/control/LampBlend.swift "$work/main.swift" 2> "$work/err"; then
+if ! swiftc -o "$work/lamps" src/control/RoomLight.swift src/control/LampBlend.swift src/control/LightDay.swift "$work/main.swift" 2> "$work/err"; then
     echo "✗ lamps: the harness didn't compile. LampBlend's API probably changed; update tests/drive/lamps.sh to match."
     sed 's/^/    /' "$work/err"
     exit 1
@@ -74,4 +102,4 @@ if ! "$work/lamps" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime"
+echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same"
