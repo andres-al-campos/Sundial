@@ -78,29 +78,20 @@ check("going dark after bedtime is the minimum at once", dk(1, 0, since: 1, 0) =
 check("a dark morning after Night Shift ends isn't dimmed", dk(7, 0, since: 22, 30) == 0, dk(7, 0, since: 22, 30))
 check("a dark afternoon isn't dimmed", dk(14, 0, since: 13, 0) == 0, dk(14, 0, since: 13, 0))
 check("dark since before the evening counts from its start", near(dk(20, 36, since: 15, 0), 0.5, 0.01), dk(20, 36, since: 15, 0))
-let litB = RoomLight.brightness(level: 15, lux: 0)
-check("the dark's minimum is reached at bedtime", RoomLight.brightness(level: 15, lux: 0, dark: 1, nightMinimum: 1) == 1, "")
-check("halfway, halfway between", near(RoomLight.brightness(level: 15, lux: 0, dark: 0.5, nightMinimum: 1), (litB + 1) / 2, 0.001), litB)
-check("a room already dimmer than the minimum isn't brightened",
-      RoomLight.brightness(level: 2, lux: 0, dark: 1, nightMinimum: 1) == RoomLight.brightness(level: 2, lux: 0), "")
-let darkLevel = RoomLight.level(forBrightness: 2, lux: 0, dark: 0.5, nightMinimum: 1)
-check("a brightness set halfway into the dark comes back there",
-      near(RoomLight.brightness(level: darkLevel, lux: 0, dark: 0.5, nightMinimum: 1), 2, 0.001), darkLevel)
-
-// Contrast in the dark goes to the night contrast, not a multiple of 0.
-check("at bedtime in the dark, contrast is the night contrast",
-      RoomLight.contrast(litBrightness: 4, scale: 4, dark: 1, nightContrast: 3) == 3, "")
-check("halfway, halfway between", near(RoomLight.contrast(litBrightness: 4, scale: 4, dark: 0.5, nightContrast: 3), 9.5, 0.001),
-      RoomLight.contrast(litBrightness: 4, scale: 4, dark: 0.5, nightContrast: 3))
-check("lit, it's the multiple", RoomLight.contrast(litBrightness: 10, scale: 4, dark: 0, nightContrast: 3) == 40, "")
+check("the slide reaches the night value at bedtime", RoomLight.slid(5, toward: 1, dark: 1) == 1, "")
+check("halfway, halfway between", RoomLight.slid(5, toward: 1, dark: 0.5) == 3, "")
+check("a value already below the night's isn't raised", RoomLight.slid(0.5, toward: 1, dark: 1) == 0.5, "")
+// A dark room says nothing about the day. Each of these crushed the next morning's
+// level until 2026-11-01: brightness 1 at 0 lux saved a level of 5.6, or 6.2 at 23:30.
+check("a drag at 0 lux before bedtime holds, and doesn't save the day's level",
+      RoomLight.dragTarget(lux: 0, dark: 0.09) == .darkHold, "")
+check("so does one at the sensor's floor", RoomLight.dragTarget(lux: 0.1, dark: 0) == .darkHold, "")
+check("a dark afternoon's drag holds too", RoomLight.dragTarget(lux: 0, dark: 0) == .darkHold, "")
+check("after bedtime in the dark it sets the night pair", RoomLight.dragTarget(lux: 0, dark: 1) == .nightPair, "")
+check("a lit room's drag saves the day's level, even a dim one", RoomLight.dragTarget(lux: 2, dark: 0) == .day, "")
 check("a contrast drag at brightness 0 doesn't set the multiple (the 'one to one' of 2026-10-31)",
-      RoomLight.contrastScale(forContrast: 1, litBrightness: 0, dark: 0, nightContrast: 3) == nil, "")
-check("nor at bedtime in the dark, where it sets the night contrast",
-      RoomLight.contrastScale(forContrast: 5, litBrightness: 10, dark: 1, nightContrast: 3) == nil, "")
-if let k2 = RoomLight.contrastScale(forContrast: 9.5, litBrightness: 4, dark: 0.5, nightContrast: 3) {
-    check("a contrast set halfway into the dark comes back there",
-          near(RoomLight.contrast(litBrightness: 4, scale: k2, dark: 0.5, nightContrast: 3), 9.5, 0.001), k2)
-} else { check("a contrast can be set halfway into the dark", false, "nil") }
+      RoomLight.savedContrastScale(forContrast: 1, brightness: 0) == nil, "")
+check("at brightness 10 it does", RoomLight.savedContrastScale(forContrast: 40, brightness: 10) == 4, "")
 
 // The sun, at the point macOS's time zone table gives America/Chicago.
 let chi = RoomLight.coordinates(iso6709: "+415100-0873900")
@@ -167,4 +158,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, a dark room dims to the night brightness and contrast by bedtime, a contrast drag at brightness 0 leaves the multiple alone, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, a dark room dims to the night brightness and contrast by bedtime, a drag in the dark leaves the day's level alone, a contrast drag at brightness 0 leaves the multiple alone, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"

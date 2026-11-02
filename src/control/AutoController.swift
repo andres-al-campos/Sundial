@@ -28,6 +28,9 @@ final class AutoController {
     /// How far into the dark the last tick was (`RoomLight.darkFraction`), so
     /// a drag knows what it's setting.
     private var dark = 0.0
+    /// What a drag in the dark chose: the slide to bedtime runs from here, not
+    /// from the room's brightness. Not saved; a lit room or a wake clears it.
+    private var darkHold: (brightness: Double, contrast: Double)?
     /// Set on wake and login: the next reading starts a fresh average and the
     /// monitor goes straight to it. Easing 20 seconds from last night's
     /// screen to this morning's was "the 20 second thing again".
@@ -52,6 +55,7 @@ final class AutoController {
                 Task { @MainActor in
                     guard let self else { return }
                     self.darkSince = nil
+                    self.darkHold = nil
                     self.snapOnNextReading = true
                     guard self.state?.applyOnWake == true else { return }
                     self.forceApply()
@@ -82,21 +86,23 @@ final class AutoController {
     }
 
     /// Brightness set by hand from Auto's slider: shown at once, and kept as
-    /// the level for this room, so other rooms scale from it; after bedtime in
-    /// the dark, as the night minimum. Saved and logged once, when the drag
-    /// ends (`done`).
+    /// the level for this room, so other rooms scale from it; in the dark, see
+    /// `RoomLight.dragTarget`. Saved and logged once, when the drag ends
+    /// (`done`).
     func setBrightness(_ brightness: Int, done: Bool) {
         guard let state else { return }
         let lux = state.roomLux ?? RoomLight.referenceLux
-        if dark >= 1 {
+        let target = RoomLight.dragTarget(lux: lux, dark: dark)
+        var contrast = RoomLight.contrast(brightness: Double(brightness), scale: state.autoContrastScale)
+        switch target {
+        case .day:
+            state.autoLevel = RoomLight.level(forBrightness: Double(brightness), lux: lux)
+        case .darkHold:
+            holdInTheDark(brightness: Double(brightness), contrast: contrast)
+        case .nightPair:
             state.autoNightMinimum = Double(brightness)
-        } else {
-            state.autoLevel = RoomLight.level(forBrightness: Double(brightness), lux: lux,
-                                              dark: dark, nightMinimum: state.autoNightMinimum)
+            contrast = state.autoNightContrast
         }
-        let contrast = dark >= 1 ? state.autoNightContrast
-            : RoomLight.contrast(litBrightness: RoomLight.brightness(level: state.autoLevel, lux: lux),
-                                 scale: state.autoContrastScale, dark: dark, nightContrast: state.autoNightContrast)
         shown = (Double(brightness), contrast, shown?.nightShift ?? Double(state.autoNightShift))
         state.autoBrightness = brightness
         state.autoContrast = Int(contrast.rounded())
@@ -104,7 +110,7 @@ final class AutoController {
         write("hardwareContrast", Int(contrast.rounded()))
         if done {
             state.save()
-            log(force: true, set: dark >= 1 ? .nightMinimum : .brightness)
+            log(force: true, set: target == .day ? .brightness : target == .nightPair ? .nightMinimum : .darkHold)
         }
     }
 
@@ -116,14 +122,18 @@ final class AutoController {
         let brightness = shown?.brightness ?? Double(state.autoBrightness)
         let lux = state.roomLux ?? RoomLight.referenceLux
         var saved: Setting?
-        if dark >= 1 {
+        switch RoomLight.dragTarget(lux: lux, dark: dark) {
+        case .day:
+            if let k = RoomLight.savedContrastScale(forContrast: Double(contrast), brightness: brightness) {
+                state.autoContrastScale = k
+                saved = .contrast
+            }
+        case .darkHold:
+            holdInTheDark(brightness: brightness, contrast: Double(contrast))
+            saved = .darkHold
+        case .nightPair:
             state.autoNightContrast = Double(contrast)
             saved = .nightContrast
-        } else if let k = RoomLight.contrastScale(forContrast: Double(contrast),
-                                                  litBrightness: RoomLight.brightness(level: state.autoLevel, lux: lux),
-                                                  dark: dark, nightContrast: state.autoNightContrast) {
-            state.autoContrastScale = k
-            saved = .contrast
         }
         shown = (brightness, Double(contrast), shown?.nightShift ?? Double(state.autoNightShift))
         state.autoContrast = contrast
@@ -132,6 +142,14 @@ final class AutoController {
             state.save()
             log(force: true, set: saved)
         }
+    }
+
+    /// The slide to bedtime starts over from what was just chosen.
+    private func holdInTheDark(brightness: Double, contrast: Double) {
+        darkHold = (brightness, contrast)
+        let comps = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: Date())
+        darkSince = (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
+        dark = 0
     }
 
     // MARK: - Tick
@@ -182,13 +200,13 @@ final class AutoController {
             if darkSince == nil { darkSince = minute }
         } else {
             darkSince = nil
+            darkHold = nil
         }
         dark = darkSince.map { RoomLight.darkFraction(minuteOfDay: minute, darkSince: $0, schedule: schedule) } ?? 0
         let lit = RoomLight.brightness(level: state.autoLevel, lux: lux)
-        let brightness = RoomLight.brightness(level: state.autoLevel, lux: lux, dark: dark, nightMinimum: state.autoNightMinimum)
-        let target = (brightness: brightness,
-                      contrast: RoomLight.contrast(litBrightness: lit, scale: state.autoContrastScale,
-                                                   dark: dark, nightContrast: state.autoNightContrast),
+        let start = darkHold ?? (lit, RoomLight.contrast(brightness: lit, scale: state.autoContrastScale))
+        let target = (brightness: RoomLight.slid(start.brightness, toward: state.autoNightMinimum, dark: dark),
+                      contrast: RoomLight.slid(start.contrast, toward: state.autoNightContrast, dark: dark),
                       nightShift: RoomLight.nightShift(minuteOfDay: minute, schedule: schedule))
 
         if snap { shown = nil }
@@ -223,7 +241,7 @@ final class AutoController {
     /// One line a minute, and one whenever you set the brightness or contrast,
     /// so a few days of use show what you chose against how bright the room
     /// was. Kept next to config.json as room-log.csv.
-    private enum Setting { case brightness, contrast, nightMinimum, nightContrast }
+    private enum Setting { case brightness, contrast, nightMinimum, nightContrast, darkHold }
     private static let logURL: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return support.appendingPathComponent("Sundial/room-log.csv")
@@ -247,11 +265,12 @@ final class AutoController {
             set == .nightMinimum ? String(format: "%.1f", state.autoNightMinimum) : "",
             String(format: "%.2f", dark),
             set == .nightContrast ? String(format: "%.1f", state.autoNightContrast) : "",
+            set == .darkHold ? "1" : "",
         ]
         let line = fields.joined(separator: ",") + "\n"
         let fm = FileManager.default
         if !fm.fileExists(atPath: Self.logURL.path) {
-            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark,night_contrast_set\n".utf8))
+            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark,night_contrast_set,dark_hold\n".utf8))
         }
         guard let handle = try? FileHandle(forWritingTo: Self.logURL) else { return }
         defer { try? handle.close() }

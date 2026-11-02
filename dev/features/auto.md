@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-10-31 14:10, at 1.1.0.
+Updated 2026-11-01 18:25, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it and the clock. It's the main mode and needs no
@@ -40,8 +40,9 @@ presets; Schedule (the presets) is the other.
   contrast 3 to start) by bedtime, and stay there until Night Shift turns
   off; going dark after bedtime is the night pair at once. Contrast at night
   is its own number, not a multiple, so brightness 0 can still have some. A
-  drag before bedtime saves the level or multiple as usual (worked back
-  through the slide); after bedtime in the dark it sets the night pair.
+  drag at 0 lux before bedtime holds what you chose and the slide runs on
+  from it, until the room is lit or the Mac wakes; it saves nothing. After
+  bedtime in the dark it sets the night pair.
   Waking the Mac starts the slide over from then.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
@@ -55,7 +56,7 @@ presets; Schedule (the presets) is the other.
 - **Room log.** One line a minute, and one each time you let go of a slider
   (with the level, contrast multiple, night brightness or night contrast saved), in
   `room-log.csv` next to `config.json`. The last column, `dark`, is how far
-  into the dark slide it was (0 to 1). Rows from 2026-10-30 on carry the
+  into the dark slide it was (0 to 1); `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
   night minimum and `dark` columns, and from 2026-10-31 night contrast; a log started before then has the older
   header.
 - **Auto | Schedule** under the header picks which one drives the monitor.
@@ -114,6 +115,10 @@ row.
 - The first Auto (2026-10-26, a few hours) used two ends, Dark room and Bright
   room, and a hold that lapsed after 20 minutes; its log is
   `room-log-first-version.csv`.
+
+- The sensor gives no reading while the laptop's screen is off, and the Mac
+  stays awake overnight with it off: the log's raw lux is blank from then
+  until the display wakes, and the average holds its last value.
 
 ## Calls
 
@@ -188,3 +193,8 @@ row.
   brightness and contrast both go to 0 it messes up the multiplication and
   now everything is one to one" (2026-10-31). The nights' drags wanted
   contrast 3 at brightness 0. Applies *Never a fight with the controls*.
+- 2026-11-01 18:25, 1.1.0. A drag in the dark holds for the night and doesn't touch the day's level.
+  Brightness 1 at 0 lux worked back to a level of 5.6, so every morning from
+  2026-10-27 to 11-01 opened at about a fifth of the room's brightness, and the
+  first drag of the day repaired it: "I don't think the on wake worked", when
+  the jump had worked and landed on that level. Applies *Just right for the room*.

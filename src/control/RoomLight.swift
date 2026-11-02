@@ -64,13 +64,9 @@ enum RoomLight {
     /// The multiple a Contrast drag saves, or nil where none can be read off:
     /// below brightness 1 every multiple gives 0, and taking the drag as a
     /// multiple there turned a nudge to contrast 1 into "one to one" all the
-    /// next day (2026-10-31). In the dark slide the drag is worked back
-    /// through it, as Brightness is.
-    static func contrastScale(forContrast contrast: Double, litBrightness lit: Double,
-                              dark: Double, nightContrast: Double) -> Double? {
-        let f = min(max(dark, 0), 1)
-        guard lit >= 1, f < 1 else { return nil }
-        return max(0, (contrast - nightContrast * f) / (1 - f)) / lit
+    /// next day (2026-10-31).
+    static func savedContrastScale(forContrast contrast: Double, brightness: Double) -> Double? {
+        brightness >= 1 ? contrast / brightness : nil
     }
 
     // MARK: - The dark
@@ -101,26 +97,20 @@ enum RoomLight {
         return Double(now - since) / Double(bed - since)
     }
 
-    /// The room's brightness, moved `dark` of the way to the night minimum
-    /// (never up to it, when the room's is already lower).
-    static func brightness(level: Double, lux: Double, dark: Double, nightMinimum: Double) -> Double {
-        let lit = brightness(level: level, lux: lux)
-        return lit + (min(nightMinimum, lit) - lit) * min(max(dark, 0), 1)
+    /// A value `dark` of the way to its night value, never up to it when it's
+    /// already lower.
+    static func slid(_ value: Double, toward night: Double, dark: Double) -> Double {
+        value + (min(night, value) - value) * min(max(dark, 0), 1)
     }
 
-    /// Contrast this far into the dark: from the multiple of the room's
-    /// brightness (`lit`, before the slide) to the night contrast, never up.
-    static func contrast(litBrightness lit: Double, scale: Double, dark: Double, nightContrast: Double) -> Double {
-        let day = contrast(brightness: lit, scale: scale)
-        return day + (min(nightContrast, day) - day) * min(max(dark, 0), 1)
-    }
-
-    /// The level that gives `brightness` this far into the dark: what a drag
-    /// saves before bedtime. Past it (`dark` 1) the drag sets the night
-    /// minimum instead, and this isn't used.
-    static func level(forBrightness brightness: Double, lux: Double, dark: Double, nightMinimum: Double) -> Double {
-        let f = min(max(dark, 0), 0.99)
-        return max(0, (brightness - nightMinimum * f) / (1 - f)) / factor(lux: lux)
+    /// What a drag sets. A dark room says nothing about the day: brightness 1
+    /// at 0 lux worked back to a level of 5.6, and each morning opened at a
+    /// fifth of what it should (2026-10-27 to 11-01). So a drag in the dark
+    /// holds until the room is lit, and only a lit room's drag saves.
+    enum DragTarget { case day, darkHold, nightPair }
+    static func dragTarget(lux: Double, dark: Double) -> DragTarget {
+        if lux > floorLux { return .day }
+        return dark >= 1 ? .nightPair : .darkHold
     }
 
     // MARK: - Night Shift
