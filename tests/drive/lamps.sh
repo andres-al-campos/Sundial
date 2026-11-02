@@ -95,6 +95,12 @@ check("following a missing bulb is refused", LightDay.problem(in: [bulb([], pare
 let handWritten = try! JSONDecoder().decode(LightDay.Key.self, from: Data(#"{"minute":60,"brightness":10,"x":0.5,"y":0.4}"#.utf8))
 check("a hand-written keyframe needs no id and is on", handWritten.on && handWritten.minute == 60, handWritten)
 
+check("a lamp someone switched off stays off", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: false) == .leave, "send")
+check("a lamp the day turned off comes back with the day", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: true) == .power, "send")
+check("a lit lamp is adjusted without touching its power", LightDay.send(targetOn: true, lampIsOn: true, dayTurnedItOff: false) == .adjust, "send")
+check("the day can still turn a lit lamp off", LightDay.send(targetOn: false, lampIsOn: true, dayTurnedItOff: false) == .power, "send")
+check("nothing is sent to a lamp already off when the day says off", LightDay.send(targetOn: false, lampIsOn: false, dayTurnedItOff: true) == .leave, "send")
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)

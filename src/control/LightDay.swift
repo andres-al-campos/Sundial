@@ -101,6 +101,20 @@ enum LightDay {
     /// A keyframe this close to a mark snaps to it and follows it.
     static let snapDistance = 10
 
+    /// What following the day does to a lamp this tick.
+    enum Send: Equatable { case leave, adjust, power }
+
+    /// A lamp that's off stays off and untouched, unless it was the day that
+    /// turned it off: someone switched it off, and only they switch it back on.
+    static func send(targetOn: Bool, lampIsOn: Bool, dayTurnedItOff: Bool) -> Send {
+        switch (targetOn, lampIsOn) {
+        case (true, true): return .adjust
+        case (true, false): return dayTurnedItOff ? .power : .leave
+        case (false, true): return .power
+        case (false, false): return .leave
+        }
+    }
+
     static func minute(of key: Key, marks: Marks) -> Int {
         guard let a = key.anchor else { return key.minute }
         return wrap(marks.minute(of: a.mark) + a.offset)

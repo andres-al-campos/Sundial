@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-02 02:32, at 1.1.0.
+Updated 2026-11-02 05:18, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -30,6 +30,8 @@ artificial light follows the natural light along with the screen.
   settings, and scene edits in the Hue app aren't read.
 - **Continuous fade.** Every 30 seconds each bulb is sent a 30-second fade to
   where it should be, so it never steps. After wake, every bulb is sent again.
+  A lamp switched off in the Hue app or anywhere else gets nothing until it's
+  switched back on, and it catches up within 30 seconds of that.
 - **Pairing.** Settings → Lamps → Pair Hue Bridge finds the bridge with
   Bonjour and waits up to 30 seconds for its button to be pressed. The key is
   kept in the Keychain. Only the home network is needed, not the internet.
@@ -56,16 +58,26 @@ Last driven: 2026-10-28, macOS. Passed; it failed as expected with a wrong
 halfway value.
 
 It also checks that importing the scenes matches the old blend at every minute,
-and the keyframe rules: straight lines, fading to off, leaving out a dragged
-keyframe, snapping, anchors, and reading whites back as a temperature.
+the keyframe rules: straight lines, fading to off, leaving out a dragged
+keyframe, snapping, anchors, and reading whites back as a temperature, and that a
+lamp someone switched off is left alone.
 
 By hand only: the window, pairing, that the bridge takes the fades, how the
 blend looks in the room.
 
+## Calls
+
+- 2026-11-02 05:18, 1.1.0. **A lamp switched off by hand stays off.** Sundial used to send on with every
+  fade, so a lamp switched off from the phone came back on within a minute: "It
+  should not re set the light color when I've turned off the lights". Only the
+  person who switched it off switches it back on. Applies *Never a fight with the controls*.
+
 ## Gotchas
 
 - The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`.
-- A lamp changed in the Hue app is set back within 30 seconds while Follow is on.
+- A lit lamp's colour or brightness changed in the Hue app is set back within a minute while Follow is on. Pause keeps it.
+- Editing a keyframe or Play the day shows on the bulb even if it was off, and it stays on afterwards.
+- After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
 - Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly.
 - macOS asks for the Keychain again after every `./build.sh`, because the app is

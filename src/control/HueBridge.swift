@@ -103,10 +103,22 @@ final class HueBridge: NSObject, URLSessionDelegate {
         try check(resp, data)
     }
 
+    /// Which lamps are lit right now, by light id.
+    func lampsOn() async throws -> [String: Bool] {
+        var lit: [String: Bool] = [:]
+        for l in try await get("light") {
+            if let id = l["id"] as? String, let on = (l["on"] as? [String: Any])?["on"] as? Bool { lit[id] = on }
+        }
+        return lit
+    }
+
     /// Fade a lamp to `state` over `fade` seconds. Off sends only that: the bulb
-    /// keeps its brightness and colour for when it's next on.
-    func set(lamp id: String, to state: LightDay.State, fade: TimeInterval) async throws {
-        var body: [String: Any] = ["on": ["on": state.on], "dynamics": ["duration": Int(fade * 1000)]]
+    /// keeps its brightness and colour for when it's next on. Without `power` the
+    /// lamp's on or off stays as it is, so a lamp switched off just after
+    /// `lampsOn` read it doesn't come back on.
+    func set(lamp id: String, to state: LightDay.State, fade: TimeInterval, power: Bool = true) async throws {
+        var body: [String: Any] = ["dynamics": ["duration": Int(fade * 1000)]]
+        if power { body["on"] = ["on": state.on] }
         if state.on {
             body["dimming"] = ["brightness": state.brightness]
             body["color"] = ["xy": ["x": state.xy.x, "y": state.xy.y]]

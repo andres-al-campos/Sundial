@@ -18,6 +18,9 @@ final class LampController {
     private var previewTask: Task<Void, Never>?
     private var busy = false
     private var readingKey = false
+    /// Kept through `refresh`, unlike `sent`: it's how a lamp the day dimmed to off
+    /// is told from one someone switched off.
+    private var offByDay: Set<String> = []
     // One line per tick, because the status line keeps saying "Paired" through a
     // stall: on 2026-11-01 the lamps sat on Night for at least 50 minutes.
     private static let log = Logger(subsystem: "com.aurende.sundial", category: "lamps")
@@ -192,16 +195,29 @@ final class LampController {
             let comps = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: now)
             let minute = (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
             let bulbs = state.lights ?? []
-            var sends = 0
+            let lit = try await bridge.lampsOn()
+            var sends = 0, leftOff = 0
             for bulb in bulbs {
                 guard let target = LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
-                      sent[bulb.id] != target else { continue }
-                try await bridge.set(lamp: bulb.id, to: target, fade: Self.interval)
+                      let isOn = lit[bulb.id] else { continue }
+                if isOn { offByDay.remove(bulb.id) }
+                let send = LightDay.send(targetOn: target.on, lampIsOn: isOn, dayTurnedItOff: offByDay.contains(bulb.id))
+                if send == .leave {
+                    // Forgotten, so the tick after it's switched back on catches it up.
+                    sent[bulb.id] = nil
+                    leftOff += 1
+                    continue
+                }
+                guard sent[bulb.id] != target else { continue }
+                try await bridge.set(lamp: bulb.id, to: target, fade: Self.interval, power: send == .power)
                 sent[bulb.id] = target
                 sends += 1
+                if send == .power {
+                    if target.on { offByDay.remove(bulb.id) } else { offByDay.insert(bulb.id) }
+                }
             }
             state.lampStatus = "Paired · following the day"
-            Self.log.notice("tick at minute \(minute): sent \(sends), \(state.lampStatus, privacy: .public)")
+            Self.log.notice("tick at minute \(minute): sent \(sends), left \(leftOff) off, \(state.lampStatus, privacy: .public)")
         } catch {
             state.lampStatus = error.localizedDescription
             Self.log.error("tick failed: \(error.localizedDescription, privacy: .public)")
