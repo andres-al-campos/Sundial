@@ -62,8 +62,11 @@ private struct MainWindowView: View {
             case .lights: LightsView()
             case .presets: PresetsSection()
             case .settings:
-                ScrollView { SettingsView().frame(maxWidth: 520, alignment: .leading) }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                ScrollView {
+                    SettingsView()
+                        .frame(maxWidth: 520, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
         }
     }
