@@ -38,7 +38,12 @@ struct MenuBarView: View {
                 }
                 Spacer()
                 if appState.isSetUp {
-                    HoverButton("Open Sundial", rest: HoverButton.createBlue) { appState.onOpenWindow?() }
+                    HoverButton("Open Sundial", rest: HoverButton.createBlue) {
+                        // The popup is the key window here. Nothing closes it for us,
+                        // because the new window comes up without it losing focus first.
+                        NSApp.keyWindow?.close()
+                        appState.onOpenWindow?()
+                    }
                 }
             }
             .font(.subheadline)
