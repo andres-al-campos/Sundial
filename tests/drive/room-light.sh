@@ -109,6 +109,19 @@ if let june = sun(2026, 6, 21, -5), let dec = sun(2026, 12, 21, -6) {
     let w = RoomLight.warmSchedule(sun: dec)
     check("in December Night Shift starts warming earlier and stays full to bedtime", w.from < RoomLight.fittedSchedule.from && w.full == RoomLight.fittedSchedule.full, w)
 } else { check("Chicago has a sunrise and sunset", false, "nil") }
+// A place picked on the map.
+let austin = RoomLight.sunTimes(year: 2026, month: 11, day: 2, latitude: 30, longitude: -98, utcOffset: -6)
+check("a picked place changes the sun: 30° N, 98° W sets near 5:43 PM on 2026-11-02, not Chicago's 4:44", austin.map { near($0.sunset, 17 * 60 + 43, 3) } ?? false, austin as Any)
+let clicked = WorldMap.place(x: 260, y: 76, width: 720, height: 280, zone: "America/Chicago")
+check("a click lands on the whole degree under it", clicked.longitude == -50 && clicked.latitude == 42, clicked)
+check("a click off the edge stays on the map", WorldMap.place(x: -5, y: 999, width: 720, height: 280, zone: "z").latitude == -60, "edge")
+let round = WorldMap.spot(latitude: 42, longitude: -88)
+let back = WorldMap.place(x: round.x * 720, y: round.y * 280, width: 720, height: 280, zone: "z")
+check("a place's dot sits where clicking it gives the same place", back.latitude == 42 && back.longitude == -88, back)
+check("the land outline parsed: every landmass has corners, on the map", WorldMap.land.count > 50 && WorldMap.land.allSatisfy { $0.count >= 3 && $0.allSatisfy { abs($0.lon) <= 180 && $0.lat >= WorldMap.south && $0.lat <= WorldMap.north } }, WorldMap.land.count)
+let oldConfig = try! JSONDecoder().decode(RoomLight.Place.self, from: Data(#"{"latitude":30,"longitude":-98,"zone":"America/Chicago"}"#.utf8))
+check("a place is stored in whole degrees", oldConfig.latitude == 30, oldConfig)
+
 if let today = sun(2026, 10, 26, -5) {
     let w = RoomLight.warmSchedule(sun: today)
     check("on the day it was fitted, the sun's schedule is the fitted one (±2 min)",
@@ -152,7 +165,7 @@ if !failures.isEmpty {
 }
 SWIFT
 
-if ! swiftc -o "$work/room" src/control/RoomLight.swift "$work/main.swift" 2> "$work/err"; then
+if ! swiftc -o "$work/room" src/control/RoomLight.swift src/control/WorldMap.swift "$work/main.swift" 2> "$work/err"; then
     echo "✗ room-light: the harness didn't compile. RoomLight's API probably changed; update tests/drive/room-light.sh to match."
     sed 's/^/    /' "$work/err"
     exit 1

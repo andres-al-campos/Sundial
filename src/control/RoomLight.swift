@@ -212,6 +212,16 @@ enum RoomLight {
         return SunTimes(sunrise: noon - 4 * ha, sunset: noon + 4 * ha)
     }
 
+    /// Where someone said they are, in whole degrees: all a sunset needs, and no
+    /// nearer than that to where they live.
+    struct Place: Codable, Equatable {
+        var latitude: Int
+        var longitude: Int
+        /// The time zone it was picked in. Elsewhere it's left behind, so a trip
+        /// still moves the sun with the clock.
+        var zone: String
+    }
+
     /// A place from the time zone table (`zone.tab`): "+415100-0873900" is
     /// 41°51'00" N, 87°39'00" W. Nil when it doesn't parse.
     static func coordinates(iso6709 text: String) -> (latitude: Double, longitude: Double)? {

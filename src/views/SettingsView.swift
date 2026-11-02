@@ -61,6 +61,10 @@ struct SettingsView: View {
 
             Divider()
 
+            LocationSection()
+
+            Divider()
+
             // Behavior
             VStack(alignment: .leading, spacing: 8) {
                 Text("Behavior")

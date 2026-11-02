@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-01 20:34, at 1.1.0.
+Updated 2026-11-02 16:21, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -28,12 +28,13 @@ presets; Schedule (the presets) is the other.
   night), and turns off 46 minutes before
   sunrise. Fitted to the presets' evening values (R² 0.98) on 2026-10-26,
   when that was 5:13 PM to 6:30 AM. Sunrise and sunset are computed for the
-  point macOS's time zone table gives your time zone (Chicago for
-  America/Chicago), so no location permission; each degree of longitude from
-  that point moves them about 4 minutes. A zone with no point (UTC) keeps the
-  fixed 5:13 PM and 6:30 AM. When the Mac changes time zone (traveling, with
-  "Set time zone automatically" on), the clock and the sun move to the new
-  zone at once.
+  spot on Settings' map, a click rounded to whole degrees, with no location
+  permission. Until one is picked it's the point macOS's time zone table gives
+  your time zone (Chicago for America/Chicago); each degree of longitude from
+  the real place moves them about 4 minutes. A zone with no point (UTC) and no
+  pick keeps the fixed 5:13 PM and 6:30 AM. When the Mac changes time zone
+  (traveling, with "Set time zone automatically" on), the clock and the sun
+  move to the new zone at once, leaving the pick behind until you're back.
 - **After sunset, the clock dims to bedtime.** From where Night Shift starts
   warming (40 minutes before sunset, where the lamps start on Twilight), lux
   stops counting: brightness and contrast slide evenly from what the room gave
@@ -78,7 +79,8 @@ room's square root (the day's drags at 35 to 470 lux, never past 100, level 0
 darkest), that the evening slides to the night pair by bedtime and not
 outside Night Shift's hours, that only a lit daytime drag saves the level, that a set
 brightness comes back in the same room and scales in another, that a set
-contrast comes back at the same brightness and scales with it, that sunrise
+contrast comes back at the same brightness and scales with it, that a click on
+the location map gives the whole degree under it and moves the sun, that sunrise
 and sunset for Chicago land on its solstice times (and zone.tab's point
 parses), that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
@@ -178,6 +180,12 @@ row.
 - 2026-10-27 01:02, 1.0.3. Night Shift's start and end follow sunset and sunrise, located by the time
   zone rather than Location Services: "timezone is good enough". Full warmth
   stays at midnight ("just midnight is fine"), which the sun doesn't move. Applies *Just right for the room*.
+- 2026-11-02 16:21, 1.1.0. A sunset set by the time zone alone isn't good enough after all: in a big zone
+  it can be an hour from the real one. So Settings shows a map to confirm
+  the spot, but stays coarse, rounded to whole degrees and with no Location Services:
+  "id rather not have to ask for ppls exacto location". The map is drawn from
+  outlines in the app, since Apple Maps would tell a server the area looked at. This
+  revises the Call above. Applies *Just right for the room*.
 - 2026-10-28 00:22, 1.1.0. Bedtime, where Night Shift is full, is yours to set in Auto, and
   the lamps' dimmest scene lands on it too: "it should be the same as night
   shift ... and the auto mode night shift should be customizable too". It

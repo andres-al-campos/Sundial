@@ -28,6 +28,8 @@ class AppState: ObservableObject {
     /// When Night Shift is full and the lamps reach their dimmest scene, in
     /// minutes after midnight. Set in Auto.
     @Published var bedtime: Int = 24 * 60
+    /// Where the sun is worked out for, when picked on Settings' map.
+    @Published var place: RoomLight.Place? { didSet { SunClock.picked = place } }
     /// The Hue lamps follow their days. False while paused from the Lights window.
     @Published var lampsFollow: Bool = false
     /// Each bulb's day. Nil until the scenes on the bridge have been imported.
@@ -132,6 +134,7 @@ class AppState: ObservableObject {
         var autoContrastScale: Double?
         var lampsFollow: Bool?
         var bedtime: Int?
+        var place: RoomLight.Place?
         var autoNightMinimum: Double?
         var autoNightContrast: Double?
         var hueHost: String?
@@ -152,6 +155,7 @@ class AppState: ObservableObject {
             autoContrastScale: autoContrastScale,
             lampsFollow: lampsFollow,
             bedtime: bedtime,
+            place: place,
             autoNightMinimum: autoNightMinimum,
             autoNightContrast: autoNightContrast,
             hueHost: hueHost,
@@ -183,6 +187,7 @@ class AppState: ObservableObject {
         autoContrastScale = config.autoContrastScale ?? RoomLight.defaultContrastScale
         lampsFollow = config.lampsFollow ?? false
         bedtime = config.bedtime ?? 24 * 60
+        place = config.place
         autoNightMinimum = config.autoNightMinimum ?? RoomLight.defaultNightMinimum
         autoNightContrast = config.autoNightContrast ?? RoomLight.defaultNightContrast
         hueHost = config.hueHost
