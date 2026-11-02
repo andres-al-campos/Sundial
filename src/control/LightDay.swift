@@ -199,6 +199,24 @@ enum LightDay {
         return out
     }
 
+    /// Centers for labels along a line: each on its spot, moved just enough to keep
+    /// `gap` between neighbours and stay on the line. Same order as given.
+    static func spread(_ spots: [Double], widths: [Double], gap: Double, across length: Double) -> [Double] {
+        let order = spots.indices.sorted { spots[$0] < spots[$1] }
+        var centers = spots
+        var edge = 0.0
+        for i in order {
+            centers[i] = max(spots[i], edge + widths[i] / 2)
+            edge = centers[i] + widths[i] / 2 + gap
+        }
+        edge = length
+        for i in order.reversed() {
+            centers[i] = min(centers[i], edge - widths[i] / 2)
+            edge = centers[i] - widths[i] / 2 - gap
+        }
+        return centers
+    }
+
     // MARK: - Showing a colour
 
     /// The sRGB that looks closest to an xy colour at full brightness.

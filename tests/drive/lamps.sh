@@ -107,6 +107,19 @@ check("a lit lamp is adjusted without touching its power", LightDay.send(targetO
 check("the day can still turn a lit lamp off", LightDay.send(targetOn: false, lampIsOn: true, dayTurnedItOff: false) == .power, "send")
 check("nothing is sent to a lamp already off when the day says off", LightDay.send(targetOn: false, lampIsOn: false, dayTurnedItOff: true) == .leave, "send")
 
+func clear(_ centers: [Double], _ widths: [Double], gap: Double, across: Double) -> Bool {
+    let spans = zip(centers, widths).map { (l: $0 - $1 / 2, r: $0 + $1 / 2) }.sorted { $0.l < $1.l }
+    return spans.first!.l >= -0.001 && spans.last!.r <= across + 0.001 && zip(spans, spans.dropFirst()).allSatisfy { $0.r + gap <= $1.l + 0.001 }
+}
+let w = [90.0, 90.0, 90.0]
+check("labels far apart stay on their marks", LightDay.spread([100, 300, 500], widths: w, gap: 8, across: 600) == [100, 300, 500], "spread")
+for spots in [[300.0, 310, 320], [320, 300, 310], [0, 5, 10], [590, 595, 600], [10, 300, 595]] {
+    let got = LightDay.spread(spots, widths: w, gap: 8, across: 600)
+    check("labels at \(spots) don't overlap or leave the row", clear(got, w, gap: 8, across: 600), got)
+}
+let crossed = LightDay.spread([320, 300], widths: [90, 90], gap: 8, across: 600)
+check("labels pushed apart keep their order", crossed[1] < crossed[0], crossed)
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)

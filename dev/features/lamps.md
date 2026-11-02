@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-02 12:04, at 1.1.0.
+Updated 2026-11-02 15:50, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -8,8 +8,9 @@ artificial light follows the natural light along with the screen.
 ## Sub-features
 
 - **Lights window.** One row per bulb across the day, read from the bridge, the
-  band showing the bulb's colour dimmed by its brightness, with Sunrise, Sunset
-  and Darkest marked.
+  band showing the bulb's colour dimmed by its brightness. Above the bands are
+  today's Sunrise, Sunset and Darkest times, worked out each day; a label too close
+  to another moves aside, and a tick stays on the real time.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change). Click a dot for its time, on/off, brightness, white
@@ -19,8 +20,8 @@ artificial light follows the natural light along with the screen.
   follows that mark. Imported keyframes can follow one at an offset, such as 40
   minutes before sunset.
 - **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
-  with a badge in the top row saying so. A second after letting go the bulb fades
-  back to where the day has it, over 2 seconds.
+  with a badge in the top row saying so. On letting go the bulb fades back to where
+  the day has it, over 2 seconds.
 - **Right-click.** Copy and paste a keyframe, its look, or a bulb's whole day;
   rename a bulb, which renames it on the bridge; make one bulb follow another's
   day, and unlink it again.

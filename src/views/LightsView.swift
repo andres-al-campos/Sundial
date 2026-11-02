@@ -67,15 +67,17 @@ struct LightsView: View {
     @State private var playMinute: Double?
     @State private var playTask: Task<Void, Never>?
     @State private var previewing: Previewing?
-    @State private var letGoTask: Task<Void, Never>?
-    @State private var now = Date()
-    private let clock = Timer.publish(every: 20, on: .main, in: .common).autoconnect()
 
     struct Selection: Equatable { var bulb: String; var key: UUID }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
     struct Previewing { var bulb: String; var look: LightDay.State }
 
     private var bulbs: [LightDay.Bulb] { appState.lights ?? [] }
+
+    /// Read fresh, with the body rebuilt on the minute by its `TimelineView`. A timer
+    /// made as a property here is remade whenever the parent redraws, and each new
+    /// one starts its wait over.
+    private var now: Date { Date() }
 
     private var marks: LightDay.Marks {
         LightDay.Marks(warm: SunClock.schedule(on: now, bedtime: appState.bedtime), sun: SunClock.sun(on: now))
@@ -89,37 +91,39 @@ struct LightsView: View {
     private var lineMinute: Double { playMinute ?? nowMinute }
 
     var body: some View {
-        VStack(spacing: 0) {
-            toolbar
-            Divider()
-            if appState.hueHost == nil {
-                unpaired
-            } else if bulbs.isEmpty {
-                ProgressView("Reading your bulbs…").frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
-                        marksHeader
-                        ForEach(bulbs) { bulb in
-                            row(bulb)
-                            if selection?.bulb == bulb.id, let key = selectedKey {
-                                KeyDrawer(
-                                    key: key,
-                                    marks: marks,
-                                    change: { change(key.id, $0) },
-                                    commit: {
-                                        history.commit(undo, "Change Keyframe")
-                                        letGo()
-                                    },
-                                    delete: { deleteSelected() },
-                                    close: { closeDrawer() }
-                                )
-                                .transition(.opacity)
+        TimelineView(.everyMinute) { _ in
+            VStack(spacing: 0) {
+                toolbar
+                Divider()
+                if appState.hueHost == nil {
+                    unpaired
+                } else if bulbs.isEmpty {
+                    ProgressView("Reading your bulbs…").frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            marksHeader
+                            ForEach(bulbs) { bulb in
+                                row(bulb)
+                                if selection?.bulb == bulb.id, let key = selectedKey {
+                                    KeyDrawer(
+                                        key: key,
+                                        marks: marks,
+                                        change: { change(key.id, $0) },
+                                        commit: {
+                                            history.commit(undo, "Change Keyframe")
+                                            endPreviewNow()
+                                        },
+                                        delete: { deleteSelected() },
+                                        close: { closeDrawer() }
+                                    )
+                                    .transition(.opacity)
+                                }
                             }
+                            hoursAxis
                         }
-                        hoursAxis
+                        .padding(16)
                     }
-                    .padding(16)
                 }
             }
         }
@@ -131,7 +135,6 @@ struct LightsView: View {
             // The bridge's own reads arrive while nothing's being edited.
             if selection == nil, dragging == nil { history.seen(new) }
         }
-        .onReceive(clock) { now = $0 }
         .onDisappear {
             playTask?.cancel()
             endPreviewNow()
@@ -142,14 +145,22 @@ struct LightsView: View {
 
     private var toolbar: some View {
         HStack(spacing: 10) {
-            if let previewing {
-                previewBadge(previewing).transition(.opacity)
-            } else {
-                Text(statusLine)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .transition(.opacity)
+            // A set height, so the row doesn't move as these swap.
+            Group {
+                if let previewing {
+                    previewBadge(previewing)
+                } else if let clockLine {
+                    Text(clockLine)
+                        .font(.title3.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(statusLine)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .frame(height: 22)
+            .transition(.opacity)
             Spacer()
             Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
                 .disabled(bulbs.isEmpty)
@@ -180,10 +191,16 @@ struct LightsView: View {
         .background(Color.primary.opacity(0.08), in: Capsule())
     }
 
-    private var statusLine: String {
+    /// The time the line on the bands is at, when that's what the row is saying.
+    private var clockLine: String? {
         if let playMinute { return "Playing, \(Self.time(Int(playMinute)))" }
+        if !appState.lampStatus.hasPrefix("Paired"), appState.hueHost != nil { return nil }
+        return appState.lampsFollow ? "Now, \(Self.time(Int(nowMinute)))" : nil
+    }
+
+    private var statusLine: String {
         if !appState.lampStatus.hasPrefix("Paired"), appState.hueHost != nil { return appState.lampStatus }
-        return appState.lampsFollow ? "Now, \(Self.time(Int(nowMinute)))" : "Paused. The bulbs stay as they are until you resume."
+        return "Paused. The bulbs stay as they are until you resume."
     }
 
     private var unpaired: some View {
@@ -201,16 +218,26 @@ struct LightsView: View {
     private var marksHeader: some View {
         HStack(spacing: Layout.gap) {
             Color.clear.frame(width: Layout.name, height: 16)
-            GeometryReader { geo in
-                ForEach(LightDay.Mark.allCases, id: \.self) { mark in
-                    Text(Self.markName(mark))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize()
-                        .position(x: geo.size.width * Layout.position(marks.minute(of: mark)), y: 8)
+            VStack(spacing: 2) {
+                MarkLabels(spots: LightDay.Mark.allCases.map { Layout.position(marks.minute(of: $0)) }) {
+                    ForEach(LightDay.Mark.allCases, id: \.self) { mark in
+                        Text("\(Self.markName(mark)) \(Self.time(marks.minute(of: mark)))")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .fixedSize()
+                    }
                 }
+                // Where each mark really is, since a label may have been pushed off it.
+                GeometryReader { geo in
+                    ForEach(LightDay.Mark.allCases, id: \.self) { mark in
+                        Rectangle()
+                            .fill(.secondary)
+                            .frame(width: 1, height: 4)
+                            .offset(x: geo.size.width * Layout.position(marks.minute(of: mark)))
+                    }
+                }
+                .frame(height: 4)
             }
-            .frame(height: 16)
         }
     }
 
@@ -416,24 +443,11 @@ struct LightsView: View {
     private func previewOn(_ bulb: String, _ look: LightDay.State) {
         var states = [bulb: look]
         for follower in bulbs where follower.parent == bulb { states[follower.id] = look }
-        letGoTask?.cancel()
         previewing = Previewing(bulb: bulbs.first { $0.id == bulb }?.name ?? "Bulb", look: look)
         appState.onPreviewLamps?(states)
     }
 
-    /// The look stays a second after letting go, or a clicked colour would be gone
-    /// before it was seen. The bulb is back on the day within 2 more.
-    private func letGo() {
-        letGoTask?.cancel()
-        letGoTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1))
-            guard !Task.isCancelled else { return }
-            endPreviewNow()
-        }
-    }
-
     private func endPreviewNow() {
-        letGoTask?.cancel()
         previewing = nil
         appState.onEndLampPreview?()
     }
@@ -481,7 +495,7 @@ struct LightsView: View {
         dragging = nil
         dragLook = nil
         history.commit(undo, "Move Keyframe")
-        letGo()
+        endPreviewNow()
     }
 
     private func pasteLook(onto id: UUID, bulb: LightDay.Bulb) {
@@ -521,7 +535,6 @@ struct LightsView: View {
             appState.onEndLampPreview?()
             return
         }
-        letGoTask?.cancel()
         previewing = nil
         playTask = Task { @MainActor in
             let start = Date(), length = 10.0
@@ -605,6 +618,25 @@ enum Layout {
     }
 }
 
+/// The marks' labels, each over its spot on the day unless that would overlap
+/// another. A `Layout` because it needs their widths before placing them, which
+/// measuring in a first pass could only give after a frame in the wrong place.
+private struct MarkLabels: SwiftUI.Layout {
+    let spots: [Double]
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        CGSize(width: proposal.width ?? 0, height: subviews.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let widths = subviews.map { Double($0.sizeThatFits(.unspecified).width) }
+        let centers = LightDay.spread(spots.map { $0 * Double(bounds.width) }, widths: widths, gap: 8, across: Double(bounds.width))
+        for (view, x) in zip(subviews, centers) {
+            view.place(at: CGPoint(x: bounds.minX + x, y: bounds.midY), anchor: .center, proposal: .unspecified)
+        }
+    }
+}
+
 /// Bulbs by id, so an edit reads as what it does.
 struct BulbIndex {
     var bulbs: [LightDay.Bulb]
@@ -670,6 +702,7 @@ private struct KeyDrawer: View {
             HStack(spacing: 10) {
                 DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
                     .labelsHidden()
+                    .controlSize(.small)
                 Toggle("On", isOn: Binding(get: { key.on }, set: { on in
                     change { $0.on = on }
                     commit()
@@ -716,8 +749,7 @@ private struct KeyDrawer: View {
                 }
                 Spacer()
                 Button("Delete Keyframe", action: delete)
-                    .buttonStyle(.borderless)
-                    .foregroundStyle(.secondary)
+                    .controlSize(.small)
             }
         }
         .font(.subheadline)
