@@ -3,27 +3,32 @@ import Foundation
 /// The decisions Auto mode makes, kept free of the sensor, the monitor and the
 /// UI so they can be checked with plain numbers (`tests/drive/room-light.sh`).
 ///
-/// One number is yours, the level: how bright you like the screen. The room's
-/// light multiplies it; contrast
-/// follows brightness, and Night Shift follows the clock. None of it needs
-/// presets.
+/// One number is yours, the level: how bright you like the screen. Before
+/// sunset the room's light multiplies it; after sunset the clock takes it to the
+/// night pair, because by then the sensor is reading the lamps Sundial is
+/// dimming. Contrast follows brightness, and Night Shift follows the clock. None
+/// of it needs presets.
 enum RoomLight {
     // MARK: - Brightness
 
     /// The room's light that the level is stated at: at 100 lux, brightness is
     /// the level itself.
     static let referenceLux = 100.0
-    /// How strongly the room moves brightness. 0.25 is a fourth root: sixteen
-    /// times the light gives twice the brightness. Fitted to the seven
-    /// brightnesses set on the evening of 2026-10-26, from 60 at 133 lux to
-    /// 17-22 at 2 lux; a square root dimmed the dark room far below them.
-    static let exponent = 0.25
+    /// How strongly the room moves brightness. 0.5 is a square root: four times
+    /// the light gives twice the brightness. Fitted to the 13 settled drags made
+    /// before sunset from 2026-10-27 to 11-01 (0.51, 25 to 470 lux). The fourth
+    /// root it replaces was fitted to evening drags in dim rooms, which the clock
+    /// handles now.
+    static let exponent = 0.5
     /// Readings below this count as this: under about 0.1 lux the sensor reads
     /// 0, so lower isn't darker, only unmeasured.
     static let floorLux = 0.1
 
-    /// The level those seven settings fit: 17 at 2 lux, 30 at 30, 43 at 84.
-    static let defaultLevel = 45.0
+    /// The level those drags fit: 30.4.
+    static let defaultLevel = 30.0
+    /// The room assumed at sunset when Sundial didn't see it (asleep, or Schedule
+    /// was on): the median at the handover over the first seven days of the log.
+    static let duskLux = 38.0
 
     /// The room's multiplier on your level: 1 at 100 lux.
     static func factor(lux: Double) -> Double {
@@ -69,30 +74,40 @@ enum RoomLight {
         brightness >= 1 ? contrast / brightness : nil
     }
 
-    // MARK: - The dark
+    // MARK: - The evening
 
-    /// Where a dark room ends up by bedtime: the brightness most nights of
+    /// Where the evening ends up by bedtime: the brightness most nights of
     /// 2026-10-26 to 30 were dragged down to (1 on six nights of seven). A drag
-    /// after bedtime in the dark sets it.
+    /// after bedtime sets it.
     static let defaultNightMinimum = 1.0
     /// The contrast with it: 3-4 with brightness 1 on those nights, and 3 with
     /// brightness 0, so not a multiple (which would make it 0). A drag after
-    /// bedtime in the dark sets it.
+    /// bedtime sets it.
     static let defaultNightContrast = 3.0
 
-    /// How far the screen has gone from the room's brightness to the night
-    /// minimum: 0 to 1. Below `floorLux` the sensor can't tell darker from
-    /// dark, and the drags showed the screen still wanted dimming after the
-    /// room read 0, so the clock carries on: from when the room went dark
-    /// (`darkSince`, minutes after midnight) to bedtime, evenly, then the
-    /// minimum until Night Shift turns off. Outside Night Shift's hours, 0.
-    static func darkFraction(minuteOfDay m: Int, darkSince d: Int, schedule s: WarmSchedule) -> Double {
+    /// The evening is Night Shift's hours, where the lamps run from Twilight to
+    /// DuskLight. The sensor reads those lamps then, so lux can't say what the
+    /// natural light is doing.
+    static func isEvening(minuteOfDay m: Int, schedule s: WarmSchedule) -> Bool {
+        (m - s.from + 2 * 24 * 60) % (24 * 60) < eveningLength(schedule: s)
+    }
+
+    /// Minutes from Night Shift's start to its end.
+    static func eveningLength(schedule s: WarmSchedule) -> Int {
+        (s.off - s.from + 2 * 24 * 60) % (24 * 60)
+    }
+
+    /// How far the screen has gone from where the slide started to the night
+    /// pair: 0 to 1. Evenly from `since` (minutes after midnight) to bedtime, then
+    /// 1 until Night Shift turns off; outside Night Shift's hours, 0. A straight
+    /// line fitted the 31 evening drags better than a curve in log brightness.
+    static func eveningFraction(minuteOfDay m: Int, since d: Int, schedule s: WarmSchedule) -> Double {
         let day = 24 * 60
         func night(_ x: Int) -> Int { (x - s.from + 2 * day) % day }
-        let now = night(m), bed = s.full - s.from, off = night(s.off)
+        let now = night(m), bed = s.full - s.from, off = eveningLength(schedule: s)
         guard now < off else { return 0 }
         if now >= bed { return 1 }
-        // Dark since before the evening began counts from its start.
+        // A start from before the evening began counts from its start.
         let since = night(d) > now ? 0 : night(d)
         return Double(now - since) / Double(bed - since)
     }
@@ -103,14 +118,15 @@ enum RoomLight {
         value + (min(night, value) - value) * min(max(dark, 0), 1)
     }
 
-    /// What a drag sets. A dark room says nothing about the day: brightness 1
-    /// at 0 lux worked back to a level of 5.6, and each morning opened at a
-    /// fifth of what it should (2026-10-27 to 11-01). So a drag in the dark
-    /// holds until the room is lit, and only a lit room's drag saves.
-    enum DragTarget { case day, darkHold, nightPair }
-    static func dragTarget(lux: Double, dark: Double) -> DragTarget {
-        if lux > floorLux { return .day }
-        return dark >= 1 ? .nightPair : .darkHold
+    /// What a drag sets. Only a lit room before sunset says anything about the
+    /// day: brightness 1 at 0 lux worked back to a level of 5.6, and each morning
+    /// opened at a fifth of what it should (2026-10-27 to 11-01). So a drag in the
+    /// evening holds for that evening, a drag after bedtime sets the night pair,
+    /// and a drag in a dark daytime room holds until the room is lit.
+    enum DragTarget { case day, hold, nightPair }
+    static func dragTarget(lux: Double, evening: Bool, fraction: Double) -> DragTarget {
+        if evening { return fraction >= 1 ? .nightPair : .hold }
+        return lux > floorLux ? .day : .hold
     }
 
     // MARK: - Night Shift

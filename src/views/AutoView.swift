@@ -46,7 +46,7 @@ struct AutoView: View {
     }
 
     /// Night Shift now, and bedtime: one time where Night Shift is full, the
-    /// lamps reach DuskLight and a dark room has the screen at its dimmest.
+    /// lamps reach DuskLight and the screen is at its dimmest.
     /// "Darkest" names all three; a separate Bedtime row repeated Night
     /// Shift's "full at".
     private var nightShiftRow: some View {

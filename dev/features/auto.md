@@ -1,20 +1,20 @@
 # Auto
 
-Updated 2026-11-01 18:25, at 1.1.0.
+Updated 2026-11-01 20:34, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
-sets the monitor from it and the clock. It's the main mode and needs no
+sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
 presets; Schedule (the presets) is the other.
 
 ## Sub-features
 
-- **Brightness is your level times the room.** You set it once with the
-  Brightness slider and it stays: Sundial saves it as your level (the
-  brightness at 100 lux), and the room scales it by the fourth root of its
-  light: sixteen times the light gives twice the brightness. Readings under
-  0.1 lux count as 0.1. The default level, 45, fits the brightnesses set on the
-  evening of 2026-10-26 (17-22 at 2 lux, 25-30 at dusk, 40 at 84 lux). A
-  level of 0 is the monitor's darkest in any room.
+- **Before sunset, brightness is your level times the room.** You set it with
+  the Brightness slider and it stays: Sundial saves it as your level (the
+  brightness at 100 lux), and the room scales it by the square root of its
+  light: four times the light gives twice the brightness. Readings under 0.1
+  lux count as 0.1. The default level, 30, and the square root fit the 13
+  settled drags made before sunset from 2026-10-27 to 11-01 (level 30.4, power
+  0.51, 25 to 470 lux). A level of 0 is the monitor's darkest in any room.
 - **Contrast follows brightness** at a multiple you set by dragging the
   Contrast slider: it starts at π × brightness, and a drag keeps the
   multiple that gives what you chose, so brightness 0 is still contrast 0, the
@@ -34,16 +34,17 @@ presets; Schedule (the presets) is the other.
   fixed 5:13 PM and 6:30 AM. When the Mac changes time zone (traveling, with
   "Set time zone automatically" on), the clock and the sun move to the new
   zone at once.
-- **The dark dims to bedtime.** Below 0.1 lux the sensor reads 0, however
-  dark. When the room goes that dark during Night Shift's hours, brightness
-  and contrast slide evenly from the room's to the night pair (brightness 1,
-  contrast 3 to start) by bedtime, and stay there until Night Shift turns
-  off; going dark after bedtime is the night pair at once. Contrast at night
-  is its own number, not a multiple, so brightness 0 can still have some. A
-  drag at 0 lux before bedtime holds what you chose and the slide runs on
-  from it, until the room is lit or the Mac wakes; it saves nothing. After
-  bedtime in the dark it sets the night pair.
-  Waking the Mac starts the slide over from then.
+- **After sunset, the clock dims to bedtime.** From where Night Shift starts
+  warming (40 minutes before sunset, where the lamps start on Twilight), lux
+  stops counting: brightness and contrast slide evenly from what the room gave
+  at that moment to the night pair (brightness 1, contrast 3 to start) by
+  bedtime, and stay there until Night Shift turns off. If Sundial didn't see
+  the handover, it starts from your level at 38 lux, the median there over the
+  first week. Contrast at night is its own number, not a multiple, so brightness
+  0 can still have some. A drag before bedtime holds what you chose and the
+  slide runs on from it for the rest of the evening, across a wake too; it saves
+  nothing. A drag after bedtime sets the night pair. A drag before sunset at
+  0 lux holds until the room is lit or the Mac wakes.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
   rest, so a big change (blinds, a cloud) lands in about 20 seconds. Waking
@@ -55,8 +56,9 @@ presets; Schedule (the presets) is the other.
   it saw (100 lux before the first) and the Room row says "no reading".
 - **Room log.** One line a minute, and one each time you let go of a slider
   (with the level, contrast multiple, night brightness or night contrast saved), in
-  `room-log.csv` next to `config.json`. The last column, `dark`, is how far
-  into the dark slide it was (0 to 1); `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
+  `room-log.csv` next to `config.json`. The `dark` column is how far along the
+  evening's slide it was (0 to 1), and from 2026-11-01 runs all evening, not
+  only at 0 lux; `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
   night minimum and `dark` columns, and from 2026-10-31 night contrast; a log started before then has the older
   header.
 - **Auto | Schedule** under the header picks which one drives the monitor.
@@ -71,10 +73,10 @@ the control under the header.
 Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 
 `./build.sh drive room-light` (~5s): compiles the app's room-light rules with
-a harness. It checks that brightness is the level times the room's fourth
-root (the evening's settings at 2, 19-32 and 84 lux, never past 100, level 0
-darkest), that a dark room slides to the night minimum by bedtime and not
-outside Night Shift's hours, that a set
+a harness. It checks that brightness before sunset is the level times the
+room's square root (the day's drags at 35 to 470 lux, never past 100, level 0
+darkest), that the evening slides to the night pair by bedtime and not
+outside Night Shift's hours, that only a lit daytime drag saves the level, that a set
 brightness comes back in the same room and scales in another, that a set
 contrast comes back at the same brightness and scales with it, that sunrise
 and sunset for Chicago land on its solstice times (and zone.tab's point
@@ -106,8 +108,11 @@ row.
   lamp down to black. Below 10 lux Sundial reads a raw detector count
   instead (about 10 per lux), which told apart an LED's settings at 0.15,
   2.2, 7 and 11 lux where lux read 0, 0, 2 and 7 (2026-10-26). Below about
-  0.1 lux both read 0, so the two lowest settings look the same. A lamp-lit room may read as bright as a dim afternoon; Night Shift is on
-  the clock; brightness is only below 0.1 lux, in the dark slide.
+  0.1 lux both read 0, so the two lowest settings look the same.
+- The sensor reads the lamps. By evening that's why the clock takes over; by
+  day the Morning and Noon scenes still add to the lux the curve scales from.
+  Evening light Sundial doesn't control (a ceiling light) doesn't raise the
+  screen either: a drag holds until the next evening.
 - The monitor's own light reaches the sensor. A brighter monitor reads as a
   brighter room; small at the levels seen so far.
 - Auto writes only when a value changes, so a change made with the monitor's
@@ -149,6 +154,16 @@ row.
   teleport") and the other half glows faintly on hover. The header's right side is
   bare in both modes: the control says the mode, and Schedule opens on the
   preset in force. Applies *Never a fight with the controls*.
+- 2026-11-01 20:34, 1.1.0. Before sunset brightness follows the room, after sunset the clock, because
+  once Sundial drives the lamps the sensor is reading its own light: "post sunset
+  light lerps, so essentially the monitor would also just follow the post sunset
+  algo. It's not pre 0 lux and post 0 lux, it's just pre sunset and post sunset."
+  The drags alone fitted one curve equally well on both sides; the split comes
+  from the loop, not the fit. It replaces the slide that began at 0 lux and limits
+  the 2026-10-26 "not the clock" call above to before sunset. The curve went from
+  a fourth root to a square root fitted to daytime drags, and the level moved to
+  a new config key since the old number meant something else. Applies *Just
+  right for the room*.
 - 2026-10-26 22:39, 1.0.3. Brightness follows the fourth root of the room's light, fitted to seven
   brightnesses set across one evening. The square root, shifted to reach 0
   at 2 lux, was a guess before any night readings; the room read 2 lux at

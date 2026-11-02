@@ -23,17 +23,16 @@ func check(_ what: String, _ ok: Bool, _ got: Any) {
 }
 func near(_ a: Double, _ b: Double, _ tol: Double) -> Bool { abs(a - b) <= tol }
 
-// Brightness: your level times the room, fitted to the brightnesses set on
-// 2026-10-26's evening.
+// Brightness before sunset: your level times the room, fitted to the settled
+// daytime drags of 2026-10-27 to 11-01.
 let lvl = RoomLight.defaultLevel
 func b(_ lux: Double) -> Double { RoomLight.brightness(level: lvl, lux: lux) }
-check("the default level gives the 17-22 set at night (2 lux)", b(2) >= 15 && b(2) <= 22, b(2))
-check("and the 25-30 set at dusk (19-32 lux)", b(19) >= 25 && b(32) <= 36, (b(19), b(32)))
-check("and the 40 set at 84 lux", near(b(84), 40, 5), b(84))
-check("a reading of 0 counts as 0.1 lux, the darkest measured, not black", b(0) == b(0.1) && b(0) > 5, b(0))
-check("the LED's dark settings (0.15, 2.2, 7 lux) give three different brightnesses", b(0.15) + 3 < b(2.2) && b(2.2) + 3 < b(7), (b(0.15), b(2.2), b(7)))
-check("16x the light gives 2x the brightness",
-      near(RoomLight.brightness(level: 10, lux: 1600) / RoomLight.brightness(level: 10, lux: 100), 2, 0.01), "")
+check("the default level gives about the 25 set at 35-51 lux", b(35) >= 15 && b(51) <= 25, (b(35), b(51)))
+check("and about the 29-42 set at 96-143 lux", b(96) >= 25 && b(143) <= 42, (b(96), b(143)))
+check("and about the 74 set at 470 lux", near(b(470), 74, 12), b(470))
+check("a reading of 0 counts as 0.1 lux, the darkest measured", b(0) == b(0.1), b(0))
+check("4x the light gives 2x the brightness",
+      near(RoomLight.brightness(level: 10, lux: 400) / RoomLight.brightness(level: 10, lux: 100), 2, 0.01), "")
 check("the level is the brightness at 100 lux", near(RoomLight.brightness(level: 30, lux: 100), 30, 0.001), "")
 check("level 0 is the monitor's darkest in any room",
       RoomLight.brightness(level: 0, lux: 2000) == 0 && RoomLight.contrast(brightness: 0) == 0, "")
@@ -43,7 +42,6 @@ check("brightness never passes 100", RoomLight.brightness(level: 80, lux: 10_000
 let set = RoomLight.level(forBrightness: 8, lux: 240)
 check("a set brightness comes back in the same room", near(RoomLight.brightness(level: set, lux: 240), 8, 0.001), RoomLight.brightness(level: set, lux: 240))
 check("and is lower with the blinds shut", RoomLight.brightness(level: set, lux: 35) < 8, RoomLight.brightness(level: set, lux: 35))
-check("a brightness set at night saves a level that is sane by day", RoomLight.brightness(level: RoomLight.level(forBrightness: 17, lux: 2), lux: 550) < 80, RoomLight.brightness(level: RoomLight.level(forBrightness: 17, lux: 2), lux: 550))
 
 // Contrast is π × brightness to start, so both reach 0 together.
 check("contrast at brightness 0 is 0", RoomLight.contrast(brightness: 0) == 0, RoomLight.contrast(brightness: 0))
@@ -65,30 +63,36 @@ check("near Midnight's 100 at 11:57 PM", near(ns(23, 57), 100, 5), ns(23, 57))
 check("full after midnight", ns(3, 0) == 100, ns(3, 0))
 check("off from 6:30 AM", ns(6, 30) == 0 && ns(6, 29) == 100, (ns(6, 29), ns(6, 30)))
 
-// The dark: below what the sensor sees, the clock dims to the night minimum by
-// bedtime (the fitted schedule: warming from 5:13 PM, full at midnight, off 6:30 AM).
+// The evening: the sensor reads the lamps then, so the clock takes the screen to
+// the night pair by bedtime (the fitted schedule: from 5:13 PM, full at midnight,
+// off 6:30 AM).
 let night = RoomLight.fittedSchedule
 func dk(_ h: Int, _ m: Int, since sh: Int, _ sm: Int) -> Double {
-    RoomLight.darkFraction(minuteOfDay: h * 60 + m, darkSince: sh * 60 + sm, schedule: night)
+    RoomLight.eveningFraction(minuteOfDay: h * 60 + m, since: sh * 60 + sm, schedule: night)
 }
-check("dark at 10:30 PM starts at the room's brightness", dk(22, 30, since: 22, 30) == 0, dk(22, 30, since: 22, 30))
-check("and is halfway at 11:15", near(dk(23, 15, since: 22, 30), 0.5, 0.001), dk(23, 15, since: 22, 30))
-check("and at the minimum by bedtime and after", dk(0, 0, since: 22, 30) == 1 && dk(3, 0, since: 22, 30) == 1, (dk(0, 0, since: 22, 30), dk(3, 0, since: 22, 30)))
-check("going dark after bedtime is the minimum at once", dk(1, 0, since: 1, 0) == 1, dk(1, 0, since: 1, 0))
-check("a dark morning after Night Shift ends isn't dimmed", dk(7, 0, since: 22, 30) == 0, dk(7, 0, since: 22, 30))
-check("a dark afternoon isn't dimmed", dk(14, 0, since: 13, 0) == 0, dk(14, 0, since: 13, 0))
-check("dark since before the evening counts from its start", near(dk(20, 36, since: 15, 0), 0.5, 0.01), dk(20, 36, since: 15, 0))
+func eve(_ h: Int, _ m: Int) -> Bool { RoomLight.isEvening(minuteOfDay: h * 60 + m, schedule: night) }
+check("the afternoon is before the evening", !eve(17, 12) && !eve(6, 30), (eve(17, 12), eve(6, 30)))
+check("Night Shift's start, midnight and 6:29 AM are the evening", eve(17, 13) && eve(0, 0) && eve(6, 29), "")
+check("the evening starts at the room's brightness", dk(17, 13, since: 17, 13) == 0, dk(17, 13, since: 17, 13))
+check("and is halfway halfway to bedtime", near(dk(20, 36, since: 17, 13), 0.5, 0.01), dk(20, 36, since: 17, 13))
+check("and at the night pair by bedtime and after", dk(0, 0, since: 17, 13) == 1 && dk(3, 0, since: 17, 13) == 1, (dk(0, 0, since: 17, 13), dk(3, 0, since: 17, 13)))
+check("a drag at 10:30 PM starts the slide over from there", dk(22, 30, since: 22, 30) == 0 && near(dk(23, 15, since: 22, 30), 0.5, 0.001), dk(23, 15, since: 22, 30))
+check("waking after bedtime is the night pair at once", dk(1, 0, since: 1, 0) == 1, dk(1, 0, since: 1, 0))
+check("the morning after Night Shift ends isn't on the slide", dk(7, 0, since: 22, 30) == 0, dk(7, 0, since: 22, 30))
+check("nor is the afternoon", dk(14, 0, since: 13, 0) == 0, dk(14, 0, since: 13, 0))
+check("a start from before the evening counts from its start", near(dk(20, 36, since: 15, 0), 0.5, 0.01), dk(20, 36, since: 15, 0))
+check("the evening's length is Night Shift's hours", RoomLight.eveningLength(schedule: night) == 13 * 60 + 17, RoomLight.eveningLength(schedule: night))
 check("the slide reaches the night value at bedtime", RoomLight.slid(5, toward: 1, dark: 1) == 1, "")
 check("halfway, halfway between", RoomLight.slid(5, toward: 1, dark: 0.5) == 3, "")
 check("a value already below the night's isn't raised", RoomLight.slid(0.5, toward: 1, dark: 1) == 0.5, "")
-// A dark room says nothing about the day. Each of these crushed the next morning's
-// level until 2026-11-01: brightness 1 at 0 lux saved a level of 5.6, or 6.2 at 23:30.
-check("a drag at 0 lux before bedtime holds, and doesn't save the day's level",
-      RoomLight.dragTarget(lux: 0, dark: 0.09) == .darkHold, "")
-check("so does one at the sensor's floor", RoomLight.dragTarget(lux: 0.1, dark: 0) == .darkHold, "")
-check("a dark afternoon's drag holds too", RoomLight.dragTarget(lux: 0, dark: 0) == .darkHold, "")
-check("after bedtime in the dark it sets the night pair", RoomLight.dragTarget(lux: 0, dark: 1) == .nightPair, "")
-check("a lit room's drag saves the day's level, even a dim one", RoomLight.dragTarget(lux: 2, dark: 0) == .day, "")
+// Only a lit room before sunset says anything about the day. Each of the others
+// crushed the next morning's level until 2026-11-01: brightness 1 at 0 lux saved a
+// level of 5.6, or 6.2 at 23:30.
+func tgt(_ lux: Double, evening: Bool, _ f: Double) -> RoomLight.DragTarget { RoomLight.dragTarget(lux: lux, evening: evening, fraction: f) }
+check("a drag before sunset in a lit room saves the day's level, even a dim one", tgt(2, evening: false, 0) == .day, "")
+check("a drag in the evening holds, however bright the lamps read", tgt(0, evening: true, 0.09) == .hold && tgt(133, evening: true, 0.1) == .hold, "")
+check("after bedtime it sets the night pair, whatever the lamps read", tgt(0, evening: true, 1) == .nightPair && tgt(30, evening: true, 1) == .nightPair, "")
+check("a dark daytime room's drag holds, at the sensor's floor too", tgt(0, evening: false, 0) == .hold && tgt(0.1, evening: false, 0) == .hold, "")
 check("a contrast drag at brightness 0 doesn't set the multiple (the 'one to one' of 2026-10-31)",
       RoomLight.savedContrastScale(forContrast: 1, brightness: 0) == nil, "")
 check("at brightness 10 it does", RoomLight.savedContrastScale(forContrast: 40, brightness: 10) == 4, "")
@@ -158,4 +162,4 @@ if ! "$work/room" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ room-light: brightness is your level times the room's fourth root, fitted to tonight's settings, a set level keeps, contrast is a multiple of brightness you can set, a dark room dims to the night brightness and contrast by bedtime, a drag in the dark leaves the day's level alone, a contrast drag at brightness 0 leaves the multiple alone, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"
+echo "✓ room-light: before sunset brightness is your level times the square root of the room, fitted to the day's drags, a set level keeps, contrast is a multiple of brightness you can set, after sunset the clock takes both to the night pair by bedtime, only a lit daytime drag saves the day's level, a contrast drag at brightness 0 leaves the multiple alone, Night Shift matches the fitted presets and follows Chicago's sun, it lands in ~20s, and a passing hand is ignored"

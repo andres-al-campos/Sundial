@@ -17,13 +17,13 @@ class AppState: ObservableObject {
     @Published var mode: Mode = .auto
     /// How bright you like the screen, as the brightness at 100 lux. The room's
     /// light multiplies it (see `RoomLight`). Set by dragging Auto's slider.
-    @Published var autoLevel: Double = RoomLight.defaultLevel
+    @Published var dayLevel: Double = RoomLight.defaultLevel
     /// Contrast per point of brightness. Set by dragging Auto's Contrast slider.
     @Published var autoContrastScale: Double = RoomLight.defaultContrastScale
-    /// The brightness a dark room reaches by bedtime. Set by dragging
-    /// Brightness after bedtime in the dark.
+    /// The brightness the evening reaches by bedtime. Set by dragging
+    /// Brightness after bedtime.
     @Published var autoNightMinimum: Double = RoomLight.defaultNightMinimum
-    /// The contrast with it. Set by dragging Contrast after bedtime in the dark.
+    /// The contrast with it. Set by dragging Contrast after bedtime.
     @Published var autoNightContrast: Double = RoomLight.defaultNightContrast
     /// When Night Shift is full and the lamps reach their dimmest scene, in
     /// minutes after midnight. Set in Auto.
@@ -109,7 +109,9 @@ class AppState: ObservableObject {
         var launchAtLogin: Bool
         var isSetUp: Bool?
         var mode: Mode?
-        var autoLevel: Double?
+        // Not `autoLevel`: that one meant a level on the fourth-root curve, and
+        // carried over it would land at about half the fitted brightness by day.
+        var dayLevel: Double?
         var autoContrastScale: Double?
         var lampsFollow: Bool?
         var bedtime: Int?
@@ -128,7 +130,7 @@ class AppState: ObservableObject {
             launchAtLogin: launchAtLogin,
             isSetUp: isSetUp,
             mode: mode,
-            autoLevel: autoLevel,
+            dayLevel: dayLevel,
             autoContrastScale: autoContrastScale,
             lampsFollow: lampsFollow,
             bedtime: bedtime,
@@ -158,7 +160,7 @@ class AppState: ObservableObject {
         launchAtLogin = config.launchAtLogin
         isSetUp = config.isSetUp ?? false
         mode = config.mode ?? .auto
-        autoLevel = config.autoLevel ?? RoomLight.defaultLevel
+        dayLevel = config.dayLevel ?? RoomLight.defaultLevel
         autoContrastScale = config.autoContrastScale ?? RoomLight.defaultContrastScale
         lampsFollow = config.lampsFollow ?? false
         bedtime = config.bedtime ?? 24 * 60
