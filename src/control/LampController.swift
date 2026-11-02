@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import OSLog
 
 /// The Hue lamps follow the day: Sundial reads the scenes on the bridge, places
 /// them on the day (`LampBlend.defaultTimes`), and every 30 seconds fades each
@@ -15,6 +16,9 @@ final class LampController {
     private var scenesRead = Date.distantPast
     private var sent: [String: LampBlend.LampState] = [:]
     private var busy = false
+    // One line per tick, because the status line keeps saying "Paired" through a
+    // stall: on 2026-11-01 the lamps sat on Night for at least 50 minutes.
+    private static let log = Logger(subsystem: "com.aurende.sundial", category: "lamps")
 
     static let interval: TimeInterval = 30
     /// Scenes edited in the Hue app are seen within this long.
@@ -77,7 +81,10 @@ final class LampController {
     }
 
     private func tick() async {
-        guard let state, !busy else { return }
+        guard let state, !busy else {
+            Self.log.notice("tick skipped: the last one hasn't finished")
+            return
+        }
         guard let bridge, bridge.isPaired else {
             state.lampStatus = "Not paired"
             return
@@ -106,13 +113,17 @@ final class LampController {
             }
             let comps = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: now)
             let minute = (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
+            var sends = 0
             for (id, target) in LampBlend.blend(frames, at: minute) where sent[id] != target {
                 try await bridge.set(lamp: id, to: target, fade: Self.interval)
                 sent[id] = target
+                sends += 1
             }
             state.lampStatus = "Paired · " + Self.where(frames, minute)
+            Self.log.notice("tick at minute \(minute): sent \(sends), \(state.lampStatus, privacy: .public)")
         } catch {
             state.lampStatus = error.localizedDescription
+            Self.log.error("tick failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

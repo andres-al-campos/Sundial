@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-10-28 00:22, at 1.1.0.
+Updated 2026-11-02 01:39, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -52,6 +52,7 @@ in the room.
 
 ## Gotchas
 
+- The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`.
 - A lamp changed in the Hue app is set back within 30 seconds while Follow is on.
 - Apart from bedtime, the scene times are fixed in `LampBlend.defaultTimes` until there's an editor.
 - macOS asks for local network access the first time Sundial looks for the bridge.
