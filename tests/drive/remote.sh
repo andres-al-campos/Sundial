@@ -66,4 +66,8 @@ if ! grep -q 'fullSizeContentView' src/views/MainWindow.swift; then
     echo "✗ remote: MainWindow's NSWindow lost .fullSizeContentView. Without it a NavigationSplitView's title bar blur lands on the content's top 50pt, hiding what's there. Put it back in the style mask in src/views/MainWindow.swift."
     exit 1
 fi
+if ! grep -q 'makeFirstResponder(nil)' src/views/MainWindow.swift; then
+    echo "✗ remote: MainWindow no longer clears the first responder when it opens. With keyboard navigation on, AppKit focuses the first button, and its ring reads as that button being on. Put window?.makeFirstResponder(nil) back after makeKeyAndOrderFront in src/views/MainWindow.swift."
+    exit 1
+fi
 echo "✓ remote: every sundial:// command parses to what it says, a wrong one is refused saying what would work, and the window's sidebar can select and its top row stays clear of the title bar"

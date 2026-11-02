@@ -27,6 +27,9 @@ enum MainWindow {
             window = w
         }
         window?.makeKeyAndOrderFront(nil)
+        // With keyboard navigation on, AppKit otherwise focuses the first button and
+        // its ring reads as that button being on. Tab still gets there.
+        window?.makeFirstResponder(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 }
