@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-02 02:02, at 1.1.0.
+Updated 2026-11-02 02:32, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -68,6 +68,10 @@ blend looks in the room.
 - A lamp changed in the Hue app is set back within 30 seconds while Follow is on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
 - Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly.
+- macOS asks for the Keychain again after every `./build.sh`, because the app is
+  signed ad-hoc and each build is a new signature to it. Allow lasts one launch,
+  Always Allow lasts until the next build. Until it's answered the lamps wait and
+  the status says so; the rest of the app runs.
 - macOS asks for local network access the first time Sundial looks for the bridge.
   Refused, no bridge is found. Allow it in System Settings → Privacy & Security
   → Local Network.

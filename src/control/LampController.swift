@@ -17,6 +17,7 @@ final class LampController {
     private var pendingPreview: [String: LightDay.State] = [:]
     private var previewTask: Task<Void, Never>?
     private var busy = false
+    private var readingKey = false
     // One line per tick, because the status line keeps saying "Paired" through a
     // stall: on 2026-11-01 the lamps sat on Night for at least 50 minutes.
     private static let log = Logger(subsystem: "com.aurende.sundial", category: "lamps")
@@ -31,7 +32,15 @@ final class LampController {
         guard timer == nil else { return }
         self.state = state
         if let host = state.hueHost {
-            bridge = HueBridge(host: host, key: HueBridge.savedKey(host: host))
+            // Off the main thread: this waits for as long as a Keychain prompt stays
+            // up, and on the main thread that held the whole launch, monitor included.
+            readingKey = true
+            Task {
+                let key = await Task.detached { HueBridge.savedKey(host: host) }.value
+                bridge = HueBridge(host: host, key: key)
+                readingKey = false
+                refresh()
+            }
         }
         timer = Timer.scheduledTimer(withTimeInterval: Self.interval, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.tick() }
@@ -159,6 +168,10 @@ final class LampController {
     private func tick() async {
         guard let state, !busy else {
             Self.log.notice("tick skipped: the last one hasn't finished")
+            return
+        }
+        guard !readingKey else {
+            state.lampStatus = "Waiting for the Keychain. Choose Always Allow in its prompt."
             return
         }
         guard let bridge, bridge.isPaired else {
