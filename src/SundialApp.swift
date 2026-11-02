@@ -66,6 +66,7 @@ struct SundialApp: App {
         state.onPreviewLamps = { lamps.preview($0) }
         state.onEndLampPreview = { lamps.endPreview() }
         state.onRenameBulb = { lamps.rename(device: $0, to: $1) }
+        state.onReadHue = { try await lamps.scenesAsStored() }
         state.onOpenWindow = { [weak state] in
             if let state { MainWindow.show(state) }
         }

@@ -15,10 +15,11 @@ enum RemoteCommand: Equatable {
     case auto, schedule
     case open(WindowSection?)
     case brightness(Int), contrast(Int)
+    case readLights, loadLights, readHue, screenshot
 
     struct Failure: Error, Equatable { let message: String }
 
-    static let usage = "Use status, pause, resume, auto, schedule, open [lights|presets|settings], brightness 0-100 or contrast 0-100."
+    static let usage = "Use status, pause, resume, auto, schedule, open [lights|presets|settings], brightness 0-100, contrast 0-100, lights, lights load <file>, hue or screenshot."
 
     static func parse(_ url: URL) -> Result<RemoteCommand, Failure> {
         guard url.scheme == "sundial", let host = url.host else {
@@ -29,6 +30,10 @@ enum RemoteCommand: Equatable {
         case ("status", nil): return .success(.status)
         case ("lights", "pause"): return .success(.pauseLights)
         case ("lights", "resume"): return .success(.resumeLights)
+        case ("lights", "read"): return .success(.readLights)
+        case ("lights", "load"): return .success(.loadLights)
+        case ("hue", nil): return .success(.readHue)
+        case ("screenshot", nil): return .success(.screenshot)
         case ("mode", "auto"): return .success(.auto)
         case ("mode", "schedule"): return .success(.schedule)
         case ("open", nil): return .success(.open(nil))

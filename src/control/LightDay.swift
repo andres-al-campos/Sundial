@@ -59,6 +59,29 @@ enum LightDay {
         }
     }
 
+    /// What's wrong with a set of days handed in from outside the app, in words
+    /// that say how to fix it, or nil if they can be used.
+    static func problem(in bulbs: [Bulb], knownIDs: Set<String>) -> String? {
+        let ids = Set(bulbs.map(\.id))
+        if let stray = ids.subtracting(knownIDs).first {
+            return "There's no bulb \(stray) on the bridge. Use the ids from `sundial lights`."
+        }
+        for bulb in bulbs {
+            if let parent = bulb.parent {
+                guard parent != bulb.id, let p = bulbs.first(where: { $0.id == parent }) else {
+                    return "\(bulb.name) follows a bulb that isn't in the file. Fix its parent, or remove it."
+                }
+                if p.parent != nil { return "\(bulb.name) follows \(p.name), which follows another bulb. Point it at the bulb that has the keyframes." }
+            }
+            for key in bulb.keys {
+                guard (0..<day).contains(key.minute) else { return "\(bulb.name) has a keyframe at minute \(key.minute). Use 0 to \(day - 1)." }
+                guard (0...100).contains(key.brightness) else { return "\(bulb.name) has a keyframe at brightness \(key.brightness). Use 0 to 100." }
+                guard (0...1).contains(key.x), (0...1).contains(key.y) else { return "\(bulb.name) has a keyframe at xy \(key.x), \(key.y). Use 0 to 1 for both." }
+            }
+        }
+        return nil
+    }
+
     struct Bulb: Codable, Equatable, Identifiable {
         var id: String
         var deviceID: String
@@ -192,5 +215,19 @@ enum LightDay {
             }
             .min { $0.1 < $1.1 } ?? (2700, 1)
         return gap < 0.012 ? best : nil
+    }
+}
+
+/// A keyframe from a hand-written file needn't invent an id or say it's on.
+extension LightDay.Key {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(id: try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID(),
+                  minute: try c.decode(Int.self, forKey: .minute),
+                  anchor: try c.decodeIfPresent(LightDay.Anchor.self, forKey: .anchor),
+                  on: try c.decodeIfPresent(Bool.self, forKey: .on) ?? true,
+                  brightness: try c.decode(Double.self, forKey: .brightness),
+                  x: try c.decode(Double.self, forKey: .x),
+                  y: try c.decode(Double.self, forKey: .y))
     }
 }

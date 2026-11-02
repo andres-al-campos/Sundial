@@ -74,6 +74,8 @@ class AppState: ObservableObject {
     var onEndLampPreview: (() -> Void)?
     /// Set by the app at startup: rename a bulb on the bridge.
     var onRenameBulb: ((_ deviceID: String, _ name: String) -> Void)?
+    /// Set by the app at startup: the bridge's scenes, as it holds them.
+    var onReadHue: (() async throws -> Data)?
     /// Set by the app at startup: open the desktop window.
     var onOpenWindow: (() -> Void)?
 

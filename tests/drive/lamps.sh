@@ -86,6 +86,15 @@ check("within 10 minutes snaps to a mark, across midnight too", LightDay.snap(14
 check("an anchored keyframe follows its mark", LightDay.minute(of: key(0, 1, .init(mark: .sunset, offset: -40)), marks: m0) == 1040, "anchor")
 check("whites read back as a temperature, colours don't", LightDay.kelvin(LampBlend.xy(mirek: 500)) == 2000 && LightDay.kelvin(.init(x: 0.17, y: 0.7)) == nil, "kelvin")
 
+func bulb(_ keys: [LightDay.Key], parent: String? = nil, id: String = "1") -> LightDay.Bulb { .init(id: id, deviceID: "d", name: "Lamp", keys: keys, parent: parent) }
+check("a good file is accepted", LightDay.problem(in: [bulb([key(600, 50)])], knownIDs: ["1"]) == nil, "problem")
+check("a bulb that isn't on the bridge is refused", LightDay.problem(in: [bulb([], id: "9")], knownIDs: ["1"]) != nil, "problem")
+check("a minute past the day is refused", LightDay.problem(in: [bulb([key(1440, 50)])], knownIDs: ["1"]) != nil, "problem")
+check("brightness past 100 is refused", LightDay.problem(in: [bulb([key(600, 150)])], knownIDs: ["1"]) != nil, "problem")
+check("following a missing bulb is refused", LightDay.problem(in: [bulb([], parent: "2")], knownIDs: ["1"]) != nil, "problem")
+let handWritten = try! JSONDecoder().decode(LightDay.Key.self, from: Data(#"{"minute":60,"brightness":10,"x":0.5,"y":0.4}"#.utf8))
+check("a hand-written keyframe needs no id and is on", handWritten.on && handWritten.minute == 60, handWritten)
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)

@@ -141,6 +141,13 @@ final class LampController {
         refresh()
     }
 
+    func scenesAsStored() async throws -> Data {
+        guard let bridge, bridge.isPaired else {
+            throw HueError("Sundial isn't paired with the bridge. Open Settings → Lamps and pair it.")
+        }
+        return try await bridge.scenesAsStored()
+    }
+
     func rename(device id: String, to name: String) {
         guard let bridge else { return }
         Task {

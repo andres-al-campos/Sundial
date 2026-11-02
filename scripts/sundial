@@ -4,7 +4,10 @@
 
 set -euo pipefail
 
-usage="usage: sundial status | pause | resume | auto | schedule | open [lights|presets|settings] | brightness 0-100 | contrast 0-100"
+usage="usage: sundial status | pause | resume | auto | schedule | open [lights|presets|settings] | brightness 0-100 | contrast 0-100 | lights | lights load <file> | hue | screenshot"
+
+support="$HOME/Library/Application Support/Sundial"
+then=""
 
 case "${1:-}" in
     status)     path="status" ;;
@@ -13,25 +16,38 @@ case "${1:-}" in
     auto)       path="mode/auto" ;;
     schedule)   path="mode/schedule" ;;
     open)       path="open${2:+/$2}" ;;
+    hue)        path="hue"; then="hue.json" ;;
+    screenshot) path="screenshot"; then="screenshot.png" ;;
+    lights)
+        if [ "${2:-}" = load ]; then
+            [ -f "${3:-}" ] || { echo "No file \"${3:-}\". Start from the output of \`sundial lights\`, edit it, and pass its path." >&2; exit 2; }
+            cp "$3" "$support/lights-in.json"
+            path="lights/load"
+        else
+            path="lights/read"; then="lights.json"
+        fi ;;
     brightness|contrast)
         [ -n "${2:-}" ] || { echo "$usage" >&2; exit 2; }
         path="$1/$2" ;;
     *)          echo "$usage" >&2; exit 2 ;;
 esac
 
-status="$HOME/Library/Application Support/Sundial/status.json"
+status="$support/status.json"
 id="$$-$RANDOM"
 # -g keeps whatever you're in frontmost; `open` as a command brings its window up itself.
 open -g "sundial://$path?id=$id"
 
-for _ in $(seq 1 50); do
+for _ in $(seq 1 300); do
     if [ -f "$status" ] && grep -q "\"id\" : \"$id\"" "$status"; then
-        cat "$status"
-        echo
-        if grep -q '"ok" : false' "$status"; then exit 1; fi
+        if grep -q '"ok" : false' "$status"; then cat "$status"; echo; exit 1; fi
+        case "$then" in
+            "") cat "$status"; echo ;;
+            *.png) echo "$support/$then" ;;
+            *) cat "$support/$then"; echo ;;
+        esac
         exit 0
     fi
     sleep 0.1
 done
-echo "Sundial didn't answer within 5 seconds. Check it's installed with ./build.sh and running in the menu bar, then try again." >&2
+echo "Sundial didn't answer within 30 seconds. Check it's installed with ./build.sh and running in the menu bar, then try again." >&2
 exit 1

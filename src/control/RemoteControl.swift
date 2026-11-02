@@ -7,16 +7,20 @@ import AppKit
 enum RemoteControl {
     static func handle(_ url: URL, state: AppState) {
         let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "id" }?.value
-        switch RemoteCommand.parse(url) {
-        case .success(let command):
-            write(state, id: id, error: run(command, state: state))
-        case .failure(let failure):
-            write(state, id: id, error: failure.message)
+        Task {
+            switch RemoteCommand.parse(url) {
+            case .success(let command):
+                write(state, id: id, error: await run(command, state: state))
+            case .failure(let failure):
+                write(state, id: id, error: failure.message)
+            }
         }
     }
 
+    private static func file(_ name: String) -> URL { AppState.supportDirectory.appendingPathComponent(name) }
+
     /// Why it couldn't be done, or nil once it's done.
-    private static func run(_ command: RemoteCommand, state: AppState) -> String? {
+    private static func run(_ command: RemoteCommand, state: AppState) async -> String? {
         switch command {
         case .status:
             return nil
@@ -38,6 +42,19 @@ enum RemoteControl {
             if let section { state.windowSection = section }
             MainWindow.show(state)
             return nil
+        case .readLights:
+            return store(state.lights ?? [], in: "lights.json")
+        case .loadLights:
+            return load(state)
+        case .readHue:
+            do {
+                try await state.onReadHue?().write(to: file("hue.json"), options: .atomic)
+                return nil
+            } catch {
+                return "Couldn't read the bridge: \(error.localizedDescription)"
+            }
+        case .screenshot:
+            return screenshot()
         case .brightness(let n):
             guard state.mode == .auto else { return scheduleOwns("Brightness") }
             state.onSetBrightness?(n, true)
@@ -46,6 +63,54 @@ enum RemoteControl {
             guard state.mode == .auto else { return scheduleOwns("Contrast") }
             state.onSetContrast?(n, true)
             return nil
+        }
+    }
+
+    private static func store(_ bulbs: [LightDay.Bulb], in name: String) -> String? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        do {
+            try encoder.encode(bulbs).write(to: file(name), options: .atomic)
+            return nil
+        } catch {
+            return "Couldn't write \(name): \(error.localizedDescription). Check the disk has room, then try again."
+        }
+    }
+
+    /// Replaces every bulb's day with lights-in.json, keeping what it replaces in
+    /// lights-before-load.json, since Cmd-Z in the window doesn't reach past this.
+    private static func load(_ state: AppState) -> String? {
+        let bulbs: [LightDay.Bulb]
+        do {
+            bulbs = try JSONDecoder().decode([LightDay.Bulb].self, from: Data(contentsOf: file("lights-in.json")))
+        } catch {
+            return "Couldn't read that file as Sundial's lights: \(error.localizedDescription). Start from the output of `sundial lights`."
+        }
+        let current = state.lights ?? []
+        if let problem = LightDay.problem(in: bulbs, knownIDs: Set(current.map(\.id))) { return problem }
+        if let failed = store(current, in: "lights-before-load.json") { return failed }
+        state.lights = bulbs
+        state.save()
+        state.onLampsChanged?()
+        return nil
+    }
+
+    /// A picture of Sundial's own window, which needs no Screen Recording
+    /// permission: that's for other apps' windows. `cacheDisplay` didn't do it,
+    /// since it paints white under the views and leaves out dark mode's white text.
+    private static func screenshot() -> String? {
+        guard let window = NSApp.windows.first(where: { $0.title == "Sundial" && $0.isVisible }) else {
+            return "Sundial's window isn't open. Run `sundial open`, then try again."
+        }
+        guard let image = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(window.windowNumber), [.boundsIgnoreFraming, .bestResolution]),
+              let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else {
+            return "macOS wouldn't capture the window. Bring it on screen with `sundial open` and try again."
+        }
+        do {
+            try png.write(to: file("screenshot.png"), options: .atomic)
+            return nil
+        } catch {
+            return "Couldn't write the screenshot: \(error.localizedDescription). Check the disk has room, then try again."
         }
     }
 
@@ -78,8 +143,8 @@ final class SundialAppDelegate: NSObject, NSApplicationDelegate {
     static var state: AppState?
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        guard let state = Self.state else { return }
         MainActor.assumeIsolated {
-            guard let state = Self.state else { return }
             for url in urls { RemoteControl.handle(url, state: state) }
         }
     }

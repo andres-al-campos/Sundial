@@ -89,6 +89,12 @@ final class HueBridge: NSObject, URLSessionDelegate {
         }
     }
 
+    /// The bridge's scenes and its Natural-light style schedules, as it holds them.
+    func scenesAsStored() async throws -> Data {
+        let all: [String: Any] = ["scene": try await get("scene"), "smart_scene": try await get("smart_scene")]
+        return try JSONSerialization.data(withJSONObject: all, options: [.prettyPrinted, .sortedKeys])
+    }
+
     func rename(device id: String, to name: String) async throws {
         var req = try request("device/\(id)")
         req.httpMethod = "PUT"

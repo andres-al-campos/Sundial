@@ -1,6 +1,6 @@
 # Command line
 
-Updated 2026-11-02 02:08, at 1.1.0.
+Updated 2026-11-02 02:25, at 1.1.0.
 
 A script, a shortcut or a session can see what Sundial is doing and change it
 without opening it.
@@ -11,6 +11,15 @@ without opening it.
   `schedule`, `open [lights|presets|settings]`, `brightness 0-100` and
   `contrast 0-100`. It prints the app's answer as JSON and exits non-zero if the
   app couldn't do it.
+- **`lights`** prints every bulb's keyframes as JSON. **`lights load <file>`** replaces
+  them with an edited copy, refusing a bad one and saying why, and keeps what it
+  replaced in `lights-before-load.json`. Minutes count from midnight, `anchor` ties
+  a keyframe to `sunrise`, `sunset` or `darkest` plus an `offset`, and `x`, `y` is the
+  colour. A new keyframe needs no `id`.
+- **`hue`** prints the bridge's scenes and smart scenes as it holds them, without
+  a Keychain prompt, since the app already has the key.
+- **`screenshot`** captures Sundial's window to a PNG and prints its path. It needs
+  no Screen Recording permission, since the window is the app's own.
 - **`sundial://` URLs**: what the command sends, usable from anything that opens
   a URL: `sundial://lights/pause`, `sundial://mode/auto`, `sundial://open/lights`,
   `sundial://brightness/40`.
@@ -32,10 +41,12 @@ Preconditions: none; needs the Swift toolchain, not the app.
 checks what each URL means and that a wrong one says what would work.
 
 By hand, on the installed app: `scripts/sundial status`, then `pause` and
-`resume` (`lightsFollowing` flips), and `brightness 200` (refused, exit 1).
+`resume` (`lightsFollowing` flips), `brightness 200` (refused, exit 1), `lights`,
+and `open` then `screenshot`.
 
 ## Gotchas
 
+- `lights load` doesn't reach Cmd-Z in the window. `lights-before-load.json` is the way back.
 - `brightness` and `contrast` act like dragging Auto's sliders, so they're kept:
   they change the level Sundial uses for this kind of room, not just the monitor
   for now.
