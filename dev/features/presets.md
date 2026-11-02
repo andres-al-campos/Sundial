@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-02 02:02, at 1.1.0.
+Updated 2026-11-02 02:08, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -23,8 +23,8 @@ passed. Auto mode doesn't use them (see auto.md).
 ## How to get to it
 
 Click the sun in the menu bar, then Open Sundial, then Presets. Choose Schedule
-in the popup to have them drive the monitor; the popup then shows the current
-one. Click a
+in the popup to have them drive the monitor; the popup then keeps the current
+one's card open. Click a
 preset's row to expand it.
 
 ## Driving it
@@ -95,9 +95,9 @@ preview, add, delete).
 - 2026-10-21 21:31, 1.0.3. Jitter on the first open after launch counts too,
   though nothing is kept yet: the list's first height is computed from its
   rows. A case of walled_garden's "A menu bar popup opens at its final size".
-- 2026-11-02 02:02, 1.1.0. The popup's footer has Quit on the left and Open Sundial on the right, in
+- 2026-11-02 02:08, 1.1.0. The popup's footer has Quit on the left and Open Sundial on the right, in
   every mode, and Add Preset moved to the window with the list. The popup only shows the
-  current preset: it's for seeing and small tweaks, not sitting down to edit. Quit stays in one
+  current preset's card, expanded: it's for seeing and small tweaks, not sitting down to edit. Quit stays in one
   place across modes, and Open Sundial is blue, white on hover ("blue and white on hover"), in
   the link blue: the accent blue was too dark to read on the glass. Applies *Never a fight with
   the controls*.

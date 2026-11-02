@@ -170,6 +170,25 @@ struct PresetListView: View {
     }
 }
 
+// MARK: - The popup's card
+
+/// The preset the schedule has on, open for tweaking. The rest are in the window.
+struct CurrentPresetCard: View {
+    @EnvironmentObject var appState: AppState
+
+    var body: some View {
+        if let preset = appState.preset(for: appState.activePresetID) {
+            PresetCardRow(preset: preset, isActive: true, isExpanded: true, onExpandToggle: {}, collapses: false)
+                .id(preset.id)
+        } else {
+            Text("No preset is on right now.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(14)
+        }
+    }
+}
+
 // MARK: - Preset Card Row
 
 private struct PresetCardRow: View {
@@ -177,6 +196,7 @@ private struct PresetCardRow: View {
     let isActive: Bool
     let isExpanded: Bool
     let onExpandToggle: () -> Void
+    var collapses = true
 
     @EnvironmentObject var appState: AppState
     @State private var isHovered = false
@@ -276,11 +296,13 @@ private struct PresetCardRow: View {
 
                 Spacer(minLength: 8)
 
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                    .allowsHitTesting(false)
+                if collapses {
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .allowsHitTesting(false)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

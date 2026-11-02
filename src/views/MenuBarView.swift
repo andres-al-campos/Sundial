@@ -26,7 +26,7 @@ struct MenuBarView: View {
                 if appState.mode == .auto {
                     AutoView()
                 } else {
-                    currentPreset
+                    CurrentPresetCard()
                 }
             }
 
@@ -46,6 +46,14 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 320)
+        .onDisappear {
+            // Popup closed: end any preview, so the monitor goes back to the
+            // scheduled preset.
+            if appState.previewingPresetID != nil {
+                appState.previewingPresetID = nil
+                appState.onPreviewEnded?()
+            }
+        }
     }
 }
 
@@ -60,31 +68,9 @@ extension MenuBarView {
             .padding(.bottom, 8)
     }
 
-    /// Which preset the schedule has on. Editing them happens in the window.
-    private var currentPreset: some View {
-        HStack(spacing: 8) {
-            Text(appState.preset(for: appState.activePresetID)?.name ?? "No preset on")
-                .font(.subheadline.weight(.medium))
-            Spacer()
-            if let entry = appState.schedule.first(where: { $0.presetID == appState.activePresetID }) {
-                Text(String(format: "since %d:%02d", entry.hour, entry.minute))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(height: 20)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-    }
-
     private func setMode(_ newMode: AppState.Mode) {
-        guard newMode != appState.mode else { return }
-        appState.previewingPresetID = nil
         // The popup resizes to the other mode's panel, eased, not in one jump.
-        withAnimation(.easeInOut(duration: 0.15)) { appState.mode = newMode }
-        appState.save()
-        // Whichever mode is now on takes the monitor at once, in full.
-        if newMode == .auto { appState.onPreviewEnded?() } else { appState.onScheduleChanged?() }
+        withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(newMode) }
     }
 }
 
