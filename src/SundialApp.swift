@@ -3,6 +3,7 @@ import ServiceManagement
 
 @main
 struct SundialApp: App {
+    @NSApplicationDelegateAdaptor(SundialAppDelegate.self) private var appDelegate
     @StateObject private var appState: AppState
     private let controller: DDCController
     private let scheduler: Scheduler
@@ -11,6 +12,7 @@ struct SundialApp: App {
 
     init() {
         let state = AppState()
+        SundialAppDelegate.state = state
         let ctrl = DDCController(
             cliPath: state.cliPath,
             displayName: state.displayName

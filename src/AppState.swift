@@ -97,12 +97,17 @@ class AppState: ObservableObject {
     /// which preset should be active right now (e.g. after toggling Enabled).
     var onScheduleChanged: (() -> Void)?
 
-    private let configURL: URL = {
+    /// The section the desktop window shows.
+    @Published var windowSection: WindowSection = .lights
+
+    nonisolated static let supportDirectory: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         let dir = support.appendingPathComponent("Sundial")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("config.json")
+        return dir
     }()
+
+    private let configURL = AppState.supportDirectory.appendingPathComponent("config.json")
 
     init() {
         load()
@@ -218,6 +223,15 @@ class AppState: ObservableObject {
     }
 
     // MARK: - Mutations
+
+    /// Whichever mode is now on takes the monitor at once, in full.
+    func setMode(_ newMode: Mode) {
+        guard newMode != mode else { return }
+        previewingPresetID = nil
+        mode = newMode
+        save()
+        if newMode == .auto { onPreviewEnded?() } else { onScheduleChanged?() }
+    }
 
     func addPreset(_ preset: Preset) {
         presets.append(preset)

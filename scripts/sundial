@@ -1,0 +1,37 @@
+#!/bin/bash
+# Control Sundial from a terminal or script. It sends a sundial:// URL, then prints
+# what the app wrote back, and exits non-zero if the app couldn't do it.
+
+set -euo pipefail
+
+usage="usage: sundial status | pause | resume | auto | schedule | open [lights|presets|settings] | brightness 0-100 | contrast 0-100"
+
+case "${1:-}" in
+    status)     path="status" ;;
+    pause)      path="lights/pause" ;;
+    resume)     path="lights/resume" ;;
+    auto)       path="mode/auto" ;;
+    schedule)   path="mode/schedule" ;;
+    open)       path="open${2:+/$2}" ;;
+    brightness|contrast)
+        [ -n "${2:-}" ] || { echo "$usage" >&2; exit 2; }
+        path="$1/$2" ;;
+    *)          echo "$usage" >&2; exit 2 ;;
+esac
+
+status="$HOME/Library/Application Support/Sundial/status.json"
+id="$$-$RANDOM"
+# -g keeps whatever you're in frontmost; `open` as a command brings its window up itself.
+open -g "sundial://$path?id=$id"
+
+for _ in $(seq 1 50); do
+    if [ -f "$status" ] && grep -q "\"id\" : \"$id\"" "$status"; then
+        cat "$status"
+        echo
+        if grep -q '"ok" : false' "$status"; then exit 1; fi
+        exit 0
+    fi
+    sleep 0.1
+done
+echo "Sundial didn't answer within 5 seconds. Check it's installed with ./build.sh and running in the menu bar, then try again." >&2
+exit 1

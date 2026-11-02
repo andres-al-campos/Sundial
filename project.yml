@@ -33,6 +33,10 @@ targets:
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
         NSHumanReadableCopyright: ""
         NSPrincipalClass: NSApplication
+        CFBundleURLTypes:
+          - CFBundleURLName: com.aurende.sundial
+            CFBundleURLSchemes:
+              - sundial
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.aurende.sundial

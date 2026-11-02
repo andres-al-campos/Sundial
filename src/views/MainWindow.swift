@@ -31,9 +31,14 @@ enum MainWindow {
     }
 }
 
-private enum Section: String, CaseIterable, Identifiable {
-    case lights = "Lights", presets = "Presets", settings = "Settings"
-    var id: String { rawValue }
+private extension WindowSection {
+    var title: String {
+        switch self {
+        case .lights: return "Lights"
+        case .presets: return "Presets"
+        case .settings: return "Settings"
+        }
+    }
     var icon: String {
         switch self {
         case .lights: return "lightbulb"
@@ -44,16 +49,16 @@ private enum Section: String, CaseIterable, Identifiable {
 }
 
 private struct MainWindowView: View {
-    @State private var section: Section = .lights
+    @EnvironmentObject var appState: AppState
 
     var body: some View {
         NavigationSplitView {
-            List(Section.allCases, selection: $section) { s in
-                Label(s.rawValue, systemImage: s.icon).tag(s)
+            List(WindowSection.allCases, selection: Binding(get: { appState.windowSection }, set: { if let s = $0 { appState.windowSection = s } })) { s in
+                Label(s.title, systemImage: s.icon).tag(Optional(s))
             }
             .navigationSplitViewColumnWidth(min: 140, ideal: 160, max: 200)
         } detail: {
-            switch section {
+            switch appState.windowSection {
             case .lights: LightsView()
             case .presets: PresetsSection()
             case .settings:
