@@ -28,8 +28,10 @@ class AppState: ObservableObject {
     /// When Night Shift is full and the lamps reach their dimmest scene, in
     /// minutes after midnight. Set in Auto.
     @Published var bedtime: Int = 24 * 60
-    /// The Hue lamps follow the day's scenes (see `LampController`).
+    /// The Hue lamps follow their days. False while paused from the Lights window.
     @Published var lampsFollow: Bool = false
+    /// Each bulb's day. Nil until the scenes on the bridge have been imported.
+    @Published var lights: [LightDay.Bulb]?
     /// The paired Hue Bridge's host name; its key is in the Keychain.
     @Published var hueHost: String?
     /// What the lamps are doing, or why they aren't, for Settings.
@@ -66,6 +68,14 @@ class AppState: ObservableObject {
     var onPairLamps: (() -> Void)?
     /// Set by the app at startup: set the lamps for now, not on the next tick.
     var onLampsChanged: (() -> Void)?
+    /// Set by the app at startup: show these states on the bulbs now.
+    var onPreviewLamps: (([String: LightDay.State]) -> Void)?
+    /// Set by the app at startup: hand the bulbs back to their days.
+    var onEndLampPreview: (() -> Void)?
+    /// Set by the app at startup: rename a bulb on the bridge.
+    var onRenameBulb: ((_ deviceID: String, _ name: String) -> Void)?
+    /// Set by the app at startup: open the desktop window.
+    var onOpenWindow: (() -> Void)?
 
     /// True once the BetterDisplay path + display name have been verified against
     /// real hardware (a DDC read succeeded). Until then, the menu bar shows the
@@ -118,6 +128,7 @@ class AppState: ObservableObject {
         var autoNightMinimum: Double?
         var autoNightContrast: Double?
         var hueHost: String?
+        var lights: [LightDay.Bulb]?
     }
 
     func save() {
@@ -136,7 +147,8 @@ class AppState: ObservableObject {
             bedtime: bedtime,
             autoNightMinimum: autoNightMinimum,
             autoNightContrast: autoNightContrast,
-            hueHost: hueHost
+            hueHost: hueHost,
+            lights: lights
         )
         do {
             let data = try JSONEncoder().encode(config)
@@ -167,6 +179,7 @@ class AppState: ObservableObject {
         autoNightMinimum = config.autoNightMinimum ?? RoomLight.defaultNightMinimum
         autoNightContrast = config.autoNightContrast ?? RoomLight.defaultNightContrast
         hueHost = config.hueHost
+        lights = config.lights
     }
 
     // MARK: - Setup validation

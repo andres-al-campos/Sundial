@@ -11,7 +11,7 @@ Sundial drives your monitor's **hardware** brightness and contrast over DDC (via
 - **Scheduling** — assign a preset to a time; Sundial applies it automatically and smoothly interpolates between presets so the change is gradual, not a jarring jump.
 - **Live control** — drag a slider in the menu bar to adjust the current display immediately.
 - **Wake handling** — re-applies the correct preset when your Mac wakes, so the screen is right the moment you return.
-- **Launch at login** — optional; lives quietly in the menu bar (no Dock icon).
+- **Launch at login** — optional; lives quietly in the menu bar, with a Dock icon only while its window is open.
 
 Presets and schedule live in `config.json` under `~/Library/Application Support/Sundial/`.
 
@@ -53,7 +53,7 @@ Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Release
 1. Click the sun icon in the menu bar — Sundial opens to a **setup screen**.
 2. Confirm the **BetterDisplay path** (default: `/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay`) and enter your **display name** — any partial match of the monitor name shown in BetterDisplay.
 3. Hit **Connect Monitor**. If Sundial can read your monitor over DDC, presets unlock; otherwise the error tells you what to check (see [Monitor compatibility](#monitor-compatibility)).
-4. Edit the presets and schedule to taste. Sundial takes over from there. You can revisit the path/name later via the **gear** icon.
+4. Edit the presets and schedule to taste. Sundial takes over from there. You can revisit the path and name later in Open Sundial → Settings.
 
 ## How it works
 

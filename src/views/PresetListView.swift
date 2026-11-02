@@ -37,11 +37,14 @@ struct PresetListView: View {
     @State private var settleTask: Task<Void, Never>?
     /// The list's height before its first measurement, worked out from the rows.
     private let initialHeight: CGFloat
+    /// The tallest the list may get. In the desktop window, the room it has.
+    private let height: CGFloat
 
     /// Takes `appState` here as well as from the environment so the list starts
     /// with its rows and its height: filling them in after the first layout
     /// showed the empty state for a frame and resized the popup.
-    init(expandedPresetID: Binding<UUID?>, appState: AppState) {
+    init(expandedPresetID: Binding<UUID?>, appState: AppState, height: CGFloat) {
+        self.height = height
         _expandedPresetID = expandedPresetID
         let sorted = Self.sorted(appState)
         _sortedPresets = State(initialValue: sorted)
@@ -115,7 +118,7 @@ struct PresetListView: View {
         // MenuBarExtra(.window) on macOS 26. Cap = 1 expanded card + 1 collapsed card
         // (heights pinned via Row above), so expanding a card shows itself + exactly one
         // collapsed neighbor, then scrolls. Grows to fit content below the cap.
-        .scrollContentHeight("presets", cap: Row.cap(expanded: expandedHeight), initial: initialHeight)
+        .scrollContentHeight("presets", cap: height, initial: initialHeight)
         .onAppear {
             refreshSort()
             // Scroll the currently-active preset to the top of the viewport on open.

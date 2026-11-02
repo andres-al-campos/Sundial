@@ -75,14 +75,36 @@ final class HueBridge: NSObject, URLSessionDelegate {
         }
     }
 
-    /// Fade a lamp to `state` over `fade` seconds.
-    func set(lamp id: String, to state: LampBlend.LampState, fade: TimeInterval) async throws {
-        let body: [String: Any] = [
-            "on": ["on": true],
-            "dimming": ["brightness": state.brightness],
-            "color": ["xy": ["x": state.xy.x, "y": state.xy.y]],
-            "dynamics": ["duration": Int(fade * 1000)],
-        ]
+    struct Light { var id: String; var deviceID: String; var name: String }
+
+    /// The bulbs on the bridge. The name lives on the device, not the light.
+    func lights() async throws -> [Light] {
+        let names = Dictionary(try await get("device").compactMap { d -> (String, String)? in
+            guard let id = d["id"] as? String, let name = (d["metadata"] as? [String: Any])?["name"] as? String else { return nil }
+            return (id, name)
+        }, uniquingKeysWith: { a, _ in a })
+        return try await get("light").compactMap { l in
+            guard let id = l["id"] as? String, let device = (l["owner"] as? [String: Any])?["rid"] as? String else { return nil }
+            return Light(id: id, deviceID: device, name: names[device] ?? "Bulb")
+        }
+    }
+
+    func rename(device id: String, to name: String) async throws {
+        var req = try request("device/\(id)")
+        req.httpMethod = "PUT"
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["metadata": ["name": name]])
+        let (data, resp) = try await session.data(for: req)
+        try check(resp, data)
+    }
+
+    /// Fade a lamp to `state` over `fade` seconds. Off sends only that: the bulb
+    /// keeps its brightness and colour for when it's next on.
+    func set(lamp id: String, to state: LightDay.State, fade: TimeInterval) async throws {
+        var body: [String: Any] = ["on": ["on": state.on], "dynamics": ["duration": Int(fade * 1000)]]
+        if state.on {
+            body["dimming"] = ["brightness": state.brightness]
+            body["color"] = ["xy": ["x": state.xy.x, "y": state.xy.y]]
+        }
         var req = try request("light/\(id)")
         req.httpMethod = "PUT"
         req.httpBody = try JSONSerialization.data(withJSONObject: body)

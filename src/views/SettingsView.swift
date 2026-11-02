@@ -5,9 +5,6 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        // A plain stack, not a measured ScrollView: its content is fixed and short,
-        // so it sizes itself in one layout pass and the popup opens at its final
-        // size. A ScrollView here started at 0 and jumped on the first open.
         VStack(alignment: .leading, spacing: 16) {
             // Monitor
             VStack(alignment: .leading, spacing: 6) {
@@ -44,19 +41,13 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
 
                 HStack {
-                    Toggle("Follow the day's scenes", isOn: $appState.lampsFollow)
-                        .controlSize(.small)
-                        .disabled(appState.hueHost == nil)
-                        .onChange(of: appState.lampsFollow) { _, _ in
-                            appState.save()
-                            appState.onLampsChanged?()
-                        }
+                    Text(appState.hueHost == nil ? "Not paired with a Hue Bridge" : "Paired with your Hue Bridge")
                     Spacer()
                     Button(appState.hueHost == nil ? "Pair Hue Bridge" : "Pair again") { appState.onPairLamps?() }
                         .controlSize(.small)
                 }
                 // Two lines held whatever the status says, so a status change
-                // never resizes the popup.
+                // doesn't move what's below it.
                 Label {
                     Text(appState.lampStatus)
                         .lineLimit(2, reservesSpace: true)

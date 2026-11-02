@@ -1,0 +1,104 @@
+import SwiftUI
+
+/// The desktop window: what you sit down to change. An AppKit window rather than
+/// a SwiftUI `Window` scene, which opens by itself at launch and would greet
+/// every login with it. The Dock icon shows only while it's open, since Sundial
+/// otherwise lives in the menu bar.
+@MainActor
+enum MainWindow {
+    private static var window: NSWindow?
+    private static var closing: NSObjectProtocol?
+
+    static func show(_ state: AppState) {
+        NSApp.setActivationPolicy(.regular)
+        if window == nil {
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 620),
+                             styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                             backing: .buffered, defer: false)
+            w.title = "Sundial"
+            w.isReleasedWhenClosed = false
+            w.contentMinSize = NSSize(width: 760, height: 420)
+            w.contentView = NSHostingView(rootView: MainWindowView().environmentObject(state))
+            w.center()
+            w.setFrameAutosaveName("SundialMain")
+            closing = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
+                MainActor.assumeIsolated { NSApp.setActivationPolicy(.accessory) }
+            }
+            window = w
+        }
+        window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+private enum Section: String, CaseIterable, Identifiable {
+    case lights = "Lights", presets = "Presets", settings = "Settings"
+    var id: String { rawValue }
+    var icon: String {
+        switch self {
+        case .lights: return "lightbulb"
+        case .presets: return "display"
+        case .settings: return "gearshape"
+        }
+    }
+}
+
+private struct MainWindowView: View {
+    @State private var section: Section = .lights
+
+    var body: some View {
+        NavigationSplitView {
+            List(Section.allCases, selection: $section) { s in
+                Label(s.rawValue, systemImage: s.icon).tag(s)
+            }
+            .navigationSplitViewColumnWidth(min: 140, ideal: 160, max: 200)
+        } detail: {
+            switch section {
+            case .lights: LightsView()
+            case .presets: PresetsSection()
+            case .settings:
+                ScrollView { SettingsView().frame(maxWidth: 520, alignment: .leading) }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+}
+
+/// The Schedule's presets, with room to edit them.
+private struct PresetsSection: View {
+    @EnvironmentObject var appState: AppState
+    @State private var expanded: UUID?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            GeometryReader { geo in
+                PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height)
+            }
+            Divider()
+            HStack {
+                Spacer()
+                HoverButton("Add Preset", systemImage: "plus", rest: HoverButton.createBlue, action: addPreset)
+            }
+            .font(.subheadline)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+        .onDisappear {
+            // Leaving the list ends any preview, so the monitor goes back to the
+            // scheduled preset.
+            if appState.previewingPresetID != nil {
+                appState.previewingPresetID = nil
+                appState.onPreviewEnded?()
+            }
+        }
+    }
+
+    /// A new preset at noon, opened for editing; the list scrolls to it.
+    private func addPreset() {
+        let preset = Preset(name: "New Preset", hardwareBrightness: 70, hardwareContrast: 75, nightShift: 0)
+        appState.addPreset(preset)
+        appState.addScheduleEntry(ScheduleEntry(presetID: preset.id, hour: 12, minute: 0))
+        appState.onScheduleChanged?()
+        withAnimation(.easeInOut(duration: 0.15)) { expanded = preset.id }
+    }
+}

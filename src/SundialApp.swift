@@ -61,11 +61,17 @@ struct SundialApp: App {
         state.onSetContrast = { auto.setContrast($0, done: $1) }
         state.onPairLamps = { lamps.pair() }
         state.onLampsChanged = { lamps.refresh() }
+        state.onPreviewLamps = { lamps.preview($0) }
+        state.onEndLampPreview = { lamps.endPreview() }
+        state.onRenameBulb = { lamps.rename(device: $0, to: $1) }
+        state.onOpenWindow = { [weak state] in
+            if let state { MainWindow.show(state) }
+        }
     }
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarView(activePresetID: appState.activePresetID)
+            MenuBarView()
                 .environmentObject(appState)
                 .onAppear {
                     // Keep controller in sync with any settings changes made since launch.
