@@ -97,4 +97,7 @@ preview, add, delete).
   rows. A case of walled_garden's "A menu bar popup opens at its final size".
 - 2026-11-02 02:02, 1.1.0. The popup's footer has Quit on the left and Open Sundial on the right, in
   every mode, and Add Preset moved to the window with the list. The popup only shows the
-  current preset: it's for seeing and small tweaks, not sitting down to edit.
+  current preset: it's for seeing and small tweaks, not sitting down to edit. Quit stays in one
+  place across modes, and Open Sundial is blue, white on hover ("blue and white on hover"), in
+  the link blue: the accent blue was too dark to read on the glass. Applies *Never a fight with
+  the controls*.
