@@ -18,6 +18,7 @@ final class LampController {
     private var previewTask: Task<Void, Never>?
     private var busy = false
     private var readingKey = false
+    private var returning = false
     /// Kept through `refresh`, unlike `sent`: it's how a lamp the day dimmed to off
     /// is told from one someone switched off.
     private var offByDay: Set<String> = []
@@ -29,6 +30,7 @@ final class LampController {
     /// A bulb added or renamed in the Hue app is seen within this long.
     static let rereadBulbs: TimeInterval = 600
     static let previewPace: TimeInterval = 0.5
+    static let returnFade: TimeInterval = 2
     static let previewBulbsPerPace = 2.0
 
     func start(state: AppState) {
@@ -129,6 +131,7 @@ final class LampController {
     func preview(_ states: [String: LightDay.State]) {
         pendingPreview.merge(states) { _, new in new }
         previewing = true
+        returning = false
         guard previewTask == nil, let bridge, bridge.isPaired else { return }
         previewTask = Task {
             while !pendingPreview.isEmpty {
@@ -147,10 +150,18 @@ final class LampController {
         }
     }
 
+    /// Back to the day quickly, once what a preview already sent has landed: left to
+    /// the usual 30-second fade, a preview looks like it stuck.
     func endPreview() {
         pendingPreview = [:]
         previewing = false
-        refresh()
+        returning = true
+        sent = [:]
+        Task {
+            await previewTask?.value
+            while busy { try? await Task.sleep(for: .milliseconds(50)) }
+            await tick()
+        }
     }
 
     func scenesAsStored() async throws -> Data {
@@ -209,13 +220,14 @@ final class LampController {
                     continue
                 }
                 guard sent[bulb.id] != target else { continue }
-                try await bridge.set(lamp: bulb.id, to: target, fade: Self.interval, power: send == .power)
+                try await bridge.set(lamp: bulb.id, to: target, fade: returning ? Self.returnFade : Self.interval, power: send == .power)
                 sent[bulb.id] = target
                 sends += 1
                 if send == .power {
                     if target.on { offByDay.remove(bulb.id) } else { offByDay.insert(bulb.id) }
                 }
             }
+            returning = false
             state.lampStatus = "Paired · following the day"
             Self.log.notice("tick at minute \(minute): sent \(sends), left \(leftOff) off, \(state.lampStatus, privacy: .public)")
         } catch {

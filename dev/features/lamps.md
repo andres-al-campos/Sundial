@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-02 05:18, at 1.1.0.
+Updated 2026-11-02 12:04, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -13,17 +13,19 @@ artificial light follows the natural light along with the screen.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change). Click a dot for its time, on/off, brightness, white
-  (1700 to 6500 K) and colour, or to delete it.
+  (700 to 6500 K) and colour, or to delete it.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
   drop. A typed time keeps its look. Within 10 minutes of a mark it snaps and
   follows that mark. Imported keyframes can follow one at an offset, such as 40
   minutes before sunset.
-- **Previews.** Changing a keyframe shows it on the bulb until its settings close.
+- **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
+  with a badge in the top row saying so. A second after letting go the bulb fades
+  back to where the day has it, over 2 seconds.
 - **Right-click.** Copy and paste a keyframe, its look, or a bulb's whole day;
   rename a bulb, which renames it on the bridge; make one bulb follow another's
   day, and unlink it again.
 - **Undo.** Cmd-Z and Shift-Cmd-Z cover every change to the bulbs.
-- **Play the day** runs the day on the bulbs in 20 seconds and returns to now.
+- **Play the day** runs the day on the bulbs in 10 seconds and returns to now.
 - **Pause** stops Sundial changing the bulbs until Resume, so the Hue app can use them.
 - **Import.** The first run makes each bulb's day from the seven named scenes on
   the bridge, keeping what the lamps did at every minute. After that Sundial holds the
@@ -76,10 +78,10 @@ blend looks in the room.
 
 - The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`.
 - A lit lamp's colour or brightness changed in the Hue app is set back within a minute while Follow is on. Pause keeps it.
-- Editing a keyframe or Play the day shows on the bulb even if it was off, and it stays on afterwards.
+- Previewing a keyframe or Play the day lights a bulb that was off, and it stays on afterwards.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
-- Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly.
+- Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly. Below that the white curve is a table of Planck's law, ending at 700 K, where it reaches these bulbs' red corner (xy 0.692, 0.308).
 - macOS asks for the Keychain again after every `./build.sh`, because the app is
   signed ad-hoc and each build is a new signature to it. Allow lasts one launch,
   Always Allow lasts until the next build. Until it's answered the lamps wait and

@@ -66,11 +66,14 @@ struct LightsView: View {
     @State private var renaming: String?
     @State private var playMinute: Double?
     @State private var playTask: Task<Void, Never>?
+    @State private var previewing: Previewing?
+    @State private var letGoTask: Task<Void, Never>?
     @State private var now = Date()
     private let clock = Timer.publish(every: 20, on: .main, in: .common).autoconnect()
 
     struct Selection: Equatable { var bulb: String; var key: UUID }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
+    struct Previewing { var bulb: String; var look: LightDay.State }
 
     private var bulbs: [LightDay.Bulb] { appState.lights ?? [] }
 
@@ -104,7 +107,10 @@ struct LightsView: View {
                                     key: key,
                                     marks: marks,
                                     change: { change(key.id, $0) },
-                                    commit: { history.commit(undo, "Change Keyframe") },
+                                    commit: {
+                                        history.commit(undo, "Change Keyframe")
+                                        letGo()
+                                    },
                                     delete: { deleteSelected() },
                                     close: { closeDrawer() }
                                 )
@@ -128,7 +134,7 @@ struct LightsView: View {
         .onReceive(clock) { now = $0 }
         .onDisappear {
             playTask?.cancel()
-            appState.onEndLampPreview?()
+            endPreviewNow()
         }
     }
 
@@ -136,9 +142,14 @@ struct LightsView: View {
 
     private var toolbar: some View {
         HStack(spacing: 10) {
-            Text(statusLine)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            if let previewing {
+                previewBadge(previewing).transition(.opacity)
+            } else {
+                Text(statusLine)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .transition(.opacity)
+            }
             Spacer()
             Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
                 .disabled(bulbs.isEmpty)
@@ -151,6 +162,22 @@ struct LightsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .animation(.easeOut(duration: 0.15), value: previewing == nil)
+    }
+
+    private func previewBadge(_ p: Previewing) -> some View {
+        let white = p.look.on ? LightDay.kelvin(p.look.xy).map { ", \($0) K" } ?? "" : ""
+        return HStack(spacing: 6) {
+            Circle()
+                .fill(Self.color(p.look))
+                .frame(width: 10, height: 10)
+            Text(p.look.on ? "Preview on \(p.bulb): \(Int(p.look.brightness.rounded()))%\(white)" : "Preview on \(p.bulb): off")
+                .monospacedDigit()
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Color.primary.opacity(0.08), in: Capsule())
     }
 
     private var statusLine: String {
@@ -374,7 +401,7 @@ struct LightsView: View {
     private func closeDrawer() {
         history.commit(undo, "Change Keyframe")
         withAnimation(.easeOut(duration: 0.15)) { selection = nil }
-        appState.onEndLampPreview?()
+        endPreviewNow()
     }
 
     private func change(_ id: UUID, _ apply: (inout LightDay.Key) -> Void) {
@@ -389,7 +416,26 @@ struct LightsView: View {
     private func previewOn(_ bulb: String, _ look: LightDay.State) {
         var states = [bulb: look]
         for follower in bulbs where follower.parent == bulb { states[follower.id] = look }
+        letGoTask?.cancel()
+        previewing = Previewing(bulb: bulbs.first { $0.id == bulb }?.name ?? "Bulb", look: look)
         appState.onPreviewLamps?(states)
+    }
+
+    /// The look stays a second after letting go, or a clicked colour would be gone
+    /// before it was seen. The bulb is back on the day within 2 more.
+    private func letGo() {
+        letGoTask?.cancel()
+        letGoTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            endPreviewNow()
+        }
+    }
+
+    private func endPreviewNow() {
+        letGoTask?.cancel()
+        previewing = nil
+        appState.onEndLampPreview?()
     }
 
     private func addKey(_ bulb: LightDay.Bulb, at x: CGFloat, width: CGFloat) {
@@ -435,7 +481,7 @@ struct LightsView: View {
         dragging = nil
         dragLook = nil
         history.commit(undo, "Move Keyframe")
-        appState.onEndLampPreview?()
+        letGo()
     }
 
     private func pasteLook(onto id: UUID, bulb: LightDay.Bulb) {
@@ -456,7 +502,7 @@ struct LightsView: View {
         edit { $0[selection.bulb]?.keys.removeAll { $0.id == selection.key } }
         self.selection = nil
         history.commit(undo, "Delete Keyframe")
-        appState.onEndLampPreview?()
+        endPreviewNow()
     }
 
     private func unlink(_ bulb: LightDay.Bulb) {
@@ -475,8 +521,10 @@ struct LightsView: View {
             appState.onEndLampPreview?()
             return
         }
+        letGoTask?.cancel()
+        previewing = nil
         playTask = Task { @MainActor in
-            let start = Date(), length = 20.0
+            let start = Date(), length = 10.0
             while !Task.isCancelled {
                 let t = Date().timeIntervalSince(start) / length
                 if t >= 1 { break }
@@ -645,7 +693,7 @@ private struct KeyDrawer: View {
             field("White", value: LightDay.kelvin(key.xy).map { "\($0) K" } ?? "Color") {
                 Slider(value: Binding(get: { Double(LightDay.kelvin(key.xy) ?? 2700) }, set: { k in
                     change { $0.xy = LampBlend.xy(mirek: 1_000_000 / k) }
-                }), in: 1700...6500, step: 50, onEditingChanged: edited)
+                }), in: LampBlend.lowestKelvin...6500, step: 50, onEditingChanged: edited)
             }
             HStack(spacing: 8) {
                 Text("Color")

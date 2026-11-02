@@ -222,7 +222,7 @@ enum LightDay {
 
     /// The colour temperature an xy is a white of, or nil for a colour.
     static func kelvin(_ xy: LampBlend.XY) -> Int? {
-        let (best, gap) = stride(from: 1700, through: 6500, by: 50)
+        let (best, gap) = stride(from: Int(LampBlend.lowestKelvin), through: 6500, by: 50)
             .map { k -> (Int, Double) in
                 let w = LampBlend.xy(mirek: 1_000_000 / Double(k))
                 return (k, hypot(w.x - xy.x, w.y - xy.y))

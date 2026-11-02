@@ -83,8 +83,24 @@ enum LampBlend {
     /// The xy of a white at this colour temperature (mirek = 1,000,000 / K),
     /// on the Planckian locus by Kim et al.'s fit, good from 1667 K to 25000 K.
     /// Scenes store whites as mirek and colours as xy; blending needs one.
+    /// Where the bulbs' colour range runs out: below this the curve leaves their red corner.
+    static let lowestKelvin = 700.0
+
+    /// Planck's law through the CIE 1931 observer, since the fit below stops at 1667 K.
+    private static let glow: [(k: Double, x: Double, y: Double)] = [
+        (700, 0.6956, 0.3041), (800, 0.6813, 0.3179), (900, 0.6670, 0.3315), (1000, 0.6528, 0.3445),
+        (1100, 0.6388, 0.3565), (1200, 0.6250, 0.3675), (1300, 0.6116, 0.3772), (1400, 0.5985, 0.3858),
+        (1500, 0.5857, 0.3931), (1667, 0.5650, 0.4027),
+    ]
+
     static func xy(mirek: Double) -> XY {
-        let k = min(25000, max(1667, 1_000_000 / mirek))
+        let k = min(25000, max(lowestKelvin, 1_000_000 / mirek))
+        if k < 1667 {
+            let upper = glow.firstIndex { $0.k >= k } ?? glow.count - 1
+            let a = glow[max(upper - 1, 0)], b = glow[upper]
+            let f = b.k == a.k ? 0 : (k - a.k) / (b.k - a.k)
+            return XY(x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f)
+        }
         let x: Double = k <= 4000
             ? -0.2661239e9 / (k * k * k) - 0.2343589e6 / (k * k) + 0.8776956e3 / k + 0.179910
             : -3.0258469e9 / (k * k * k) + 2.1070379e6 / (k * k) + 0.2226347e3 / k + 0.240390

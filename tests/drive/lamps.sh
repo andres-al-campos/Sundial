@@ -95,6 +95,12 @@ check("following a missing bulb is refused", LightDay.problem(in: [bulb([], pare
 let handWritten = try! JSONDecoder().decode(LightDay.Key.self, from: Data(#"{"minute":60,"brightness":10,"x":0.5,"y":0.4}"#.utf8))
 check("a hand-written keyframe needs no id and is on", handWritten.on && handWritten.minute == 60, handWritten)
 
+let lowest = LampBlend.xy(mirek: 1_000_000 / LampBlend.lowestKelvin)
+check("the lowest white is the bulbs' red corner, or a lower one would look the same", near(lowest.x, 0.692, 0.005) && near(lowest.y, 0.308, 0.005), lowest)
+let below = LampBlend.xy(mirek: 1_000_000 / 1666), above = LampBlend.xy(mirek: 1_000_000 / 1668)
+check("the slider doesn't jump where the low table meets the fit at 1667 K", near(below.x, above.x, 0.002) && near(below.y, above.y, 0.002), (below, above))
+check("1000 K is the published CIE point", near(LampBlend.xy(mirek: 1000).x, 0.6528, 0.0005) && near(LampBlend.xy(mirek: 1000).y, 0.3445, 0.0005), LampBlend.xy(mirek: 1000))
+check("MidNight's colour reads as a temperature, so its slider doesn't jump", LightDay.kelvin(.init(x: 0.602, y: 0.376)) != nil, "kelvin")
 check("a lamp someone switched off stays off", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: false) == .leave, "send")
 check("a lamp the day turned off comes back with the day", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: true) == .power, "send")
 check("a lit lamp is adjusted without touching its power", LightDay.send(targetOn: true, lampIsOn: true, dayTurnedItOff: false) == .adjust, "send")
