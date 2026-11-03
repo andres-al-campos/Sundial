@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-02 23:33, at 1.1.0.
+Updated 2026-11-02 23:34, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -28,7 +28,7 @@ presets; Schedule (the presets) is the other.
   night), and turns off 46 minutes before
   sunrise. Fitted to the presets' evening values (R² 0.98) on 2026-10-26,
   when that was 5:13 PM to 6:30 AM. Sunrise and sunset are computed for the
-  spot picked in Settings, by searching for a town (Apple's place search, which
+  spot picked in Settings, by searching for a city (Apple's place search, which
   sees what's typed) or clicking the map, rounded to whole degrees either way, with
   no location permission. Until one is picked it's the point macOS's time zone table gives
   your time zone (Chicago for America/Chicago); each degree of longitude from
@@ -82,7 +82,7 @@ outside Night Shift's hours, that only a lit daytime drag saves the level, that 
 brightness comes back in the same room and scales in another, that a set
 contrast comes back at the same brightness and scales with it, that a click on
 the location map gives the whole degree under it and moves the sun, that a
-searched town is kept to whole degrees, that sunrise
+searched city is kept to whole degrees, that sunrise
 and sunset for Chicago land on its solstice times (and zone.tab's point
 parses), that Night Shift lands near the presets it was fitted to, that the blinds
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
@@ -188,9 +188,9 @@ row.
   "id rather not have to ask for ppls exacto location". The map is drawn from
   outlines in the app, since Apple Maps would tell a server the area looked at. This
   revises the Call above. Applies *Just right for the room*.
-- 2026-11-02 23:33, 1.1.0. Picking on the map still asks you to know where you are on a small map, so a search for
-  your town sits above it: "Most ppl don't know their lat lon". It uses Apple's place
-  search, which sees what's typed ("apple is ok"), and offers towns rather than street
+- 2026-11-02 23:34, 1.1.0. Picking on the map still asks you to know where you are on a small map, so a search for
+  your city sits above it: "Most ppl don't know their lat lon". It uses Apple's place
+  search, which sees what's typed ("apple is ok"), and offers cities rather than street
   addresses. What's kept is the name and the same whole degrees a click gives. Applies
   *Just right for the room*.
 - 2026-10-28 00:22, 1.1.0. Bedtime, where Night Shift is full, is yours to set in Auto, and

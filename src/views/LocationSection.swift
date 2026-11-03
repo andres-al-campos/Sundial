@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Where the sun is worked out for, confirmed by looking at it: a dot on a map and
-/// the times that follow from it. Search for a town, or click or drag to correct it.
+/// the times that follow from it. Search for a city, or click or drag to correct it.
 /// Not Location Services, because a sunset needs a rough place and nobody has to give
 /// up a precise one for it.
 struct LocationSection: View {
@@ -50,7 +50,7 @@ struct LocationSection: View {
     }
 
     private var searchField: some View {
-        TextField("Search for your town", text: $query)
+        TextField("Search your city", text: $query)
             .textFieldStyle(.roundedBorder)
             .controlSize(.small)
             .focused($searching)
@@ -169,7 +169,7 @@ struct LocationSection: View {
     }
 
     private var readout: String {
-        guard let shown else { return "Search for your town, or click your part of the world." }
+        guard let shown else { return "Search your city, or click your part of the world." }
         let lat = "\(abs(Int(shown.latitude.rounded())))° \(shown.latitude < 0 ? "S" : "N")"
         let lon = "\(abs(Int(shown.longitude.rounded())))° \(shown.longitude < 0 ? "W" : "E")"
         guard dragged == nil, let sun = SunClock.sun() else { return "\(lat), \(lon)" }

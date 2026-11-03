@@ -1,6 +1,6 @@
 import MapKit
 
-/// Finds a town by name through Apple's place search, for people who couldn't point
+/// Finds a city by name through Apple's place search, for people who couldn't point
 /// to theirs on a small map. Only what's typed goes to Apple, and only while typing.
 @MainActor
 final class PlaceSearch: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
@@ -13,7 +13,7 @@ final class PlaceSearch: NSObject, ObservableObject, MKLocalSearchCompleterDeleg
         super.init()
         completer.delegate = self
         completer.resultTypes = .address
-        // Towns, not street addresses: a sunset doesn't need anyone's house.
+        // Cities, not street addresses: a sunset doesn't need anyone's house.
         if #available(macOS 15, *) {
             completer.addressFilter = MKAddressFilter(including: [.locality, .subLocality, .administrativeArea])
         }
@@ -43,7 +43,7 @@ final class PlaceSearch: NSObject, ObservableObject, MKLocalSearchCompleterDeleg
         MainActor.assumeIsolated {
             guard !completer.queryFragment.isEmpty else { return }
             results = Array(completer.results.prefix(Self.shownResults))
-            problem = results.isEmpty ? "No towns match that. Check the spelling, or click your spot on the map." : nil
+            problem = results.isEmpty ? "No cities match that. Check the spelling, or click your spot on the map." : nil
         }
     }
 
@@ -51,7 +51,7 @@ final class PlaceSearch: NSObject, ObservableObject, MKLocalSearchCompleterDeleg
         MainActor.assumeIsolated {
             results = []
             problem = (error as? MKError)?.code == .placemarkNotFound
-                ? "No towns match that. Check the spelling, or click your spot on the map."
+                ? "No cities match that. Check the spelling, or click your spot on the map."
                 : "Couldn't reach Apple's place search. Check your connection, or click your spot on the map."
         }
     }
