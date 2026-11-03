@@ -122,6 +122,13 @@ enum LightDay {
 
     static func wrap(_ minute: Int) -> Int { ((minute % day) + day) % day }
 
+    /// A minute of the day as the clock reads it, for a time picker. Not midnight
+    /// plus that many minutes: the days the clocks change are 23 and 25 hours long.
+    static func clockTime(_ minute: Int, on date: Date, in calendar: Calendar = .current) -> Date {
+        let m = wrap(minute)
+        return calendar.date(bySettingHour: m / 60, minute: m % 60, second: 0, of: date) ?? date
+    }
+
     /// The mark a time snaps to, if it's close enough to one.
     static func snap(_ minute: Int, marks: Marks) -> Anchor? {
         Mark.allCases

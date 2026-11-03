@@ -73,7 +73,7 @@ struct AutoView: View {
 
     private var bedtimeBinding: Binding<Date> {
         Binding(
-            get: { Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(appState.bedtime % (24 * 60)) * 60) },
+            get: { LightDay.clockTime(appState.bedtime, on: Date()) },
             set: { date in
                 let c = Calendar.current.dateComponents([.hour, .minute], from: date)
                 let m = (c.hour ?? 0) * 60 + (c.minute ?? 0)

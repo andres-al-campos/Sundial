@@ -120,6 +120,26 @@ for spots in [[300.0, 310, 320], [320, 300, 310], [0, 5, 10], [590, 595, 600], [
 let crossed = LightDay.spread([320, 300], widths: [90, 90], gap: 8, across: 600)
 check("labels pushed apart keep their order", crossed[1] < crossed[0], crossed)
 
+// A time picker reads the clock, on the 25-hour and 23-hour days too.
+var chicago = Calendar(identifier: .gregorian)
+chicago.timeZone = TimeZone(identifier: "America/Chicago")!
+func read(_ d: Date) -> Int {
+    let c = chicago.dateComponents([.hour, .minute], from: d)
+    return c.hour! * 60 + c.minute!
+}
+let clockDays = ["fall back": DateComponents(year: 2026, month: 11, day: 1, hour: 22),
+            "spring forward": DateComponents(year: 2027, month: 3, day: 14, hour: 22),
+            "an ordinary day": DateComponents(year: 2026, month: 11, day: 2, hour: 22)]
+for (name, parts) in clockDays {
+    let date = chicago.date(from: parts)!
+    for minute in [0, 60, 4 * 60, 17 * 60 + 42, 23 * 60 + 59] {
+        let got = LightDay.clockTime(minute, on: date, in: chicago)
+        check("minute \(minute) reads the same on \(name)", read(got) == minute, read(got))
+        check("and stays on that day on \(name)", chicago.isDate(got, inSameDayAs: date), got)
+    }
+}
+check("24:00 bedtime reads as midnight", read(LightDay.clockTime(24 * 60, on: chicago.date(from: clockDays["fall back"]!)!, in: chicago)) == 0, "bedtime")
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)
@@ -136,4 +156,4 @@ if ! "$work/lamps" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same"
+echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same, and time pickers read the clock on the days it changes"

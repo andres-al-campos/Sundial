@@ -773,7 +773,7 @@ private struct KeyDrawer: View {
     /// A typed time keeps the keyframe's look. Only a drag takes what's under it.
     private var timeBinding: Binding<Date> {
         Binding(
-            get: { Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(LightDay.minute(of: key, marks: marks)) * 60) },
+            get: { LightDay.clockTime(LightDay.minute(of: key, marks: marks), on: Date()) },
             set: { date in
                 let c = Calendar.current.dateComponents([.hour, .minute], from: date)
                 let m = (c.hour ?? 0) * 60 + (c.minute ?? 0)
