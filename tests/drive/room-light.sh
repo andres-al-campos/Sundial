@@ -119,8 +119,11 @@ let round = WorldMap.spot(latitude: 42, longitude: -88)
 let back = WorldMap.place(x: round.x * 720, y: round.y * 280, width: 720, height: 280, zone: "z")
 check("a place's dot sits where clicking it gives the same place", back.latitude == 42 && back.longitude == -88, back)
 check("the land outline parsed: every landmass has corners, on the map", WorldMap.land.count > 50 && WorldMap.land.allSatisfy { $0.count >= 3 && $0.allSatisfy { abs($0.lon) <= 180 && $0.lat >= WorldMap.south && $0.lat <= WorldMap.north } }, WorldMap.land.count)
+let searched = RoomLight.Place(near: 30.2642643, -97.7475016, zone: "America/Chicago", name: "Austin, TX")
+check("a searched town is kept to whole degrees, like a click", searched.latitude == 30 && searched.longitude == -98 && searched.name == "Austin, TX", searched)
 let oldConfig = try! JSONDecoder().decode(RoomLight.Place.self, from: Data(#"{"latitude":30,"longitude":-98,"zone":"America/Chicago"}"#.utf8))
 check("a place is stored in whole degrees", oldConfig.latitude == 30, oldConfig)
+check("a place saved before search has no name", oldConfig.name == nil, oldConfig)
 
 if let today = sun(2026, 10, 26, -5) {
     let w = RoomLight.warmSchedule(sun: today)

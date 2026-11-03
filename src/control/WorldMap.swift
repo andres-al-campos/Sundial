@@ -16,7 +16,7 @@ enum WorldMap {
     static func place(x: Double, y: Double, width: Double, height: Double, zone: String) -> RoomLight.Place {
         let lon = west + (min(max(0, x / width), 1)) * (east - west)
         let lat = north - (min(max(0, y / height), 1)) * (north - south)
-        return RoomLight.Place(latitude: Int(lat.rounded()), longitude: Int(lon.rounded()), zone: zone)
+        return RoomLight.Place(near: lat, lon, zone: zone)
     }
 
     /// Where a latitude and longitude sit on the map, 0 to 1 across and down.

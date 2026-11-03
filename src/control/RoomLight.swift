@@ -220,6 +220,16 @@ enum RoomLight {
         /// The time zone it was picked in. Elsewhere it's left behind, so a trip
         /// still moves the sun with the clock.
         var zone: String
+        /// What it was searched for as. A click on the map has none.
+        var name: String?
+
+        /// Rounded here, so a search keeps no more of a place than a click does.
+        init(near latitude: Double, _ longitude: Double, zone: String, name: String? = nil) {
+            self.latitude = Int(latitude.rounded())
+            self.longitude = Int(longitude.rounded())
+            self.zone = zone
+            self.name = name
+        }
     }
 
     /// A place from the time zone table (`zone.tab`): "+415100-0873900" is
