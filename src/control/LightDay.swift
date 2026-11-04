@@ -333,6 +333,20 @@ enum LightDay {
         offWhiteLine(xy) <= whiteTolerance
     }
 
+    /// The temperature to keep showing once the wheel leaves the whites, given the colour
+    /// it's leaving and what was already kept: a slider that followed the wheel around
+    /// would say the number still meant something.
+    static func keptKelvin(leaving xy: LampBlend.XY, kept: Int?) -> Int {
+        if let kept, !hasTemperature(xy) { return kept }
+        return kelvin(xy)
+    }
+
+    /// Where the Temperature slider sits: on the colour's own temperature if it has one,
+    /// otherwise where it was kept.
+    static func sliderKelvin(_ xy: LampBlend.XY, kept: Int?) -> Int {
+        hasTemperature(xy) ? kelvin(xy) : kept ?? kelvin(xy)
+    }
+
     static func offWhiteLine(_ xy: LampBlend.XY) -> Double {
         func uv(_ c: LampBlend.XY) -> (u: Double, v: Double) {
             let d = -2 * c.x + 12 * c.y + 3

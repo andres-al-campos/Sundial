@@ -848,10 +848,15 @@ private struct KeyPanel: View {
     let delete: () -> Void
 
     private static let labelWidth: CGFloat = 84
+    /// Each keyframe's temperature from before the wheel took it off the whites.
+    @State private var kept: [UUID: Int] = [:]
 
     var body: some View {
         HStack(spacing: 20) {
-            ColorWheel(xy: key.xy, change: { xy in change { $0.xy = xy } }, commit: commit)
+            ColorWheel(xy: key.xy, change: { xy in
+                kept[key.id] = LightDay.keptKelvin(leaving: key.xy, kept: kept[key.id])
+                change { $0.xy = xy }
+            }, commit: commit)
                 .frame(width: wheel, height: wheel)
             // Evenly down the wheel's height, so nothing piles up at the top of the card.
             VStack(alignment: .leading, spacing: 0) {
@@ -898,21 +903,22 @@ private struct KeyPanel: View {
 
     private var wheel: CGFloat { Layout.cardHeight - 2 * Layout.cardPadding }
 
-    /// Dimmed for a colour, which has no temperature, with that in place of a number. It
-    /// still moves, since dragging it is the way back to a white from a colour.
+    /// Dimmed for a colour that isn't a white, which has no temperature, with the slider
+    /// staying where it was and the reason in place of a number. It can still be dragged,
+    /// since that's the way back to a white.
     private var temperature: some View {
         let white = LightDay.hasTemperature(key.xy)
-        return field("Temperature", value: white ? "\(LightDay.kelvin(key.xy)) K" : "A colour") {
+        return field("Temperature", value: white ? "\(LightDay.kelvin(key.xy)) K" : "Not white") {
             // Rounded here rather than with the slider's step, which draws a tick at
             // every step and made it look unlike Brightness.
-            Slider(value: Binding(get: { Double(LightDay.kelvin(key.xy)) }, set: { k in
+            Slider(value: Binding(get: { Double(LightDay.sliderKelvin(key.xy, kept: kept[key.id])) }, set: { k in
                 change { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
             }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
             .tint(white ? nil : .gray)
             .opacity(white ? 1 : 0.5)
         }
         .foregroundStyle(white ? .primary : .secondary)
-        .help(white ? "" : "This colour isn't one of the glowing-metal whites, so it has no temperature. Drag to set a white.")
+        .help(white ? "" : "Only whites have a temperature, and this colour isn't one. Drag to go back to a white.")
     }
 
     private func field<C: View>(_ label: String, value: String, @ViewBuilder control: () -> C) -> some View {

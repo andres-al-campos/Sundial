@@ -196,6 +196,19 @@ for (name, hue) in [("green", 0.33), ("cyan", 0.5), ("blue", 0.66), ("magenta", 
 }
 check("the wheel's centre has one", LightDay.hasTemperature(LightDay.xy(hue: 0, saturation: 0)), "centre")
 
+// The Temperature slider stays put while the wheel moves through colours.
+let warmWhite = LampBlend.xy(mirek: 1_000_000 / 2700.0)
+let green = LightDay.xy(hue: 0.33, saturation: 1), blue = LightDay.xy(hue: 0.66, saturation: 1)
+let kept1 = LightDay.keptKelvin(leaving: warmWhite, kept: nil)
+check("leaving a white keeps its temperature", kept1 == 2700, kept1)
+check("the slider stays there on a colour", LightDay.sliderKelvin(green, kept: kept1) == 2700, LightDay.sliderKelvin(green, kept: kept1))
+let kept2 = LightDay.keptKelvin(leaving: green, kept: kept1)
+check("and through the next colour", kept2 == 2700 && LightDay.sliderKelvin(blue, kept: kept2) == 2700, kept2)
+check("back on a white it shows that white's", LightDay.sliderKelvin(LampBlend.xy(mirek: 250), kept: kept2) == 4000, LightDay.sliderKelvin(LampBlend.xy(mirek: 250), kept: kept2))
+check("leaving that white keeps the new one", LightDay.keptKelvin(leaving: LampBlend.xy(mirek: 250), kept: kept2) == 4000, "new")
+let colourFirst = LightDay.keptKelvin(leaving: green, kept: nil)
+check("a keyframe already a colour keeps what it showed", colourFirst == LightDay.sliderKelvin(green, kept: nil), colourFirst)
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)
@@ -224,4 +237,4 @@ if ! grep -q 'days\[l.id\] ?? LightDay.defaultKeys' src/control/LampController.s
     echo "✗ lamps: a new bulb no longer gets LightDay.defaultKeys, so it has no keyframes and Sundial leaves it alone. Use them for a bulb with no scene, in LampController.syncBulbs."
     exit 1
 fi
-echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same, time pickers read the clock on the days it changes, a new bulb starts on sunrise, sunset and bedtime, and only whites have a temperature"
+echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same, time pickers read the clock on the days it changes, a new bulb starts on sunrise, sunset and bedtime, and only whites have a temperature, with the slider staying put through colours"

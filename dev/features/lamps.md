@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 12:11, at 1.1.0.
+Updated 2026-11-04 12:17, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -17,7 +17,9 @@ artificial light follows the natural light along with the screen.
   (700 to 6500 K) and colour, or to delete it. A bulb the bridge has no scene for starts
   on three: sunrise, sunset and bedtime. Until they're changed its name says to click a dot.
 - **Temperature** only means something for the glowing-metal whites. For any other colour
-  the slider dims and says "A colour", and dragging it goes back to a white.
+  the slider dims, says "Not white", and stays where it was before the wheel left the whites.
+  That's remembered until Sundial quits; a keyframe that's already a colour sits at its
+  nearest temperature. Dragging the slider goes back to a white.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
   drop. A typed time keeps its look. Within 10 minutes of a mark it snaps and
   follows that mark. Imported keyframes can follow one at an offset, such as 40
@@ -105,6 +107,10 @@ blend looks in the room.
   fade, so a lamp switched off from the phone came back on within a minute: "It
   should not re set the light color when I've turned off the lights". Only the
   person who switched it off switches it back on. Applies *Never a fight with the controls*.
+
+- 2026-11-04 12:17, 1.1.0. **A colour's Temperature slider stays still.** The dimmed look is fine, but moving with the wheel
+  "sends mixed signals": it says the number still means something. It keeps the value from before
+  the colour.
 
 ## Gotchas
 
