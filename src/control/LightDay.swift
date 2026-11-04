@@ -233,11 +233,16 @@ enum LightDay {
     static func rgb(_ xy: LampBlend.XY) -> (r: Double, g: Double, b: Double) {
         let y = max(xy.y, 0.001)
         let X = xy.x / y, Z = (1 - xy.x - xy.y) / y
-        let linear = [3.2406 * X - 1.5372 - 0.4986 * Z,
-                      -0.9689 * X + 1.8758 + 0.0415 * Z,
-                      0.0557 * X - 0.2040 + 1.0570 * Z].map { max(0, $0) }
-        let top = max(linear.max() ?? 1, 0.001)
-        let c = linear.map { v -> Double in
+        return encoded([3.2406 * X - 1.5372 - 0.4986 * Z,
+                        -0.9689 * X + 1.8758 + 0.0415 * Z,
+                        0.0557 * X - 0.2040 + 1.0570 * Z])
+    }
+
+    /// Brightest channel at 1, with what's out of range cut off, through the sRGB curve.
+    private static func encoded(_ linear: [Double]) -> (r: Double, g: Double, b: Double) {
+        let clipped = linear.map { max(0, $0) }
+        let top = max(clipped.max() ?? 1, 0.001)
+        let c = clipped.map { v -> Double in
             let n = v / top
             return n <= 0.0031308 ? 12.92 * n : 1.055 * pow(n, 1 / 2.4) - 0.055
         }
@@ -245,7 +250,11 @@ enum LightDay {
     }
 
     /// The xy of a spot on the colour wheel, its hue from 0 to 1 and its saturation
-    /// from white at 0 to the full colour at 1.
+    /// from white at 0 to the full colour at 1. Its green and blue are the screen's
+    /// and its red the bulbs' (Hue's gamut C). The screen's red runs out around 900 K, so
+    /// on an all-sRGB wheel every temperature below that was one spot and the deepest reds
+    /// were out of reach. The bulbs' green is so far past the screen's that with it a
+    /// half-saturated spot showed as full green on the bands.
     static func xy(hue: Double, saturation: Double) -> LampBlend.XY {
         let h = (hue - hue.rounded(.down)) * 6, sat = min(max(0, saturation), 1)
         let t = h - h.rounded(.down)
@@ -262,16 +271,21 @@ enum LightDay {
             let c = 1 - sat + sat * v
             return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
         }
-        let X = 0.4124 * linear[0] + 0.3576 * linear[1] + 0.1805 * linear[2]
-        let Y = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
-        let Z = 0.0193 * linear[0] + 0.1192 * linear[1] + 0.9505 * linear[2]
+        let X = 0.3913 * linear[0] + 0.3762 * linear[1] + 0.1830 * linear[2]
+        let Y = 0.1745 * linear[0] + 0.7523 * linear[1] + 0.0732 * linear[2]
+        let Z = 0.0001 * linear[0] + 0.1254 * linear[1] + 0.9636 * linear[2]
         return .init(x: X / (X + Y + Z), y: Y / (X + Y + Z))
     }
 
-    /// Where an xy colour sits on the colour wheel. One outside what the screen can
-    /// show lands on the rim.
+    /// Where an xy colour sits on the colour wheel. One outside the wheel lands on
+    /// the rim.
     static func wheel(_ xy: LampBlend.XY) -> (hue: Double, saturation: Double) {
-        let c = rgb(xy), top = max(c.r, c.g, c.b), low = min(c.r, c.g, c.b), span = top - low
+        let y = max(xy.y, 0.001)
+        let X = xy.x / y, Z = (1 - xy.x - xy.y) / y
+        let c = encoded([3.2410 * X - 1.5374 - 0.4986 * Z,
+                         -0.7612 * X + 1.7073 + 0.0149 * Z,
+                         0.0987 * X - 0.2220 + 1.0359 * Z])
+        let top = max(c.r, c.g, c.b), low = min(c.r, c.g, c.b), span = top - low
         guard top > 0, span > 0 else { return (0, 0) }
         let sector: Double
         if top == c.r { sector = (c.g - c.b) / span } else if top == c.g { sector = 2 + (c.b - c.r) / span } else { sector = 4 + (c.r - c.g) / span }
