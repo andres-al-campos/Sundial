@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 16:21, at 1.1.0.
+Updated 2026-11-04 16:35, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -27,16 +27,16 @@ artificial light follows the natural light along with the screen.
 - **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
   with a badge in the top row saying what it lands on, such as 45% at 6:48 PM. On letting go the bulb fades back to where
   the day has it, over 1 second.
-- **Holding.** Click a bulb's name and the same card changes that bulb right now, from what the
-  lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
-  and the card says "Held until sunrise" with Back to schedule, which fades it back in 1 second.
+- **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
+  from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
+  and the card says "Held until sunrise" with an orange Back to schedule, which fades it back in 1 second.
   A hold ends by itself at the next sunrise, covers only the bulb clicked and not those linked to
   it, and is forgotten on relaunch. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows, which stay put: a colour wheel, then the settings reading left to right and top
-  to bottom: the bulb with its on/off switch to the left of its name, the time with Delete keyframe at the end of its row,
+  to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 keyframes" after it, the time with Delete keyframe at the end of its row,
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
-  sliders, keeping their fill, and shows "Off". Every button shades on hover. The rows scroll only if the
+  sliders, keeping their fill, and both say "Off". Every button shades on hover. The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
@@ -121,6 +121,11 @@ blend looks in the room.
 - 2026-11-04 16:21, 1.1.0. **Delete is spelled out.** A trash icon and an X are too similar in meaning to sit side by side: "very easy to
   mix up". So Delete keyframe is in words at the end of the time's row, where a held bulb has Back to schedule, and the X stays at
   the top right. The time goes right under the name because "the time is basically their id".
+
+- 2026-11-04 16:35, 1.1.0. **A card says whether it's a light or a keyframe.** The two look alike: "its not immediately obvious". So the name is followed by
+  "Keyframe" or "6 keyframes", and only the light lights up its whole row. A keyframe shows on its dot.
+
+- 2026-11-04 16:35, 1.1.0. **Back to schedule is orange.** "It's the call to action", the same as Resume while paused.
 
 - 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
   take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *What you

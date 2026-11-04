@@ -185,6 +185,14 @@ struct LightsView: View {
         return Shown(bulb: name, bulbID: selection.bulb, key: key, look: Self.state(key))
     }
 
+    /// Said beside the name, since the two cards look alike and a light isn't one of its keyframes.
+    private func kind(of show: Shown) -> String {
+        if show.key != nil { return "Keyframe" }
+        guard let bulb = bulbs.first(where: { $0.id == show.bulbID }) else { return "" }
+        if let parent = bulb.parent { return "Follows \(bulbs.first { $0.id == parent }?.name ?? "another bulb")" }
+        return bulb.keys.count == 1 ? "1 keyframe" : "\(bulb.keys.count) keyframes"
+    }
+
     /// What a bulb's card starts from: its hold, or the lamp as last read, or where the
     /// day has it until that read comes back.
     private func rightNow(_ id: String) -> LightDay.State {
@@ -199,6 +207,7 @@ struct LightsView: View {
         let show = shown ?? lastShown
         return LookPanel(
             bulb: show.bulb,
+            kind: kind(of: show),
             look: show.look,
             keptFor: show.key?.id.uuidString ?? show.bulbID,
             change: { apply in
@@ -394,6 +403,7 @@ struct LightsView: View {
     private func row(_ bulb: LightDay.Bulb) -> some View {
         let keys = LightDay.keys(of: bulb, in: bulbs)
         let linked = bulb.parent != nil
+        let selected = selection == Selection(bulb: bulb.id, key: nil)
         return HStack(spacing: Layout.gap) {
             name(bulb)
                 .frame(width: Layout.name, height: Layout.bandHeight + 8, alignment: .leading)
@@ -439,6 +449,14 @@ struct LightsView: View {
             }
             .frame(height: Layout.bandHeight + 8)
         }
+        // The whole row for the light, while a keyframe of it shows only on its dot. Past the
+        // band's end by as much as it shows above and below the band.
+        .background {
+            RoundedRectangle(cornerRadius: 5)
+                .fill(.primary.opacity(selected ? 0.08 : 0))
+                .padding(.trailing, -4)
+                .animation(.easeOut(duration: 0.15), value: selected)
+        }
     }
 
     /// Where the pointer last was over a band, for the band's right-click menu.
@@ -479,7 +497,6 @@ struct LightsView: View {
             }
             .padding(.horizontal, 8)
             .frame(maxHeight: .infinity)
-            .background(selection?.bulb == bulb.id ? Color.primary.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 5))
             .contentShape(Rectangle())
             .onTapGesture { selectBulb(bulb.id) }
         }
@@ -897,6 +914,7 @@ private struct Band: View {
 /// only in the row saying which, so opening one after the other moves nothing.
 private struct LookPanel<Identity: View>: View {
     let bulb: String
+    let kind: String
     let look: LightDay.State
     let keptFor: String
     let change: ((inout LightDay.State) -> Void) -> Void
@@ -932,6 +950,9 @@ private struct LookPanel<Identity: View>: View {
                     Text(bulb)
                         .font(.headline)
                         .lineLimit(1)
+                    Text(kind)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                     Spacer(minLength: 0)
                 }
                 .padding(.trailing, Layout.cardCloseRoom)
@@ -966,7 +987,7 @@ private struct LookPanel<Identity: View>: View {
     /// since that's the way back to a white.
     private var temperature: some View {
         let white = LightDay.hasTemperature(look.xy)
-        return field("Temperature", value: white ? "\(LightDay.kelvin(look.xy)) K" : "Color") {
+        return field("Temperature", value: !look.on ? "Off" : white ? "\(LightDay.kelvin(look.xy)) K" : "Color") {
             // Rounded here rather than with the slider's step, which draws a tick at
             // every step and made it look unlike Brightness.
             Slider(value: Binding(get: { Double(LightDay.sliderKelvin(look.xy, kept: kept[keptFor])) }, set: { k in
@@ -1070,6 +1091,8 @@ private struct HoldRow: View {
             Spacer(minLength: 8)
             // There either way and only usable when held, so nothing moves as it starts.
             Button("Back to schedule", action: back)
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
                 .controlSize(.small)
                 .hoverShade()
                 .opacity(held ? 1 : 0)
