@@ -61,7 +61,7 @@ Not built: deleting a bulb from the bridge, or adding a new one. Undo doesn't co
 
 ## How to get to it
 
-Click the sun in the menu bar, then Open Sundial, then Lights. A Dock icon pinned to the Dock opens the window too.
+Click the sun in the menu bar, then Open Sundial, then Lights. Clicking its icon in the Dock, once pinned, opens the window too.
 
 ## Driving it
 
