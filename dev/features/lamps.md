@@ -24,11 +24,11 @@ artificial light follows the natural light along with the screen.
   the day has it, over 1 second.
 - **Disabling.** A disabled keyframe draws as a ring of six dashes and the day runs as if it
   weren't there, keeping its settings. Right-click it, or use Disable in its settings.
-- **Panel.** Click a keyframe and its settings show in the panel under the rows:
-  a colour wheel, then long Brightness and Temperature sliders. The panel stays one
-  height, and the rows scroll if they don't fit. Its close button hides it, and
-  selecting a keyframe brings it back. Clicking the empty space around the rows
-  deselects.
+- **Panel.** Click a keyframe and its settings show in the panel right under the
+  timeline: a colour wheel, then long Brightness and Temperature sliders. The panel
+  stays one height and slides down from behind the rows, which stay put, and they
+  scroll only if the window can't fit both. Its close button hides it, and selecting a
+  keyframe brings it back. Clicking the empty space around the rows deselects.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
   temperature has its own spot. Screens run out of red around 900 K, so below that the
   thumb moves and the bulb changes while the colours on screen stay the same red.
@@ -82,10 +82,11 @@ blend looks in the room.
 
 ## Calls
 
-- 2026-11-03 23:34, 1.1.0. **A keyframe's settings sit in a panel under the rows, not an inspector.** The day runs left to
+- 2026-11-04 02:17, 1.1.0. **A keyframe's settings sit in a panel under the rows, not an inspector.** The day runs left to
   right and an inspector takes that width from it, and the sliders stay long: "i just like the
-  long sliders more". The panel keeps one height whatever it shows and the rows scroll above it,
-  so nothing moves when you select, which applies *Motion spends attention*. Hiding it is a choice
+  long sliders more". It sits right under the timeline and comes down from behind the rows, "always
+  below the timeline", and keeps one height whatever it shows, so nothing moves when you select,
+  which applies *Motion spends attention*. Hiding it is a choice
   you make, with its close button, and selecting a keyframe brings it back.
 
 - 2026-11-03 23:34, 1.1.0. Off and disabled are two settings: off is a dark moment the bulb fades through, disabled

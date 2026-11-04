@@ -188,4 +188,8 @@ if ! "$work/lamps" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
+if ! grep -q 'ViewThatFits(in: .vertical)' src/views/LightsView.swift; then
+    echo "✗ lamps: LightsView's rows lost their ViewThatFits. A ScrollView that's always there shows a scroll bar when the panel slides, since each frame's rounding leaves its content a fraction taller. Put the rows back in a ViewThatFits, with the ScrollView as its second choice."
+    exit 1
+fi
 echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same, and time pickers read the clock on the days it changes"

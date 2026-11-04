@@ -102,26 +102,23 @@ struct LightsView: View {
                 } else if bulbs.isEmpty {
                     ProgressView("Reading your bulbs…").frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    GeometryReader { viewport in
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 8) {
-                                marksHeader
-                                ForEach(bulbs) { row($0) }
-                                hoursAxis
-                            }
-                            .padding(.horizontal, Layout.edge)
-                            .padding(.vertical, 16)
-                            // As tall as the view, so the space under the rows can be clicked.
-                            .frame(minHeight: viewport.size.height, alignment: .top)
-                            .contentShape(Rectangle())
-                            .onTapGesture { deselect() }
-                        }
+                    // A scroll view only when the rows and the panel don't both fit. One that
+                    // was always there got resized by the panel's slide, and each frame's
+                    // rounding left its content a fraction taller, which shows a scroll bar.
+                    ViewThatFits(in: .vertical) {
+                        rows
+                        ScrollView { rows }
                     }
-                    if panelOpen {
-                        Divider()
-                        panel
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
+                    .layoutPriority(1)
+                    // Anchored at its bottom in a frame that grows, so it comes down from
+                    // behind the rows and they never move.
+                    panel
+                        .frame(height: panelOpen ? Layout.panelHeight : 0, alignment: .bottom)
+                        .clipped()
+                        .allowsHitTesting(panelOpen)
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { deselect() }
                 }
             }
         }
@@ -137,6 +134,18 @@ struct LightsView: View {
             playTask?.cancel()
             endPreviewNow()
         }
+    }
+
+    private var rows: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            marksHeader
+            ForEach(bulbs) { row($0) }
+            hoursAxis
+        }
+        .padding(.horizontal, Layout.edge)
+        .padding(.vertical, 16)
+        .contentShape(Rectangle())
+        .onTapGesture { deselect() }
     }
 
     // MARK: - Panel
@@ -175,6 +184,7 @@ struct LightsView: View {
                 .padding(.trailing, Layout.edge)
                 .padding(.top, Layout.panelPadding)
         }
+        .overlay(alignment: .top) { Divider() }
     }
 
     // MARK: - Bars
@@ -717,7 +727,7 @@ enum Layout {
     static let gap: CGFloat = 12
     static let bandHeight: CGFloat = 22
     static let linkedHeight: CGFloat = 10
-    /// The same whatever it shows, so the rows above it never move.
+    /// The same whatever it shows, so nothing moves as a selection comes and goes.
     static let panelHeight: CGFloat = 144
     static let panelPadding: CGFloat = 14
     /// The axis starts at 5 AM, so the day reads left to right and the night
@@ -793,7 +803,7 @@ private struct Band: View {
     }
 }
 
-// MARK: - The drawer
+// MARK: - The panel
 
 /// A keyframe's settings, in the panel under the rows.
 private struct KeyPanel: View {
