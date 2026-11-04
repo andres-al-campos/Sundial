@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 12:17, at 1.1.0.
+Updated 2026-11-04 12:52, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -17,7 +17,7 @@ artificial light follows the natural light along with the screen.
   (700 to 6500 K) and colour, or to delete it. A bulb the bridge has no scene for starts
   on three: sunrise, sunset and bedtime. Until they're changed its name says to click a dot.
 - **Temperature** only means something for the glowing-metal whites. For any other colour
-  the slider dims, says "Not white", and stays where it was before the wheel left the whites.
+  the slider dims, says "Color", and stays where it was before the wheel left the whites.
   That's remembered until Sundial quits; a keyframe that's already a colour sits at its
   nearest temperature. Dragging the slider goes back to a white.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
@@ -31,7 +31,8 @@ artificial light follows the natural light along with the screen.
   weren't there, keeping its settings. Right-click it, or use Disable in its settings.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows, which stay put: a colour wheel, then the settings reading left to right and top
-  to bottom, with long Brightness and Temperature sliders. The rows scroll only if the
+  to bottom: which bulb, long Brightness and Temperature sliders, then the time, Light on,
+  Disable and Delete. The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
@@ -60,7 +61,7 @@ Not built: deleting a bulb from the bridge, or adding a new one. Undo doesn't co
 
 ## How to get to it
 
-Click the sun in the menu bar, then Open Sundial, then Lights.
+Click the sun in the menu bar, then Open Sundial, then Lights. A Dock icon pinned to the Dock opens the window too.
 
 ## Driving it
 

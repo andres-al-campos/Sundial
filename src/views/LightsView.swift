@@ -751,6 +751,8 @@ enum Layout {
 
     static let cardCorner: CGFloat = 12
     static let cardPadding: CGFloat = 14
+    /// The card's close button sits over the end of its first line.
+    static let cardCloseRoom: CGFloat = 24
     /// The colour wheel's height plus its padding.
     static let cardHeight: CGFloat = 144
     static let cardRoom: CGFloat = cardHeight + rowsPadding
@@ -861,21 +863,19 @@ private struct KeyPanel: View {
             // Evenly down the wheel's height, so nothing piles up at the top of the card.
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
-                    Text("\(bulb), keyframe at")
+                    Text("\(bulb) keyframe")
                         .font(.headline)
                         .lineLimit(1)
-                    DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                        .controlSize(.small)
-                    Toggle("On", isOn: Binding(get: { key.on }, set: { on in
-                        change { $0.on = on }
-                        commit()
-                    }))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
+                    if let text = LightsView.anchorText(key.anchor) {
+                        Text(text)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
                     Spacer(minLength: 0)
                 }
+                .padding(.trailing, Layout.cardCloseRoom)
                 Spacer(minLength: 0)
                 field("Brightness", value: "\(Int(key.brightness.rounded()))%") {
                     Slider(value: Binding(get: { key.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
@@ -884,16 +884,24 @@ private struct KeyPanel: View {
                 temperature
                 Spacer(minLength: 0)
                 HStack(spacing: 8) {
+                    DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .controlSize(.small)
+                    Spacer(minLength: 8)
+                    // Named because Disable sits beside it: off is a dark moment the bulb
+                    // fades through, disabled is as if the keyframe weren't there.
+                    Toggle("Light on", isOn: Binding(get: { key.on }, set: { on in
+                        change { $0.on = on }
+                        commit()
+                    }))
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .fixedSize()
+                    Spacer(minLength: 8)
                     Button(key.enabled ? "Disable" : "Enable", action: toggleEnabled)
                         .controlSize(.small)
                     Button("Delete", action: delete)
                         .controlSize(.small)
-                    if let text = LightsView.anchorText(key.anchor) {
-                        Text(text)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 0)
                 }
             }
             .frame(height: wheel)
@@ -908,7 +916,7 @@ private struct KeyPanel: View {
     /// since that's the way back to a white.
     private var temperature: some View {
         let white = LightDay.hasTemperature(key.xy)
-        return field("Temperature", value: white ? "\(LightDay.kelvin(key.xy)) K" : "Not white") {
+        return field("Temperature", value: white ? "\(LightDay.kelvin(key.xy)) K" : "Color") {
             // Rounded here rather than with the slider's step, which draws a tick at
             // every step and made it look unlike Brightness.
             Slider(value: Binding(get: { Double(LightDay.sliderKelvin(key.xy, kept: kept[key.id])) }, set: { k in
@@ -918,7 +926,7 @@ private struct KeyPanel: View {
             .opacity(white ? 1 : 0.5)
         }
         .foregroundStyle(white ? .primary : .secondary)
-        .help(white ? "" : "Only whites have a temperature, and this colour isn't one. Drag to go back to a white.")
+        .help(white ? "" : "Only whites have a temperature, and this color isn't one. Drag to go back to a white.")
     }
 
     private func field<C: View>(_ label: String, value: String, @ViewBuilder control: () -> C) -> some View {
