@@ -70,7 +70,7 @@ private struct MainWindowView: View {
             case .settings:
                 ScrollView {
                     SettingsView()
-                        .frame(maxWidth: 520, alignment: .leading)
+                        .frame(maxWidth: 520 + 2 * Layout.edge, alignment: .leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }

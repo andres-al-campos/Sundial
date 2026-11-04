@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-03 20:15, at 1.1.0.
+Updated 2026-11-03 20:28, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -13,8 +13,8 @@ artificial light follows the natural light along with the screen.
   to another moves aside, and a tick stays on the real time.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
-  (the band doesn't change). Click a dot for its time, on/off, brightness, white
-  (700 to 6500 K) and colour, or to delete it.
+  (the band doesn't change). Click a dot for its time, on/off, brightness, temperature
+  (700 to 6500 K, and the nearest one for a colour) and colour, or to delete it.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
   drop. A typed time keeps its look. Within 10 minutes of a mark it snaps and
   follows that mark. Imported keyframes can follow one at an offset, such as 40
@@ -28,6 +28,7 @@ artificial light follows the natural light along with the screen.
 - **Undo.** Cmd-Z and Shift-Cmd-Z cover every change to the bulbs.
 - **Play the day** runs the day on the bulbs in 10 seconds and returns to now.
 - **Pause** stops Sundial changing the bulbs until Resume, so the Hue app can use them.
+  A preview while paused still shows on the bulb, then fades back to what the bulb was.
 - **Import.** The first run makes each bulb's day from the seven named scenes on
   the bridge, keeping what the lamps did at every minute. After that Sundial holds the
   settings, and scene edits in the Hue app aren't read.

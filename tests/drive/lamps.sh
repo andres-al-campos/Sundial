@@ -84,7 +84,7 @@ check("a dragged keyframe is left out of what it samples", near(LightDay.state(k
 check("no keyframes, no state: Sundial leaves the bulb alone", LightDay.state([], at: 0, marks: m0) == nil, "state")
 check("within 10 minutes snaps to a mark, across midnight too", LightDay.snap(1435, marks: m0)?.mark == .darkest && LightDay.snap(1000, marks: m0) == nil, "snap")
 check("an anchored keyframe follows its mark", LightDay.minute(of: key(0, 1, .init(mark: .sunset, offset: -40)), marks: m0) == 1040, "anchor")
-check("whites read back as a temperature, colours don't", LightDay.kelvin(LampBlend.xy(mirek: 500)) == 2000 && LightDay.kelvin(.init(x: 0.17, y: 0.7)) == nil, "kelvin")
+check("whites read back as their temperature, and a colour as the nearest one", LightDay.kelvin(LampBlend.xy(mirek: 500)) == 2000 && (700...6500).contains(LightDay.kelvin(.init(x: 0.17, y: 0.7))), "kelvin")
 
 func bulb(_ keys: [LightDay.Key], parent: String? = nil, id: String = "1") -> LightDay.Bulb { .init(id: id, deviceID: "d", name: "Lamp", keys: keys, parent: parent) }
 check("a good file is accepted", LightDay.problem(in: [bulb([key(600, 50)])], knownIDs: ["1"]) == nil, "problem")
@@ -100,7 +100,7 @@ check("the lowest white is the bulbs' red corner, or a lower one would look the 
 let below = LampBlend.xy(mirek: 1_000_000 / 1666), above = LampBlend.xy(mirek: 1_000_000 / 1668)
 check("the slider doesn't jump where the low table meets the fit at 1667 K", near(below.x, above.x, 0.002) && near(below.y, above.y, 0.002), (below, above))
 check("1000 K is the published CIE point", near(LampBlend.xy(mirek: 1000).x, 0.6528, 0.0005) && near(LampBlend.xy(mirek: 1000).y, 0.3445, 0.0005), LampBlend.xy(mirek: 1000))
-check("MidNight's colour reads as a temperature, so its slider doesn't jump", LightDay.kelvin(.init(x: 0.602, y: 0.376)) != nil, "kelvin")
+check("MidNight's colour reads as a temperature, so its slider doesn't jump", (1000...1700).contains(LightDay.kelvin(.init(x: 0.602, y: 0.376))), LightDay.kelvin(.init(x: 0.602, y: 0.376)))
 check("a lamp someone switched off stays off", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: false) == .leave, "send")
 check("a lamp the day turned off comes back with the day", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: true) == .power, "send")
 check("a lit lamp is adjusted without touching its power", LightDay.send(targetOn: true, lampIsOn: true, dayTurnedItOff: false) == .adjust, "send")

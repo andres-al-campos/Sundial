@@ -100,6 +100,7 @@ struct SettingsView: View {
                     .onChange(of: appState.applyOnWake) { _, _ in appState.save() }
             }
         }
-        .padding(14)
+        .padding(.horizontal, Layout.edge)
+        .padding(.vertical, 14)
     }
 }

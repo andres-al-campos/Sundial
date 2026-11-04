@@ -70,7 +70,7 @@ struct LightsView: View {
 
     struct Selection: Equatable { var bulb: String; var key: UUID }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
-    struct Previewing { var look: LightDay.State; var minute: Int }
+    struct Previewing { var bulb: String; var look: LightDay.State; var minute: Int }
 
     private var bulbs: [LightDay.Bulb] { appState.lights ?? [] }
 
@@ -122,7 +122,8 @@ struct LightsView: View {
                             }
                             hoursAxis
                         }
-                        .padding(16)
+                        .padding(.horizontal, Layout.edge)
+                        .padding(.vertical, 16)
                     }
                 }
             }
@@ -171,7 +172,7 @@ struct LightsView: View {
             }
             .disabled(appState.hueHost == nil)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, Layout.edge)
         .padding(.vertical, 10)
         .animation(.easeOut(duration: 0.15), value: previewing == nil)
     }
@@ -181,7 +182,7 @@ struct LightsView: View {
             Circle()
                 .fill(Self.color(p.look))
                 .frame(width: 12, height: 12)
-            Text("\(p.look.on ? "\(Int(p.look.brightness.rounded()))%" : "Off") at \(Self.time(p.minute))")
+            Text("\(p.bulb): \(p.look.on ? "\(Int(p.look.brightness.rounded()))%" : "Off") at \(Self.time(p.minute))")
                 .monospacedDigit()
         }
         .font(.title3)
@@ -442,7 +443,7 @@ struct LightsView: View {
     private func previewOn(_ bulb: String, _ look: LightDay.State, at minute: Int) {
         var states = [bulb: look]
         for follower in bulbs where follower.parent == bulb { states[follower.id] = look }
-        previewing = Previewing(look: look, minute: minute)
+        previewing = Previewing(bulb: bulbs.first { $0.id == bulb }?.name ?? "Bulb", look: look, minute: minute)
         appState.onPreviewLamps?(states)
     }
 
@@ -606,6 +607,8 @@ struct LightsView: View {
 }
 
 enum Layout {
+    /// Between the window's edge and what's in it.
+    static let edge: CGFloat = 28
     static let name: CGFloat = 130
     static let gap: CGFloat = 12
     static let bandHeight: CGFloat = 22
@@ -695,6 +698,8 @@ private struct KeyDrawer: View {
     let delete: () -> Void
     let close: () -> Void
 
+    private static let labelWidth: CGFloat = 84
+
     private static let colors: [(name: String, x: Double, y: Double)] = [
         ("Amber", 0.5469, 0.4106), ("Coral", 0.62, 0.36), ("Red", 0.675, 0.322), ("Pink", 0.42, 0.22),
         ("Violet", 0.25, 0.10), ("Blue", 0.16, 0.06), ("Teal", 0.17, 0.35), ("Green", 0.21, 0.65),
@@ -726,14 +731,16 @@ private struct KeyDrawer: View {
             field("Brightness", value: "\(Int(key.brightness.rounded()))%") {
                 Slider(value: Binding(get: { key.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
             }
-            field("White", value: LightDay.kelvin(key.xy).map { "\($0) K" } ?? "Color") {
-                Slider(value: Binding(get: { Double(LightDay.kelvin(key.xy) ?? 2700) }, set: { k in
-                    change { $0.xy = LampBlend.xy(mirek: 1_000_000 / k) }
-                }), in: LampBlend.lowestKelvin...6500, step: 50, onEditingChanged: edited)
+            field("Temperature", value: "\(LightDay.kelvin(key.xy)) K") {
+                // Rounded here rather than with the slider's step, which draws a tick at
+                // every step and made it look unlike Brightness.
+                Slider(value: Binding(get: { Double(LightDay.kelvin(key.xy)) }, set: { k in
+                    change { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
+                }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
             }
             HStack(spacing: 8) {
                 Text("Color")
-                    .frame(width: 72, alignment: .leading)
+                    .frame(width: Self.labelWidth, alignment: .leading)
                 ForEach(Self.colors, id: \.name) { c in
                     Button {
                         change {
@@ -762,7 +769,7 @@ private struct KeyDrawer: View {
 
     private func field<C: View>(_ label: String, value: String, @ViewBuilder control: () -> C) -> some View {
         HStack(spacing: 8) {
-            Text(label).frame(width: 72, alignment: .leading)
+            Text(label).frame(width: Self.labelWidth, alignment: .leading)
             control()
             Text(value)
                 .font(.caption.monospacedDigit())
