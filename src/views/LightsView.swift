@@ -269,7 +269,7 @@ struct LightsView: View {
                 ForEach([6, 9, 12, 15, 18, 21, 0, 3], id: \.self) { hour in
                     Text(Self.hour(hour))
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                         .fixedSize()
                         .position(x: geo.size.width * Layout.position(hour * 60), y: 7)
                 }
@@ -354,11 +354,17 @@ struct LightsView: View {
         let at = LightDay.minute(of: key, marks: marks)
         let look = dragging == key.id ? (dragLook ?? Self.state(key)) : Self.state(key)
         let selected = selection?.key == key.id
+        let size: CGFloat = selected ? 17 : 13
+        let line: CGFloat = selected ? 3 : 1.5
+        // Six dashes, whatever the size: at smaller ones the ring read as nearly solid.
+        let dash = 2 * .pi * (size - line) / 2 / 12
         return Circle()
             .fill(key.enabled ? Self.color(look) : .clear)
-            .overlay(Circle().strokeBorder(selected ? Color.accentColor : Color.white,
-                                           style: StrokeStyle(lineWidth: selected ? 2.5 : 1.5, dash: key.enabled ? [] : [2, 2])))
-            .frame(width: selected ? 15 : 13, height: selected ? 15 : 13)
+            .overlay(Circle().strokeBorder(.white, style: StrokeStyle(lineWidth: line, dash: key.enabled ? [] : [dash, dash])))
+            // White and a dark edge, because bands run from pale to nearly black and the
+            // accent colour disappeared against the dark ones.
+            .background(Circle().stroke(.black.opacity(selected ? 0.6 : 0), lineWidth: 1))
+            .frame(width: size, height: size)
             .contentShape(Circle().inset(by: -4))
             .position(x: width * Layout.position(at), y: (Layout.bandHeight + 8) / 2)
             .gesture(
