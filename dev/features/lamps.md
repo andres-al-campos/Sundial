@@ -106,6 +106,9 @@ blend looks in the room.
   the space below them isn't the problem *Empty space is spread out* is about: that was the
   writing on the card.
 
+- 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
+  schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
+
 - 2026-11-04 14:17, 1.1.0. **No Disable.** It only existed to hold a colour for a while, and two on/off controls side by side were
   the cost: a new person can't tell them apart. Holding does that job, so a keyframe is either in the day or
   deleted. Keyframes saved as disabled count again.
