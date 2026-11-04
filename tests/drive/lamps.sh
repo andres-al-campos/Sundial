@@ -120,6 +120,21 @@ for spots in [[300.0, 310, 320], [320, 300, 310], [0, 5, 10], [590, 595, 600], [
 let crossed = LightDay.spread([320, 300], widths: [90, 90], gap: 8, across: 600)
 check("labels pushed apart keep their order", crossed[1] < crossed[0], crossed)
 
+// A disabled keyframe is as if it weren't there, unlike an off one.
+let plain = [key(8 * 60, 80), key(20 * 60, 10)]
+var extra = key(14 * 60, 100); extra.enabled = false
+let mNone = LightDay.Marks(sunrise: 420, sunset: 1020, darkest: 1440)
+let sameDay = (0..<LightDay.day).allSatisfy { LightDay.state(plain + [extra], at: Double($0), marks: mNone) == LightDay.state(plain, at: Double($0), marks: mNone) }
+check("a disabled keyframe leaves the day as if it weren't there", sameDay, "disabled")
+var dark = extra; dark.enabled = true; dark.on = false
+check("an off keyframe is still there: the bulb fades to dark at it", LightDay.state(plain + [dark], at: 14 * 60, marks: mNone)?.on == false, "off")
+check("a bulb with only disabled keyframes is left alone", LightDay.state([extra], at: 0, marks: mNone) == nil, "alone")
+let oldKey = try! JSONDecoder().decode(LightDay.Key.self, from: Data(#"{"minute":60,"brightness":50,"x":0.4,"y":0.4}"#.utf8))
+check("a keyframe saved before disabling existed is enabled", oldKey.enabled, oldKey)
+var kept = extra; kept.enabled = false
+let roundTrip = try! JSONDecoder().decode(LightDay.Key.self, from: JSONEncoder().encode(kept))
+check("disabled survives saving", roundTrip.enabled == false, roundTrip)
+
 // A time picker reads the clock, on the 25-hour and 23-hour days too.
 var chicago = Calendar(identifier: .gregorian)
 chicago.timeZone = TimeZone(identifier: "America/Chicago")!

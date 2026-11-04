@@ -114,6 +114,7 @@ struct LightsView: View {
                                             history.commit(undo, "Change Keyframe")
                                             endPreviewNow()
                                         },
+                                        toggleEnabled: { toggleEnabled(key.id, bulb: bulb.id) },
                                         delete: { deleteSelected() },
                                         close: { closeDrawer() }
                                     )
@@ -354,8 +355,9 @@ struct LightsView: View {
         let look = dragging == key.id ? (dragLook ?? Self.state(key)) : Self.state(key)
         let selected = selection?.key == key.id
         return Circle()
-            .fill(Self.color(look))
-            .overlay(Circle().strokeBorder(selected ? Color.accentColor : Color.white, lineWidth: selected ? 2.5 : 1.5))
+            .fill(key.enabled ? Self.color(look) : .clear)
+            .overlay(Circle().strokeBorder(selected ? Color.accentColor : Color.white,
+                                           style: StrokeStyle(lineWidth: selected ? 2.5 : 1.5, dash: key.enabled ? [] : [2, 2])))
             .frame(width: selected ? 15 : 13, height: selected ? 15 : 13)
             .contentShape(Circle().inset(by: -4))
             .position(x: width * Layout.position(at), y: (Layout.bandHeight + 8) / 2)
@@ -377,6 +379,7 @@ struct LightsView: View {
         Button("Paste Color and Brightness") { pasteLook(onto: key.id, bulb: bulb) }
             .disabled(clip.key == nil)
         Divider()
+        Button(key.enabled ? "Disable Keyframe" : "Enable Keyframe") { toggleEnabled(key.id, bulb: bulb.id) }
         Button("Delete Keyframe") {
             selection = Selection(bulb: bulb.id, key: key.id)
             deleteSelected()
@@ -529,6 +532,20 @@ struct LightsView: View {
             }
         }
         history.commit(undo, "Paste Color and Brightness")
+    }
+
+    private func toggleEnabled(_ id: UUID, bulb: String) {
+        var title = "Disable Keyframe"
+        edit { index in
+            index.withKey(bulb, id) {
+                $0.enabled.toggle()
+                if $0.enabled { title = "Enable Keyframe" }
+            }
+        }
+        history.commit(undo, title)
+        // Through the preview's return, so the change shows on the bulb in 1.5 seconds
+        // rather than over the usual 30.
+        endPreviewNow()
     }
 
     private func deleteSelected() {
@@ -715,6 +732,7 @@ private struct KeyDrawer: View {
     let marks: LightDay.Marks
     let change: ((inout LightDay.Key) -> Void) -> Void
     let commit: () -> Void
+    let toggleEnabled: () -> Void
     let delete: () -> Void
     let close: () -> Void
 
@@ -778,6 +796,8 @@ private struct KeyDrawer: View {
                     .help(c.name)
                 }
                 Spacer()
+                Button(key.enabled ? "Disable" : "Enable", action: toggleEnabled)
+                    .controlSize(.small)
                 Button("Delete Keyframe", action: delete)
                     .controlSize(.small)
             }
