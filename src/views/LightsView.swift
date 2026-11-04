@@ -53,7 +53,8 @@ final class LightsHistory: ObservableObject {
 
 /// One row per bulb across the day, the band being what the bulb does: its colour,
 /// dimmed by its brightness. Click a band for a keyframe, drag one to move it,
-/// click one for its settings. Right-click for copy, paste and linking.
+/// click one for its settings in the panel below. Right-click for copy, paste and
+/// linking.
 struct LightsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.undoManager) private var undo
@@ -67,6 +68,7 @@ struct LightsView: View {
     @State private var playMinute: Double?
     @State private var playTask: Task<Void, Never>?
     @State private var previewing: Previewing?
+    @AppStorage("lightsPanelOpen") private var panelOpen = true
 
     struct Selection: Equatable { var bulb: String; var key: UUID }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
@@ -100,31 +102,25 @@ struct LightsView: View {
                 } else if bulbs.isEmpty {
                     ProgressView("Reading your bulbs…").frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 8) {
-                            marksHeader
-                            ForEach(bulbs) { bulb in
-                                row(bulb)
-                                if selection?.bulb == bulb.id, let key = selectedKey {
-                                    KeyDrawer(
-                                        key: key,
-                                        marks: marks,
-                                        change: { change(key.id, $0) },
-                                        commit: {
-                                            history.commit(undo, "Change Keyframe")
-                                            endPreviewNow()
-                                        },
-                                        toggleEnabled: { toggleEnabled(key.id, bulb: bulb.id) },
-                                        delete: { deleteSelected() },
-                                        close: { closeDrawer() }
-                                    )
-                                    .transition(.opacity)
-                                }
+                    GeometryReader { viewport in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 8) {
+                                marksHeader
+                                ForEach(bulbs) { row($0) }
+                                hoursAxis
                             }
-                            hoursAxis
+                            .padding(.horizontal, Layout.edge)
+                            .padding(.vertical, 16)
+                            // As tall as the view, so the space under the rows can be clicked.
+                            .frame(minHeight: viewport.size.height, alignment: .top)
+                            .contentShape(Rectangle())
+                            .onTapGesture { deselect() }
                         }
-                        .padding(.horizontal, Layout.edge)
-                        .padding(.vertical, 16)
+                    }
+                    if panelOpen {
+                        Divider()
+                        panel
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
             }
@@ -140,6 +136,44 @@ struct LightsView: View {
         .onDisappear {
             playTask?.cancel()
             endPreviewNow()
+        }
+    }
+
+    // MARK: - Panel
+
+    @ViewBuilder
+    private var panel: some View {
+        Group {
+            if let selection, let key = selectedKey {
+                KeyPanel(
+                    bulb: bulbs.first { $0.id == selection.bulb }?.name ?? "Bulb",
+                    key: key,
+                    marks: marks,
+                    change: { change(key.id, $0) },
+                    commit: {
+                        history.commit(undo, "Change Keyframe")
+                        endPreviewNow()
+                    },
+                    toggleEnabled: { toggleEnabled(key.id, bulb: selection.bulb) },
+                    delete: { deleteSelected() }
+                )
+            } else {
+                Text("Select a keyframe to change it.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .padding(.horizontal, Layout.edge)
+        .padding(.vertical, Layout.panelPadding)
+        .frame(height: Layout.panelHeight)
+        // Over the panel rather than in what it shows, so it doesn't move between them.
+        .overlay(alignment: .topTrailing) {
+            Button(action: closePanel) { Image(systemName: "xmark") }
+                .buttonStyle(.borderless)
+                .help("Hide this panel. Selecting a keyframe brings it back.")
+                .padding(.trailing, Layout.edge)
+                .padding(.top, Layout.panelPadding)
         }
     }
 
@@ -300,10 +334,24 @@ struct LightsView: View {
                         .onContinuousHover { phase in
                             if case .active(let p) = phase { hoverX = p.x }
                         }
-                    Rectangle()
-                        .fill(.primary.opacity(0.85))
-                        .frame(width: 1.5, height: Layout.bandHeight + 8)
-                        .offset(x: geo.size.width * Layout.position(lineMinute))
+                    // A piece in each row rather than one line over them all, so it stays
+                    // under the keyframes. Tall enough to meet the next row's piece, and an
+                    // overlay so that doesn't change the row's height.
+                    Color.clear
+                        .overlay(alignment: .leading) {
+                            Rectangle()
+                                .fill(.primary.opacity(0.85))
+                                .frame(width: 1.5, height: Layout.bandHeight + 16)
+                                .offset(x: geo.size.width * Layout.position(lineMinute) - 0.75)
+                        }
+                        .overlay(alignment: .leading) {
+                            if bulb.id == bulbs.last?.id {
+                                Circle()
+                                    .fill(.primary)
+                                    .frame(width: 9, height: 9)
+                                    .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (Layout.bandHeight + 16) / 2)
+                            }
+                        }
                         .allowsHitTesting(false)
                     if !linked {
                         ForEach(keys) { key in
@@ -448,16 +496,28 @@ struct LightsView: View {
     }
 
     private func toggle(_ s: Selection) {
-        if selection == s { closeDrawer() } else {
+        if selection == s { deselect() } else {
             history.commit(undo, "Change Keyframe")
             selection = s
+            showPanel()
         }
     }
 
-    private func closeDrawer() {
+    private func deselect() {
+        guard selection != nil else { return }
         history.commit(undo, "Change Keyframe")
-        withAnimation(.easeOut(duration: 0.15)) { selection = nil }
+        selection = nil
         endPreviewNow()
+    }
+
+    private func closePanel() {
+        deselect()
+        withAnimation(.easeOut(duration: 0.2)) { panelOpen = false }
+    }
+
+    private func showPanel() {
+        guard !panelOpen else { return }
+        withAnimation(.easeOut(duration: 0.2)) { panelOpen = true }
     }
 
     private func change(_ id: UUID, _ apply: (inout LightDay.Key) -> Void) {
@@ -490,7 +550,8 @@ struct LightsView: View {
                                brightness: look?.brightness ?? 50, x: look?.xy.x ?? warm.x, y: look?.xy.y ?? warm.y)
         edit { $0[bulb.id]?.keys.append(key) }
         history.commit(undo, "Add Keyframe")
-        withAnimation(.easeOut(duration: 0.15)) { selection = Selection(bulb: bulb.id, key: key.id) }
+        selection = Selection(bulb: bulb.id, key: key.id)
+        showPanel()
     }
 
     /// While dragged a keyframe shows what's under it, and on drop it takes that.
@@ -549,8 +610,8 @@ struct LightsView: View {
             }
         }
         history.commit(undo, title)
-        // Through the preview's return, so the change shows on the bulb in 1.5 seconds
-        // rather than over the usual 30.
+        // Through the preview's return, so the change shows on the bulb right away
+        // rather than over the usual 30 seconds.
         endPreviewNow()
     }
 
@@ -656,6 +717,9 @@ enum Layout {
     static let gap: CGFloat = 12
     static let bandHeight: CGFloat = 22
     static let linkedHeight: CGFloat = 10
+    /// The same whatever it shows, so the rows above it never move.
+    static let panelHeight: CGFloat = 144
+    static let panelPadding: CGFloat = 14
     /// The axis starts at 5 AM, so the day reads left to right and the night
     /// isn't split in two at midnight.
     static let start = 5 * 60
@@ -731,86 +795,64 @@ private struct Band: View {
 
 // MARK: - The drawer
 
-/// A keyframe's settings, opening under its row. The header is also the time
-/// setting and the on/off, so they take no rows of their own.
-private struct KeyDrawer: View {
+/// A keyframe's settings, in the panel under the rows.
+private struct KeyPanel: View {
+    let bulb: String
     let key: LightDay.Key
     let marks: LightDay.Marks
     let change: ((inout LightDay.Key) -> Void) -> Void
     let commit: () -> Void
     let toggleEnabled: () -> Void
     let delete: () -> Void
-    let close: () -> Void
 
     private static let labelWidth: CGFloat = 84
 
-    private static let colors: [(name: String, x: Double, y: Double)] = [
-        ("Amber", 0.5469, 0.4106), ("Coral", 0.62, 0.36), ("Red", 0.675, 0.322), ("Pink", 0.42, 0.22),
-        ("Violet", 0.25, 0.10), ("Blue", 0.16, 0.06), ("Teal", 0.17, 0.35), ("Green", 0.21, 0.65),
-    ]
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                    .controlSize(.small)
-                Toggle("On", isOn: Binding(get: { key.on }, set: { on in
-                    change { $0.on = on }
-                    commit()
-                }))
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                if let text = LightsView.anchorText(key.anchor) {
-                    Text(text)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button(action: close) { Image(systemName: "xmark") }
-                    .buttonStyle(.borderless)
-                    .help("Close")
-            }
-            field("Brightness", value: "\(Int(key.brightness.rounded()))%") {
-                Slider(value: Binding(get: { key.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
-            }
-            field("Temperature", value: "\(LightDay.kelvin(key.xy)) K") {
-                // Rounded here rather than with the slider's step, which draws a tick at
-                // every step and made it look unlike Brightness.
-                Slider(value: Binding(get: { Double(LightDay.kelvin(key.xy)) }, set: { k in
-                    change { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
-                }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
-            }
-            HStack(spacing: 8) {
-                Text("Color")
-                    .frame(width: Self.labelWidth, alignment: .leading)
-                ForEach(Self.colors, id: \.name) { c in
-                    Button {
-                        change {
-                            $0.x = c.x
-                            $0.y = c.y
-                        }
+        HStack(spacing: 20) {
+            ColorWheel(xy: key.xy, change: { xy in change { $0.xy = xy } }, commit: commit)
+                .frame(width: Layout.panelHeight - 2 * Layout.panelPadding, height: Layout.panelHeight - 2 * Layout.panelPadding)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Text("\(bulb), keyframe at")
+                        .font(.headline)
+                        .lineLimit(1)
+                    DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .controlSize(.small)
+                    Toggle("On", isOn: Binding(get: { key.on }, set: { on in
+                        change { $0.on = on }
                         commit()
-                    } label: {
-                        let rgb = LightDay.rgb(.init(x: c.x, y: c.y))
-                        Circle()
-                            .fill(Color(red: rgb.r, green: rgb.g, blue: rgb.b))
-                            .frame(width: 20, height: 20)
-                    }
-                    .buttonStyle(.plain)
-                    .help(c.name)
+                    }))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    Spacer(minLength: 0)
                 }
-                Spacer()
-                Button(key.enabled ? "Disable" : "Enable", action: toggleEnabled)
-                    .controlSize(.small)
-                Button("Delete Keyframe", action: delete)
-                    .controlSize(.small)
+                field("Brightness", value: "\(Int(key.brightness.rounded()))%") {
+                    Slider(value: Binding(get: { key.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
+                }
+                field("Temperature", value: "\(LightDay.kelvin(key.xy)) K") {
+                    // Rounded here rather than with the slider's step, which draws a tick at
+                    // every step and made it look unlike Brightness.
+                    Slider(value: Binding(get: { Double(LightDay.kelvin(key.xy)) }, set: { k in
+                        change { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
+                    }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
+                }
+                HStack(spacing: 8) {
+                    if let text = LightsView.anchorText(key.anchor) {
+                        Text(text)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Button(key.enabled ? "Disable" : "Enable", action: toggleEnabled)
+                        .controlSize(.small)
+                    Button("Delete", action: delete)
+                        .controlSize(.small)
+                }
             }
         }
         .font(.subheadline)
-        .padding(12)
-        .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
     }
 
     private func field<C: View>(_ label: String, value: String, @ViewBuilder control: () -> C) -> some View {
@@ -863,5 +905,42 @@ private struct RenameField: View {
             .onSubmit { done(name) }
             .onExitCommand { done("") }
             .onChange(of: focused) { _, now in if !now { done(name) } }
+    }
+}
+
+/// Any colour a bulb can take: hue around the rim, white at the centre.
+private struct ColorWheel: View {
+    let xy: LampBlend.XY
+    let change: (LampBlend.XY) -> Void
+    let commit: () -> Void
+
+    private static let hues: [Color] = [.init(red: 1, green: 0, blue: 0), .init(red: 1, green: 1, blue: 0), .init(red: 0, green: 1, blue: 0),
+                                        .init(red: 0, green: 1, blue: 1), .init(red: 0, green: 0, blue: 1), .init(red: 1, green: 0, blue: 1),
+                                        .init(red: 1, green: 0, blue: 0)]
+
+    var body: some View {
+        GeometryReader { geo in
+            let radius = min(geo.size.width, geo.size.height) / 2
+            let spot = LightDay.wheel(xy)
+            let angle = spot.hue * 2 * .pi
+            ZStack {
+                Circle().fill(AngularGradient(colors: Self.hues, center: .center))
+                Circle().fill(RadialGradient(colors: [.white, .white.opacity(0)], center: .center, startRadius: 0, endRadius: radius))
+                Circle()
+                    .strokeBorder(.white, lineWidth: 2)
+                    .background(Circle().stroke(.black.opacity(0.6), lineWidth: 1))
+                    .frame(width: 12, height: 12)
+                    .position(x: radius + cos(angle) * spot.saturation * radius, y: radius + sin(angle) * spot.saturation * radius)
+            }
+            .contentShape(Circle())
+            .gesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                    .onChanged { drag in
+                        let x = drag.location.x - radius, y = drag.location.y - radius
+                        change(LightDay.xy(hue: atan2(y, x) / (2 * .pi), saturation: hypot(x, y) / radius))
+                    }
+                    .onEnded { _ in commit() }
+            )
+        }
     }
 }
