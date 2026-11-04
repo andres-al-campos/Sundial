@@ -19,6 +19,10 @@ final class LampController {
     private var busy = false
     private var readingKey = false
     private var returning = false
+    /// While paused a preview returns to what the lamps were, since the day isn't
+    /// theirs to follow: Pause is there so the Hue app can use them.
+    private var beforePreview: [String: LightDay.State]?
+    private var previewed: Set<String> = []
     /// Kept through `refresh`, unlike `sent`: it's how a lamp the day dimmed to off
     /// is told from one someone switched off.
     private var offByDay: Set<String> = []
@@ -134,8 +138,13 @@ final class LampController {
         returning = false
         guard previewTask == nil, let bridge, bridge.isPaired else { return }
         previewTask = Task {
+            if state?.lampsFollow == false, beforePreview == nil {
+                do { beforePreview = try await bridge.lampStates() }
+                catch { state?.lampStatus = error.localizedDescription }
+            }
             while !pendingPreview.isEmpty {
                 let batch = pendingPreview
+                previewed.formUnion(batch.keys)
                 pendingPreview = [:]
                 let started = Date()
                 do {
@@ -160,7 +169,27 @@ final class LampController {
         Task {
             await previewTask?.value
             while busy { try? await Task.sleep(for: .milliseconds(50)) }
-            await tick()
+            guard !previewing else { return }
+            if let before = beforePreview {
+                await restore(before)
+            } else {
+                await tick()
+            }
+        }
+    }
+
+    private func restore(_ before: [String: LightDay.State]) async {
+        beforePreview = nil
+        returning = false
+        guard let bridge else { return }
+        let ids = previewed
+        previewed = []
+        do {
+            for id in ids {
+                if let s = before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
+            }
+        } catch {
+            state?.lampStatus = error.localizedDescription
         }
     }
 
@@ -201,6 +230,7 @@ final class LampController {
                 return
             }
             guard !previewing else { return }
+            previewed = []
             let now = Date()
             let marks = LightDay.Marks(warm: SunClock.schedule(on: now, bedtime: state.bedtime), sun: SunClock.sun(on: now))
             let comps = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: now)

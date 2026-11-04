@@ -112,6 +112,19 @@ final class HueBridge: NSObject, URLSessionDelegate {
         return lit
     }
 
+    /// Each lamp as it is now, to put back after a preview while paused.
+    func lampStates() async throws -> [String: LightDay.State] {
+        var states: [String: LightDay.State] = [:]
+        for l in try await get("light") {
+            guard let id = l["id"] as? String, let on = (l["on"] as? [String: Any])?["on"] as? Bool,
+                  let brightness = (l["dimming"] as? [String: Any])?["brightness"] as? Double,
+                  let xy = ((l["color"] as? [String: Any])?["xy"]) as? [String: Any],
+                  let x = xy["x"] as? Double, let y = xy["y"] as? Double else { continue }
+            states[id] = LightDay.State(on: on, brightness: brightness, xy: .init(x: x, y: y))
+        }
+        return states
+    }
+
     /// Fade a lamp to `state` over `fade` seconds. Off sends only that: the bulb
     /// keeps its brightness and colour for when it's next on. Without `power` the
     /// lamp's on or off stays as it is, so a lamp switched off just after
