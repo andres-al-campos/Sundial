@@ -68,8 +68,15 @@ struct LightsView: View {
     @State private var playMinute: Double?
     @State private var playTask: Task<Void, Never>?
     @State private var previewing: Previewing?
-    /// What the card last showed, so it still has it while it slides away.
-    @State private var lastShown: Shown?
+    /// What the card last showed, so it still has it while it slides away. Something from
+    /// the start, because a card whose contents are new on its first open jumps open
+    /// instead of sliding.
+    @State private var lastShown = Shown(bulb: "", key: LightDay.Key(minute: 0, brightness: 0, x: 0.4, y: 0.4))
+
+    /// Follows the selection a step behind, so the card already shows the keyframe when it
+    /// starts to move. In one step the slide also caught its text and sliders, which
+    /// travelled from the last keyframe's places, overlapping on the way.
+    @State private var cardOpen = false
 
     struct Selection: Equatable { var bulb: String; var key: UUID }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
@@ -117,47 +124,44 @@ struct LightsView: View {
             if selection == nil, dragging == nil { history.seen(new) }
         }
         .onChange(of: shown) { _, new in if let new { lastShown = new } }
+        .onChange(of: selection != nil) { _, selected in cardOpen = selected }
         .onDisappear {
             playTask?.cancel()
             endPreviewNow()
         }
     }
 
-    /// The rows share the height, so the space goes to the day and not to a gap under it,
-    /// and they give up the card's room while it's out. Whether they scroll is settled by
-    /// the room they'd have with the card out, so opening it never swaps them for a scroll
-    /// view halfway through its slide.
     private var lightsAndCard: some View {
         GeometryReader { geo in
-            let open = selection != nil
-            let room = geo.size.height - (open ? Layout.cardRoom : 0)
             VStack(spacing: 0) {
-                Group {
-                    if Layout.rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom) {
-                        rows(rowHeight: Layout.rowHeight(bulbs.count, in: room))
-                    } else {
-                        ScrollView { rows(rowHeight: Layout.smallestRow) }
-                    }
+                // Whether they scroll is settled by the room they'd have with the card out, and
+                // that's the scroll view's height either way. A scroll view resized by the
+                // slide shows a scroll bar from each frame's rounding. A ViewThatFits here
+                // settles it without that, but the card then jumps open instead of sliding.
+                if Layout.rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom) {
+                    rows
+                } else {
+                    ScrollView { rows }
+                        .frame(height: geo.size.height - Layout.cardRoom)
                 }
-                .frame(height: room)
-                // Over the card, which starts behind them and comes down from under their edge.
-                .background(Color(nsColor: .windowBackgroundColor))
-                .zIndex(1)
+                // Anchored at its bottom in a frame that grows, so it comes down from behind
+                // the rows and they never move.
                 card
-                    .frame(height: open ? Layout.cardRoom : 0, alignment: .bottom)
-                    .offset(y: open ? 0 : -Layout.cardTravel)
-                    .allowsHitTesting(open)
+                    .frame(height: cardOpen ? Layout.cardRoom : 0, alignment: .bottom)
+                    .clipped()
+                    .allowsHitTesting(cardOpen)
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { deselect() }
             }
-            .animation(.easeOut(duration: Layout.slide), value: open)
+            .animation(.easeOut(duration: Layout.slide), value: cardOpen)
         }
-        // The same ground under the card as under the rows, or their edge shows as a seam.
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private func rows(rowHeight: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: Layout.rowGap) {
+    private var rows: some View {
+        VStack(alignment: .leading, spacing: 8) {
             marksHeader
-            ForEach(bulbs) { row($0, height: rowHeight) }
+            ForEach(bulbs) { row($0) }
             hoursAxis
         }
         .padding(.horizontal, Layout.edge)
@@ -174,31 +178,26 @@ struct LightsView: View {
     }
 
     private var card: some View {
-        Group {
-            if let show = shown ?? lastShown {
-                KeyPanel(
-                    bulb: show.bulb,
-                    key: show.key,
-                    marks: marks,
-                    change: { change(show.key.id, $0) },
-                    commit: {
-                        history.commit(undo, "Change Keyframe")
-                        endPreviewNow()
-                    },
-                    toggleEnabled: { if let selection { toggleEnabled(show.key.id, bulb: selection.bulb) } },
-                    delete: { deleteSelected() }
-                )
-                // SwiftUI's default would fade it in over the slide.
-                .transition(.identity)
-            }
-        }
+        let show = shown ?? lastShown
+        return KeyPanel(
+            bulb: show.bulb,
+            key: show.key,
+            marks: marks,
+            change: { change(show.key.id, $0) },
+            commit: {
+                history.commit(undo, "Change Keyframe")
+                endPreviewNow()
+            },
+            toggleEnabled: { if let selection { toggleEnabled(show.key.id, bulb: selection.bulb) } },
+            delete: { deleteSelected() }
+        )
         .padding(Layout.cardPadding)
         .frame(height: Layout.cardHeight)
         .frame(maxWidth: .infinity)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: Layout.cardCorner))
+        .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: Layout.cardCorner))
         .overlay {
             RoundedRectangle(cornerRadius: Layout.cardCorner)
-                .strokeBorder(.primary.opacity(0.1))
+                .strokeBorder(.primary.opacity(0.12))
         }
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) { Image(systemName: "xmark") }
@@ -347,18 +346,18 @@ struct LightsView: View {
 
     // MARK: - A row
 
-    private func row(_ bulb: LightDay.Bulb, height: CGFloat) -> some View {
+    private func row(_ bulb: LightDay.Bulb) -> some View {
         let keys = LightDay.keys(of: bulb, in: bulbs)
         let linked = bulb.parent != nil
         return HStack(spacing: Layout.gap) {
             name(bulb)
-                .frame(width: Layout.name, height: height, alignment: .leading)
+                .frame(width: Layout.name, height: Layout.bandHeight + 8, alignment: .leading)
                 .contentShape(Rectangle())
                 .contextMenu { rowMenu(bulb) }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Band(keys: keys, marks: marks, without: dragging)
-                        .frame(height: (height - Layout.bandInset) * (linked ? Layout.linkedShare : 1))
+                        .frame(height: linked ? Layout.linkedHeight : Layout.bandHeight)
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                         .frame(maxHeight: .infinity)
                         .contentShape(Rectangle())
@@ -374,7 +373,7 @@ struct LightsView: View {
                         .overlay(alignment: .leading) {
                             Rectangle()
                                 .fill(.primary.opacity(0.85))
-                                .frame(width: 1.5, height: height + Layout.rowGap)
+                                .frame(width: 1.5, height: Layout.bandHeight + 16)
                                 .offset(x: geo.size.width * Layout.position(lineMinute) - 0.75)
                         }
                         .overlay(alignment: .leading) {
@@ -382,18 +381,18 @@ struct LightsView: View {
                                 Circle()
                                     .fill(.primary)
                                     .frame(width: 9, height: 9)
-                                    .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (height + Layout.rowGap) / 2)
+                                    .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (Layout.bandHeight + 16) / 2)
                             }
                         }
                         .allowsHitTesting(false)
                     if !linked {
                         ForEach(keys) { key in
-                            dot(key, bulb: bulb, width: geo.size.width, rowHeight: height)
+                            dot(key, bulb: bulb, width: geo.size.width)
                         }
                     }
                 }
             }
-            .frame(height: height)
+            .frame(height: Layout.bandHeight + 8)
         }
     }
 
@@ -433,13 +432,13 @@ struct LightsView: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 8)
-            .frame(height: Layout.smallestRow)
+            .frame(maxHeight: .infinity)
             .background(selection?.bulb == bulb.id ? Color.primary.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 5))
             .onTapGesture { renaming = bulb.id }
         }
     }
 
-    private func dot(_ key: LightDay.Key, bulb: LightDay.Bulb, width: CGFloat, rowHeight: CGFloat) -> some View {
+    private func dot(_ key: LightDay.Key, bulb: LightDay.Bulb, width: CGFloat) -> some View {
         let at = LightDay.minute(of: key, marks: marks)
         let look = dragging == key.id ? (dragLook ?? Self.state(key)) : Self.state(key)
         let selected = selection?.key == key.id
@@ -455,7 +454,7 @@ struct LightsView: View {
             .background(Circle().stroke(.black.opacity(selected ? 0.6 : 0), lineWidth: 1))
             .frame(width: size, height: size)
             .contentShape(Circle().inset(by: -4))
-            .position(x: width * Layout.position(at), y: rowHeight / 2)
+            .position(x: width * Layout.position(at), y: (Layout.bandHeight + 8) / 2)
             .gesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .local)
                     .onChanged { moveKey(key.id, bulb: bulb, to: $0.location.x, width: width) }
@@ -746,35 +745,23 @@ enum Layout {
     static let edge: CGFloat = 28
     static let name: CGFloat = 130
     static let gap: CGFloat = 12
-    static let smallestRow: CGFloat = 30
-    /// A row's band is this much shorter than the row.
-    static let bandInset: CGFloat = 8
-    /// A linked bulb's band is this much of a band, since its keyframes are another's.
-    static let linkedShare: CGFloat = 0.45
-    static let rowGap: CGFloat = 8
+    static let bandHeight: CGFloat = 22
+    static let linkedHeight: CGFloat = 10
     static let rowsPadding: CGFloat = 16
-    /// The hours and the marks' labels.
-    static let rowsLabels: CGFloat = 22 + 14
 
     static let cardCorner: CGFloat = 12
     static let cardPadding: CGFloat = 14
     /// The colour wheel's height plus its padding.
     static let cardHeight: CGFloat = 144
     static let cardRoom: CGFloat = cardHeight + rowsPadding
-    /// How far the card comes down as the rows lift off it.
-    static let cardTravel: CGFloat = cardRoom * 0.6
     static let slide = 0.28
 
-    private static func notBands(_ rows: Int) -> CGFloat {
-        rowsPadding * 2 + rowsLabels + rowGap * CGFloat(rows + 1)
-    }
+    /// Whether the rows fit in `height`: the marks and hours, the padding, and a row and
+    /// a gap per bulb.
     static func rowsFit(_ rows: Int, in height: CGFloat) -> Bool {
-        notBands(rows) + smallestRow * CGFloat(rows) <= height
+        rowsPadding * 2 + 22 + 14 + 8 * CGFloat(rows + 1) + (bandHeight + 8) * CGFloat(rows) <= height
     }
-    /// What each row gets when they share `height`.
-    static func rowHeight(_ rows: Int, in height: CGFloat) -> CGFloat {
-        max(smallestRow, (height - notBands(rows)) / CGFloat(max(rows, 1)))
-    }
+
     /// The axis starts at 5 AM, so the day reads left to right and the night
     /// isn't split in two at midnight.
     static let start = 5 * 60

@@ -212,12 +212,12 @@ if ! "$work/lamps" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-if ! grep -q 'rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom)' src/views/LightsView.swift; then
-    echo "✗ lamps: LightsView no longer decides whether the rows scroll from the room they'd have with the card out. Decided from the room at that moment, they turn into a scroll view partway through the card's slide, and a scroll view resized every frame shows a scroll bar from rounding. Pass Layout.rowsFit the height minus Layout.cardRoom, in lightsAndCard."
+if grep -q 'ViewThatFits(' src/views/LightsView.swift || ! grep -q 'rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom)' src/views/LightsView.swift; then
+    echo "✗ lamps: LightsView has to settle whether the rows scroll from the room they'd have with the card out, with no ViewThatFits. A ViewThatFits made the card jump open instead of sliding, and a scroll view resized by the slide shows a scroll bar from each frame's rounding. Pass Layout.rowsFit the height minus Layout.cardRoom, in lightsAndCard."
     exit 1
 fi
-if ! grep -q '\.transition(\.identity)' src/views/LightsView.swift; then
-    echo "✗ lamps: the card's contents lost .transition(.identity). Without it SwiftUI fades them in on top of the slide, so the card reads as fading in. Put it back on KeyPanel in LightsView's card."
+if ! grep -q 'let show = shown ?? lastShown' src/views/LightsView.swift || ! grep -q 'value: cardOpen' src/views/LightsView.swift; then
+    echo "✗ lamps: the card has to show its keyframe before it moves, and have contents before its first open. Created on that open they jump open or fade in, and changed in the same step as the slide its text and sliders travel across each other. Keep KeyPanel in the card from the start showing shown ?? lastShown, and animate on cardOpen, which follows the selection a step behind, in LightsView."
     exit 1
 fi
 if ! grep -q 'days\[l.id\] ?? LightDay.defaultKeys' src/control/LampController.swift; then

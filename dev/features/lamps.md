@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 11:57, at 1.1.0.
+Updated 2026-11-04 12:11, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -27,10 +27,10 @@ artificial light follows the natural light along with the screen.
   the day has it, over 1 second.
 - **Disabling.** A disabled keyframe draws as a ring of six dashes and the day runs as if it
   weren't there, keeping its settings. Right-click it, or use Disable in its settings.
-- **Card.** Click a keyframe and its settings come down on a card from under the
-  timeline: a colour wheel, then long Brightness and Temperature sliders. The rows share
-  the window's height and give the card its room while it's out, and they scroll only if
-  the window can't fit them with it. Its close button or clicking the dot again puts it
+- **Card.** Click a keyframe and its settings come down on a card from behind the
+  rows, which stay put: a colour wheel, then the settings reading left to right and top
+  to bottom, with long Brightness and Temperature sliders. The rows scroll only if the
+  window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
   temperature has its own spot. Screens run out of red around 900 K, so below that the
@@ -94,10 +94,9 @@ blend looks in the room.
   one": the dots are "the most obvious thing to explore". It comes down from under the timeline
   and never covers it, "always below the timeline".
 
-- 2026-11-04 11:57, 1.1.0. **The rows take the height, and make way for the card.** Applies *Empty space is spread out*. The
-  cost is that the row under the pointer moves when the card opens, against *Never a fight with
-  the controls*: rows that stayed still would leave the card's room empty whenever nothing's
-  selected, which is what this was changing.
+- 2026-11-04 12:11, 1.1.0. **Rows keep their height.** Rows stretched to fill the window looked "horrendous", and
+  the space below them isn't the problem *Empty space is spread out* is about: that was the
+  writing on the card.
 
 - 2026-11-03 23:34, 1.1.0. Off and disabled are two settings: off is a dark moment the bulb fades through, disabled
   is as if the keyframe weren't there.
