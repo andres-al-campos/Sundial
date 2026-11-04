@@ -70,7 +70,7 @@ struct LightsView: View {
 
     struct Selection: Equatable { var bulb: String; var key: UUID }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
-    struct Previewing { var bulb: String; var look: LightDay.State }
+    struct Previewing { var look: LightDay.State; var minute: Int }
 
     private var bulbs: [LightDay.Bulb] { appState.lights ?? [] }
 
@@ -159,7 +159,7 @@ struct LightsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(height: 22)
+            .frame(height: 28)
             .transition(.opacity)
             Spacer()
             Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
@@ -177,16 +177,15 @@ struct LightsView: View {
     }
 
     private func previewBadge(_ p: Previewing) -> some View {
-        let white = p.look.on ? LightDay.kelvin(p.look.xy).map { ", \($0) K" } ?? "" : ""
-        return HStack(spacing: 6) {
+        HStack(spacing: 6) {
             Circle()
                 .fill(Self.color(p.look))
-                .frame(width: 10, height: 10)
-            Text(p.look.on ? "Preview on \(p.bulb): \(Int(p.look.brightness.rounded()))%\(white)" : "Preview on \(p.bulb): off")
+                .frame(width: 12, height: 12)
+            Text("\(p.look.on ? "\(Int(p.look.brightness.rounded()))%" : "Off") at \(Self.time(p.minute))")
                 .monospacedDigit()
         }
-        .font(.subheadline)
-        .padding(.horizontal, 8)
+        .font(.title3)
+        .padding(.horizontal, 10)
         .padding(.vertical, 3)
         .background(Color.primary.opacity(0.08), in: Capsule())
     }
@@ -246,7 +245,7 @@ struct LightsView: View {
             Color.clear.frame(width: Layout.name, height: 14)
             GeometryReader { geo in
                 ForEach([6, 9, 12, 15, 18, 21, 0, 3], id: \.self) { hour in
-                    Text(Self.time(hour * 60))
+                    Text(Self.hour(hour))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .fixedSize()
@@ -436,14 +435,14 @@ struct LightsView: View {
         edit { index in
             index.withKey(selection.bulb, id, apply)
         }
-        if let key = selectedKey { previewOn(selection.bulb, Self.state(key)) }
+        if let key = selectedKey { previewOn(selection.bulb, Self.state(key), at: LightDay.minute(of: key, marks: marks)) }
     }
 
     /// The bulb, and whichever follow it, show this now.
-    private func previewOn(_ bulb: String, _ look: LightDay.State) {
+    private func previewOn(_ bulb: String, _ look: LightDay.State, at minute: Int) {
         var states = [bulb: look]
         for follower in bulbs where follower.parent == bulb { states[follower.id] = look }
-        previewing = Previewing(bulb: bulbs.first { $0.id == bulb }?.name ?? "Bulb", look: look)
+        previewing = Previewing(look: look, minute: minute)
         appState.onPreviewLamps?(states)
     }
 
@@ -478,7 +477,7 @@ struct LightsView: View {
         }
         if let look = LightDay.state(bulb.keys, at: Double(minute), marks: marks, without: id) {
             dragLook = look
-            previewOn(bulb.id, look)
+            previewOn(bulb.id, look, at: minute)
         }
     }
 
@@ -567,6 +566,10 @@ struct LightsView: View {
     static func time(_ minute: Int) -> String {
         let m = LightDay.wrap(minute), h = m / 60
         return String(format: "%d:%02d %@", h % 12 == 0 ? 12 : h % 12, m % 60, h < 12 ? "AM" : "PM")
+    }
+
+    static func hour(_ hour: Int) -> String {
+        "\(hour % 12 == 0 ? 12 : hour % 12) \(hour < 12 ? "AM" : "PM")"
     }
 
     static func markName(_ mark: LightDay.Mark) -> String {

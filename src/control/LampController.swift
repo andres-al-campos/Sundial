@@ -30,7 +30,7 @@ final class LampController {
     /// A bulb added or renamed in the Hue app is seen within this long.
     static let rereadBulbs: TimeInterval = 600
     static let previewPace: TimeInterval = 0.5
-    static let returnFade: TimeInterval = 2
+    static let returnFade: TimeInterval = 1.5
     static let previewBulbsPerPace = 2.0
 
     func start(state: AppState) {
