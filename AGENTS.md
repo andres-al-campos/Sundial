@@ -23,6 +23,7 @@ file refines one or names an exception.
   as you drag, and editing a preset previews it on the monitor. A control that
   can't move the monitor isn't offered as if it could: its reason takes its
   place. (From the contrast lock.)
-- 2026-11-04 11:57, 1.1.0. **Empty space is spread out.** What's on a screen shares the room it has, so empty space
-  reads as chosen rather than left over: "the empty space should feel intentional. spread
-  out", not "all crammed in at the top" with the rest empty below. (From the Lights window.)
+- 2026-11-04 12:11, 1.1.0. **Empty space is spread out.** What's inside a card reads like writing, left to right
+  and top to bottom, so empty space looks chosen rather than left over: "the empty space
+  should feel intentional. spread out", not "all crammed in at the top" with an empty row
+  below. Things keep their own size to do it. (From the keyframe card.)
