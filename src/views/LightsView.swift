@@ -907,29 +907,31 @@ private struct LookPanel<Identity: View>: View {
     @State private var kept: [String: Int] = [:]
 
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 14) {
             ColorWheel(xy: look.xy, change: { xy in
                 kept[keptFor] = LightDay.keptKelvin(leaving: look.xy, kept: kept[keptFor])
                 change { $0.xy = xy }
             }, commit: commit)
                 .frame(width: wheel, height: wheel)
                 .disabled(!look.on)
-                .opacity(look.on ? 1 : 0.5)
+                .dimmed(look.on)
+            // Beside the wheel's curve the switch has no edge to sit against, so this is it.
+            Divider()
             // Evenly down the wheel's height, so nothing piles up at the top of the card.
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
                     // The switch is always the bulb: on or off at this keyframe, or now.
-                    Toggle(isOn: Binding(get: { look.on }, set: { on in
+                    Toggle(bulb, isOn: Binding(get: { look.on }, set: { on in
                         change { $0.on = on }
                         commit()
-                    })) {
-                        Text(bulb)
-                            .font(.headline)
-                            .lineLimit(1)
-                    }
+                    }))
+                    .labelsHidden()
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .fixedSize()
+                    Text(bulb)
+                        .font(.headline)
+                        .lineLimit(1)
                     Spacer(minLength: 0)
                 }
                 .padding(.trailing, Layout.cardCloseRoom)
@@ -937,12 +939,14 @@ private struct LookPanel<Identity: View>: View {
                 identity()
                 Spacer(minLength: 0)
                 field("Brightness", value: look.on ? "\(Int(look.brightness.rounded()))%" : "Off") {
-                    Slider(value: Binding(get: { look.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
+                    Slider(value: Binding(get: { look.brightness }, set: { b in adjust { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
+                        .dimmed(look.on)
+                        .allowsHitTesting(look.on)
                 }
-                .disabled(!look.on)
+                .foregroundStyle(look.on ? .primary : .secondary)
                 Spacer(minLength: 0)
                 temperature
-                    .disabled(!look.on)
+                    .allowsHitTesting(look.on)
             }
             .frame(height: wheel)
         }
@@ -950,6 +954,12 @@ private struct LookPanel<Identity: View>: View {
     }
 
     private var wheel: CGFloat { Layout.cardHeight - 2 * Layout.cardPadding }
+
+    /// The sliders stay enabled while off, because `.disabled` draws them with no fill: "removing
+    /// the filled bar looks kind of weird". So being off stops them here and with hit testing.
+    private func adjust(_ apply: (inout LightDay.State) -> Void) {
+        if look.on { change(apply) }
+    }
 
     /// Dimmed for a colour that isn't a white, which has no temperature, with the slider
     /// staying where it was and the reason in place of a number. It can still be dragged,
@@ -960,13 +970,12 @@ private struct LookPanel<Identity: View>: View {
             // Rounded here rather than with the slider's step, which draws a tick at
             // every step and made it look unlike Brightness.
             Slider(value: Binding(get: { Double(LightDay.sliderKelvin(look.xy, kept: kept[keptFor])) }, set: { k in
-                change { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
+                adjust { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
             }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
-            .tint(white ? nil : .gray)
-            .opacity(white ? 1 : 0.5)
+            .dimmed(white && look.on)
         }
         .foregroundStyle(white && look.on ? .primary : .secondary)
-        .help(white ? "" : "Only whites have a temperature, and this color isn't one. Drag to go back to a white.")
+        .help(white || !look.on ? "" : "Only whites have a temperature, and this color isn't one. Drag to go back to a white.")
     }
 
     private func field<C: View>(_ label: String, value: String, @ViewBuilder control: () -> C) -> some View {
@@ -984,9 +993,8 @@ private struct LookPanel<Identity: View>: View {
 }
 
 /// A keyframe's time, which is what tells it from the bulb's others, so it sits right under
-/// the name. Delete stays beside it and well away from the card's close button, since the
-/// two are easy to mix up side by side, and before the caption so it holds still from one
-/// keyframe to the next.
+/// the name. Delete is spelled out at the end of the row, where a held bulb has Back to
+/// schedule, since a trash icon and the card's X are easy to mix up.
 private struct KeyTimeRow: View {
     let key: LightDay.Key
     let marks: LightDay.Marks
@@ -1000,22 +1008,20 @@ private struct KeyTimeRow: View {
             DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .controlSize(.small)
-            Button(action: delete) {
-                Image(systemName: "trash")
-                    .frame(width: Layout.iconButton, height: Layout.iconButton)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.borderless)
-            .hoverShade()
-            .help("Delete this keyframe")
+                .fixedSize()
             if let text = LightsView.anchorText(key.anchor) {
+                // Gives way first when the window is small, with the whole of it on hover.
                 Text(text)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .fixedSize()
+                    .help(text)
             }
-            Spacer(minLength: 0)
+            Spacer(minLength: 8)
+            Button("Delete keyframe", action: delete)
+                .controlSize(.small)
+                .hoverShade()
+                .fixedSize()
         }
     }
 
@@ -1033,6 +1039,15 @@ private struct KeyTimeRow: View {
                 commit()
             }
         )
+    }
+}
+
+private extension View {
+    /// How a card's control looks when it isn't in use, the same whatever the reason.
+    func dimmed(_ active: Bool) -> some View {
+        tint(active ? nil : .gray)
+            .opacity(active ? 1 : 0.5)
+            .animation(.easeOut(duration: 0.15), value: active)
     }
 }
 
