@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 02:17, at 1.1.0.
+Updated 2026-11-04 11:57, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -9,12 +9,15 @@ artificial light follows the natural light along with the screen.
 
 - **Lights window.** One row per bulb across the day, read from the bridge, the
   band showing the bulb's colour dimmed by its brightness. Above the bands are
-  today's Sunrise, Sunset and Darkest times, worked out each day; a label too close
+  today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change). Click a dot for its time, on/off, brightness, temperature
-  (700 to 6500 K, and the nearest one for a colour) and colour, or to delete it.
+  (700 to 6500 K) and colour, or to delete it. A bulb the bridge has no scene for starts
+  on three: sunrise, sunset and bedtime. Until they're changed its name says to click a dot.
+- **Temperature** only means something for the glowing-metal whites. For any other colour
+  the slider dims and says "A colour", and dragging it goes back to a white.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
   drop. A typed time keeps its look. Within 10 minutes of a mark it snaps and
   follows that mark. Imported keyframes can follow one at an offset, such as 40
@@ -24,11 +27,11 @@ artificial light follows the natural light along with the screen.
   the day has it, over 1 second.
 - **Disabling.** A disabled keyframe draws as a ring of six dashes and the day runs as if it
   weren't there, keeping its settings. Right-click it, or use Disable in its settings.
-- **Panel.** Click a keyframe and its settings show in the panel right under the
-  timeline: a colour wheel, then long Brightness and Temperature sliders. The panel
-  stays one height and slides down from behind the rows, which stay put, and they
-  scroll only if the window can't fit both. Its close button hides it, and selecting a
-  keyframe brings it back. Clicking the empty space around the rows deselects.
+- **Card.** Click a keyframe and its settings come down on a card from under the
+  timeline: a colour wheel, then long Brightness and Temperature sliders. The rows share
+  the window's height and give the card its room while it's out, and they scroll only if
+  the window can't fit them with it. Its close button or clicking the dot again puts it
+  away, as does clicking around the rows.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
   temperature has its own spot. Screens run out of red around 900 K, so below that the
   thumb moves and the bulb changes while the colours on screen stay the same red.
@@ -77,17 +80,24 @@ the keyframe rules: straight lines, fading to off, leaving out a dragged
 keyframe, snapping, anchors, and reading whites back as a temperature, and that a
 lamp someone switched off is left alone.
 
-By hand only: the window, pairing, that the bridge takes the fades, how the
+It also checks a new bulb's three keyframes, what counts as new, and that whites have a
+temperature and colours don't.
+
+By hand only: the window, how the card moves, pairing, that the bridge takes the fades, how the
 blend looks in the room.
 
 ## Calls
 
-- 2026-11-04 02:17, 1.1.0. **A keyframe's settings sit in a panel under the rows, not an inspector.** The day runs left to
+- 2026-11-04 11:57, 1.1.0. **A keyframe's settings sit on a card under the rows, not an inspector.** The day runs left to
   right and an inspector takes that width from it, and the sliders stay long: "i just like the
-  long sliders more". It sits right under the timeline and comes down from behind the rows, "always
-  below the timeline", and keeps one height whatever it shows, so nothing moves when you select,
-  which applies *Motion spends attention*. Hiding it is a choice
-  you make, with its close button, and selecting a keyframe brings it back.
+  long sliders more". It's there only while a keyframe is selected, so nothing has to say "select
+  one": the dots are "the most obvious thing to explore". It comes down from under the timeline
+  and never covers it, "always below the timeline".
+
+- 2026-11-04 11:57, 1.1.0. **The rows take the height, and make way for the card.** Applies *Empty space is spread out*. The
+  cost is that the row under the pointer moves when the card opens, against *Never a fight with
+  the controls*: rows that stayed still would leave the card's room empty whenever nothing's
+  selected, which is what this was changing.
 
 - 2026-11-03 23:34, 1.1.0. Off and disabled are two settings: off is a dark moment the bulb fades through, disabled
   is as if the keyframe weren't there.

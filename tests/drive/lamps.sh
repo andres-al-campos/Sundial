@@ -212,8 +212,12 @@ if ! "$work/lamps" > "$work/out"; then
     cat "$work/out"
     exit 1
 fi
-if ! grep -q 'ViewThatFits(in: .vertical)' src/views/LightsView.swift; then
-    echo "✗ lamps: LightsView's rows lost their ViewThatFits. A ScrollView that's always there shows a scroll bar when the panel slides, since each frame's rounding leaves its content a fraction taller. Put the rows back in a ViewThatFits, with the ScrollView as its second choice."
+if ! grep -q 'rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom)' src/views/LightsView.swift; then
+    echo "✗ lamps: LightsView no longer decides whether the rows scroll from the room they'd have with the card out. Decided from the room at that moment, they turn into a scroll view partway through the card's slide, and a scroll view resized every frame shows a scroll bar from rounding. Pass Layout.rowsFit the height minus Layout.cardRoom, in lightsAndCard."
+    exit 1
+fi
+if ! grep -q '\.transition(\.identity)' src/views/LightsView.swift; then
+    echo "✗ lamps: the card's contents lost .transition(.identity). Without it SwiftUI fades them in on top of the slide, so the card reads as fading in. Put it back on KeyPanel in LightsView's card."
     exit 1
 fi
 if ! grep -q 'days\[l.id\] ?? LightDay.defaultKeys' src/control/LampController.swift; then
