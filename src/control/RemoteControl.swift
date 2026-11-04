@@ -148,4 +148,22 @@ final class SundialAppDelegate: NSObject, NSApplicationDelegate {
             for url in urls { RemoteControl.handle(url, state: state) }
         }
     }
+
+    /// Someone started Sundial by hand, from the Dock or Finder, and wants to see it.
+    /// Login and `sundial://` launches stay quiet: a login shouldn't greet with a window.
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        let launch = NSAppleEventManager.shared().currentAppleEvent
+        guard launch?.eventID == kAEOpenApplication,
+              launch?.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue != keyAELaunchedAsLogInItem,
+              let state = Self.state else { return }
+        MainActor.assumeIsolated { MainWindow.show(state) }
+    }
+
+    /// A click on the Dock icon while Sundial runs, with its window shut or not.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if let state = Self.state {
+            MainActor.assumeIsolated { MainWindow.show(state) }
+        }
+        return false
+    }
 }

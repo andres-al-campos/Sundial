@@ -11,7 +11,7 @@ Sundial drives your monitor's **hardware** brightness and contrast over DDC (via
 - **Scheduling** — assign a preset to a time; Sundial applies it automatically and smoothly interpolates between presets so the change is gradual, not a jarring jump.
 - **Live control** — drag a slider in the menu bar to adjust the current display immediately.
 - **Wake handling** — re-applies the correct preset when your Mac wakes, so the screen is right the moment you return.
-- **Launch at login** — optional; lives quietly in the menu bar, with a Dock icon only while its window is open.
+- **Launch at login** — optional; lives quietly in the menu bar, with a Dock icon only while its window is open. Pinned to the Dock, a click opens the window.
 
 Presets and schedule live in `config.json` under `~/Library/Application Support/Sundial/`.
 
