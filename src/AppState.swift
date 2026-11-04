@@ -101,8 +101,10 @@ class AppState: ObservableObject {
     /// which preset should be active right now (e.g. after toggling Enabled).
     var onScheduleChanged: (() -> Void)?
 
-    /// The section the desktop window shows.
-    @Published var windowSection: WindowSection = .presets
+    /// The section the desktop window shows, and shows again next time it opens.
+    @Published var windowSection = UserDefaults.standard.string(forKey: "windowSection").flatMap(WindowSection.init) ?? .presets {
+        didSet { UserDefaults.standard.set(windowSection.rawValue, forKey: "windowSection") }
+    }
 
     nonisolated static let supportDirectory: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

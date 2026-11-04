@@ -74,4 +74,8 @@ if grep -q 'contentMinSize' src/views/MainWindow.swift || ! grep -q 'frame(minWi
     echo "✗ remote: MainWindow's minimum size has to be a frame on its root view. An NSHostingView replaces the window's contentMinSize with what the view asks for, which let the window shrink to 334 x 153 and piled the hour labels on each other. Put .frame(minWidth: minSize.width, minHeight: minSize.height) back on the root view in src/views/MainWindow.swift."
     exit 1
 fi
-echo "✓ remote: every sundial:// command parses to what it says, a wrong one is refused saying what would work, and the window's sidebar can select, its top row stays clear of the title bar, and it can't shrink below its minimum"
+if ! grep -q 'forKey: "windowSection"' src/AppState.swift; then
+    echo "✗ remote: AppState no longer keeps windowSection in UserDefaults, so the window would forget which section it was closed in. Read it in the property's initial value and write it in didSet, in src/AppState.swift."
+    exit 1
+fi
+echo "✓ remote: every sundial:// command parses to what it says, a wrong one is refused saying what would work, and the window's sidebar can select, its top row stays clear of the title bar, it can't shrink below its minimum, and it reopens on the section it closed in"
