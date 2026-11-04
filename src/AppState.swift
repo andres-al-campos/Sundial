@@ -102,7 +102,7 @@ class AppState: ObservableObject {
     var onScheduleChanged: (() -> Void)?
 
     /// The section the desktop window shows.
-    @Published var windowSection: WindowSection = .lights
+    @Published var windowSection: WindowSection = .presets
 
     nonisolated static let supportDirectory: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

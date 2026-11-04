@@ -2,7 +2,7 @@ import Foundation
 
 /// A section of the desktop window.
 enum WindowSection: String, CaseIterable, Identifiable {
-    case lights, presets, settings
+    case presets, lights, settings
     var id: Self { self }
 }
 
