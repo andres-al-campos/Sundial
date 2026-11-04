@@ -27,7 +27,7 @@ struct LocationSection: View {
             Text("Location")
                 .font(.caption.bold())
                 .foregroundStyle(.secondary)
-            Text("The sunrise and sunset everything follows are worked out for this spot. Roughly is enough. What you type goes to Apple to find it; the spot stays on this Mac.")
+            Text("Searches go to Apple. Everything else stays on this Mac.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             searchField
