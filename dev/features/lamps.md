@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 14:17, at 1.1.0.
+Updated 2026-11-04 14:57, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -34,8 +34,8 @@ artificial light follows the natural light along with the screen.
   it, and is forgotten on relaunch. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows, which stay put: a colour wheel, then the settings reading left to right and top
-  to bottom: the bulb with its on/off switch, long Brightness and Temperature sliders, then the
-  time with Delete in the far corner. Off dims the rest and shows "Off". The rows scroll only if the
+  to bottom: the bulb with its on/off switch, the time with Delete beside it, then long Brightness
+  and Temperature sliders. Off dims the rest and shows "Off". Every button shades on hover. The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
@@ -117,8 +117,8 @@ blend looks in the room.
   Time keeps its label even though the value explains itself, and off is a switch rather than the bottom of
   the slider, which only looks obvious to whoever built it. Applies *Never a fight with the controls*.
 
-- 2026-11-04 14:17, 1.1.0. **Delete is far from Close.** Side by side they're "very easy to mix up", so Delete takes the bottom right
-  corner and Close the top right.
+- 2026-11-04 14:57, 1.1.0. **Delete is far from Close.** Side by side they're "very easy to mix up", so Delete sits beside the time
+  it deletes, well left of Close. The time goes right under the name because "the time is basically their id".
 
 - 2026-11-02 05:18, 1.1.0. **A lamp switched off by hand stays off.** Sundial used to send on with every
   fade, so a lamp switched off from the phone came back on within a minute: "It

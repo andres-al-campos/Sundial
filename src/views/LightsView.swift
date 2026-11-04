@@ -237,10 +237,15 @@ struct LightsView: View {
                 .strokeBorder(.primary.opacity(0.12))
         }
         .overlay(alignment: .topTrailing) {
-            Button(action: deselect) { Image(systemName: "xmark") }
-                .buttonStyle(.borderless)
-                .help("Close")
-                .padding(Layout.cardPadding)
+            Button(action: deselect) {
+                Image(systemName: "xmark")
+                    .frame(width: Layout.iconButton, height: Layout.iconButton)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .hoverShade()
+            .help("Close")
+            .padding(Layout.cardPadding - 4)
         }
         .padding(.horizontal, Layout.edge)
         .padding(.bottom, Layout.rowsPadding)
@@ -273,6 +278,7 @@ struct LightsView: View {
             Spacer()
             Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
                 .disabled(bulbs.isEmpty)
+                .hoverShade()
             // Filled while paused, because the lamps have stopped following the day and
             // nothing else would say so once you look away from the status line.
             Group {
@@ -285,6 +291,7 @@ struct LightsView: View {
                 }
             }
             .disabled(appState.hueHost == nil)
+            .hoverShade()
         }
         .padding(.horizontal, Layout.edge)
         .padding(.vertical, 10)
@@ -332,6 +339,7 @@ struct LightsView: View {
             Text("Pair with your Hue Bridge to see your bulbs here.")
                 .foregroundStyle(.secondary)
             Button("Pair Hue Bridge") { appState.onPairLamps?() }
+                .hoverShade()
             Text(appState.lampStatus)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -798,6 +806,7 @@ enum Layout {
     /// The card's close button sits over the end of its first line.
     static let cardCloseRoom: CGFloat = 24
     static let cardLabel: CGFloat = 84
+    static let iconButton: CGFloat = 22
     /// The colour wheel's height plus its padding.
     static let cardHeight: CGFloat = 144
     static let cardRoom: CGFloat = cardHeight + rowsPadding
@@ -885,14 +894,14 @@ private struct Band: View {
 // MARK: - The card's contents
 
 /// A look on the card under the rows, a keyframe's or a bulb's right now. The two differ
-/// only in the bottom row, so opening one after the other moves nothing.
-private struct LookPanel<Bottom: View>: View {
+/// only in the row saying which, so opening one after the other moves nothing.
+private struct LookPanel<Identity: View>: View {
     let bulb: String
     let look: LightDay.State
     let keptFor: String
     let change: ((inout LightDay.State) -> Void) -> Void
     let commit: () -> Void
-    @ViewBuilder let bottom: () -> Bottom
+    @ViewBuilder let identity: () -> Identity
 
     /// Each look's temperature from before the wheel took it off the whites.
     @State private var kept: [String: Int] = [:]
@@ -925,6 +934,8 @@ private struct LookPanel<Bottom: View>: View {
                 }
                 .padding(.trailing, Layout.cardCloseRoom)
                 Spacer(minLength: 0)
+                identity()
+                Spacer(minLength: 0)
                 field("Brightness", value: look.on ? "\(Int(look.brightness.rounded()))%" : "Off") {
                     Slider(value: Binding(get: { look.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
                 }
@@ -932,8 +943,6 @@ private struct LookPanel<Bottom: View>: View {
                 Spacer(minLength: 0)
                 temperature
                     .disabled(!look.on)
-                Spacer(minLength: 0)
-                bottom()
             }
             .frame(height: wheel)
         }
@@ -974,8 +983,10 @@ private struct LookPanel<Bottom: View>: View {
     private func edited(_ editing: Bool) { if !editing { commit() } }
 }
 
-/// A keyframe's time, with Delete in the corner furthest from the card's close button,
-/// since the two are easy to mix up side by side.
+/// A keyframe's time, which is what tells it from the bulb's others, so it sits right under
+/// the name. Delete stays beside it and well away from the card's close button, since the
+/// two are easy to mix up side by side, and before the caption so it holds still from one
+/// keyframe to the next.
 private struct KeyTimeRow: View {
     let key: LightDay.Key
     let marks: LightDay.Marks
@@ -989,6 +1000,14 @@ private struct KeyTimeRow: View {
             DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .controlSize(.small)
+            Button(action: delete) {
+                Image(systemName: "trash")
+                    .frame(width: Layout.iconButton, height: Layout.iconButton)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .hoverShade()
+            .help("Delete this keyframe")
             if let text = LightsView.anchorText(key.anchor) {
                 Text(text)
                     .font(.caption)
@@ -996,10 +1015,7 @@ private struct KeyTimeRow: View {
                     .lineLimit(1)
                     .fixedSize()
             }
-            Spacer(minLength: 8)
-            Button(action: delete) { Image(systemName: "trash") }
-                .buttonStyle(.borderless)
-                .help("Delete this keyframe")
+            Spacer(minLength: 0)
         }
     }
 
@@ -1040,6 +1056,7 @@ private struct HoldRow: View {
             // There either way and only usable when held, so nothing moves as it starts.
             Button("Back to schedule", action: back)
                 .controlSize(.small)
+                .hoverShade()
                 .opacity(held ? 1 : 0)
                 .allowsHitTesting(held)
         }

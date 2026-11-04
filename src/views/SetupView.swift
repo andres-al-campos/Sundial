@@ -69,6 +69,7 @@ struct SetupView: View {
             .controlSize(.regular)
             .buttonStyle(.borderedProminent)
             .disabled(testing)
+            .hoverShade()
         }
         .padding(14)
     }

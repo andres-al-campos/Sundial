@@ -43,6 +43,7 @@ struct LocationSection: View {
                 if isPicked, dragged == nil {
                     Button("Use My Time Zone") { pick(nil) }
                         .controlSize(.small)
+                        .hoverShade()
                 }
             }
             .frame(height: 22)

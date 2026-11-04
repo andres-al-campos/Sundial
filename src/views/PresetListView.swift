@@ -473,6 +473,7 @@ private struct PresetEditorBody: View {
                     .controlSize(.small)
                     .tint(isPreviewing ? .orange : nil)
                     .buttonStyle(.bordered)
+                    .hoverShade()
                 }
 
                 Spacer()
@@ -485,6 +486,7 @@ private struct PresetEditorBody: View {
                     Label("Delete", systemImage: "trash")
                 }
                 .controlSize(.small)
+                .hoverShade()
             }
         }
         .opacity(draft.enabled ? 1.0 : 0.6)

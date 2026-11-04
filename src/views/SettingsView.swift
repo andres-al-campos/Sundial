@@ -45,6 +45,7 @@ struct SettingsView: View {
                     Spacer()
                     Button(appState.hueHost == nil ? "Pair Hue Bridge" : "Pair again") { appState.onPairLamps?() }
                         .controlSize(.small)
+                        .hoverShade()
                 }
                 // Two lines held whatever the status says, so a status change
                 // doesn't move what's below it.

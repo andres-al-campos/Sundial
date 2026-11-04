@@ -169,3 +169,24 @@ struct HoverButton: View {
         .onHover { isHovered = $0 }
     }
 }
+
+/// Every button in a window answers the pointer the same way. macOS leaves its standard
+/// buttons still until they're pressed, so a button can't be told from a label by aiming at it.
+private struct HoverShade: ViewModifier {
+    @State private var hovered = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(.primary.opacity(hovered ? 0.12 : 0))
+                    .allowsHitTesting(false)
+            }
+            .onHover { hovered = $0 }
+            .animation(.easeOut(duration: 0.1), value: hovered)
+    }
+}
+
+extension View {
+    func hoverShade() -> some View { modifier(HoverShade()) }
+}
