@@ -70,4 +70,8 @@ if ! grep -q 'makeFirstResponder(nil)' src/views/MainWindow.swift; then
     echo "✗ remote: MainWindow no longer clears the first responder when it opens. With keyboard navigation on, AppKit focuses the first button, and its ring reads as that button being on. Put window?.makeFirstResponder(nil) back after makeKeyAndOrderFront in src/views/MainWindow.swift."
     exit 1
 fi
-echo "✓ remote: every sundial:// command parses to what it says, a wrong one is refused saying what would work, and the window's sidebar can select and its top row stays clear of the title bar"
+if grep -q 'contentMinSize' src/views/MainWindow.swift || ! grep -q 'frame(minWidth: minSize.width' src/views/MainWindow.swift; then
+    echo "✗ remote: MainWindow's minimum size has to be a frame on its root view. An NSHostingView replaces the window's contentMinSize with what the view asks for, which let the window shrink to 334 x 153 and piled the hour labels on each other. Put .frame(minWidth: minSize.width, minHeight: minSize.height) back on the root view in src/views/MainWindow.swift."
+    exit 1
+fi
+echo "✓ remote: every sundial:// command parses to what it says, a wrong one is refused saying what would work, and the window's sidebar can select, its top row stays clear of the title bar, and it can't shrink below its minimum"

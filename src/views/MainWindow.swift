@@ -8,6 +8,8 @@ import SwiftUI
 enum MainWindow {
     private static var window: NSWindow?
     private static var closing: NSObjectProtocol?
+    /// Below this the bands are too short for their hour labels.
+    static let minSize = NSSize(width: 760, height: 420)
 
     static func show(_ state: AppState) {
         NSApp.setActivationPolicy(.regular)
@@ -17,8 +19,9 @@ enum MainWindow {
                              backing: .buffered, defer: false)
             w.title = "Sundial"
             w.isReleasedWhenClosed = false
-            w.contentMinSize = NSSize(width: 760, height: 420)
-            w.contentView = NSHostingView(rootView: MainWindowView().environmentObject(state))
+            w.contentView = NSHostingView(rootView: MainWindowView()
+                .frame(minWidth: minSize.width, minHeight: minSize.height)
+                .environmentObject(state))
             w.center()
             w.setFrameAutosaveName("SundialMain")
             closing = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
