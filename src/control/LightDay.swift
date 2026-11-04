@@ -244,6 +244,41 @@ enum LightDay {
         return (c[0], c[1], c[2])
     }
 
+    /// The xy of a spot on the colour wheel, its hue from 0 to 1 and its saturation
+    /// from white at 0 to the full colour at 1.
+    static func xy(hue: Double, saturation: Double) -> LampBlend.XY {
+        let h = (hue - hue.rounded(.down)) * 6, sat = min(max(0, saturation), 1)
+        let t = h - h.rounded(.down)
+        let full: [Double]
+        switch Int(h) {
+        case 0: full = [1, t, 0]
+        case 1: full = [1 - t, 1, 0]
+        case 2: full = [0, 1, t]
+        case 3: full = [0, 1 - t, 1]
+        case 4: full = [t, 0, 1]
+        default: full = [1, 0, 1 - t]
+        }
+        let linear = full.map { v -> Double in
+            let c = 1 - sat + sat * v
+            return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+        }
+        let X = 0.4124 * linear[0] + 0.3576 * linear[1] + 0.1805 * linear[2]
+        let Y = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+        let Z = 0.0193 * linear[0] + 0.1192 * linear[1] + 0.9505 * linear[2]
+        return .init(x: X / (X + Y + Z), y: Y / (X + Y + Z))
+    }
+
+    /// Where an xy colour sits on the colour wheel. One outside what the screen can
+    /// show lands on the rim.
+    static func wheel(_ xy: LampBlend.XY) -> (hue: Double, saturation: Double) {
+        let c = rgb(xy), top = max(c.r, c.g, c.b), low = min(c.r, c.g, c.b), span = top - low
+        guard top > 0, span > 0 else { return (0, 0) }
+        let sector: Double
+        if top == c.r { sector = (c.g - c.b) / span } else if top == c.g { sector = 2 + (c.b - c.r) / span } else { sector = 4 + (c.r - c.g) / span }
+        let hue = sector / 6
+        return (hue - hue.rounded(.down), span / top)
+    }
+
     /// How far a colour is dimmed on the band. The floor keeps a dim band's
     /// colour readable.
     static func shade(brightness: Double) -> Double { 0.22 + 0.78 * pow(max(0, brightness) / 100, 0.6) }

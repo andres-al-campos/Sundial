@@ -100,6 +100,14 @@ check("the lowest white is the bulbs' red corner, or a lower one would look the 
 let below = LampBlend.xy(mirek: 1_000_000 / 1666), above = LampBlend.xy(mirek: 1_000_000 / 1668)
 check("the slider doesn't jump where the low table meets the fit at 1667 K", near(below.x, above.x, 0.002) && near(below.y, above.y, 0.002), (below, above))
 check("1000 K is the published CIE point", near(LampBlend.xy(mirek: 1000).x, 0.6528, 0.0005) && near(LampBlend.xy(mirek: 1000).y, 0.3445, 0.0005), LampBlend.xy(mirek: 1000))
+for hue in stride(from: 0.0, to: 1.0, by: 0.05) {
+    for saturation in [0.25, 0.6, 1.0] {
+        let spot = LightDay.wheel(LightDay.xy(hue: hue, saturation: saturation))
+        check("the colour wheel gives back the spot that was picked, or its thumb jumps under the pointer", near(spot.hue, hue, 0.01) && near(spot.saturation, saturation, 0.01), (hue, saturation, spot))
+    }
+}
+check("the centre of the colour wheel is white", near(LightDay.xy(hue: 0.3, saturation: 0).x, 0.3127, 0.001) && near(LightDay.xy(hue: 0.3, saturation: 0).y, 0.329, 0.001), LightDay.xy(hue: 0.3, saturation: 0))
+check("a wheel drag past the rim stays on the rim", LightDay.xy(hue: 0.2, saturation: 3) == LightDay.xy(hue: 0.2, saturation: 1), "")
 check("MidNight's colour reads as a temperature, so its slider doesn't jump", (1000...1700).contains(LightDay.kelvin(.init(x: 0.602, y: 0.376))), LightDay.kelvin(.init(x: 0.602, y: 0.376)))
 check("a lamp someone switched off stays off", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: false) == .leave, "send")
 check("a lamp the day turned off comes back with the day", LightDay.send(targetOn: true, lampIsOn: false, dayTurnedItOff: true) == .power, "send")
