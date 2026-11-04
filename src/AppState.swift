@@ -32,6 +32,8 @@ class AppState: ObservableObject {
     @Published var place: RoomLight.Place? { didSet { SunClock.picked = place } }
     /// The Hue lamps follow their days. False while paused from the Lights window.
     @Published var lampsFollow: Bool = false
+    /// Bulbs set by hand for now. Not saved: a relaunch hands them back to the day.
+    @Published var holds: [String: LightDay.Hold] = [:]
     /// Each bulb's day. Nil until the scenes on the bridge have been imported.
     @Published var lights: [LightDay.Bulb]?
     /// The paired Hue Bridge's host name; its key is in the Keychain.
@@ -78,6 +80,7 @@ class AppState: ObservableObject {
     var onRenameBulb: ((_ deviceID: String, _ name: String) -> Void)?
     /// Set by the app at startup: the bridge's scenes, as it holds them.
     var onReadHue: (() async throws -> Data)?
+    var onReadLamps: (() async throws -> [String: LightDay.State])?
     /// Set by the app at startup: open the desktop window.
     var onOpenWindow: (() -> Void)?
 

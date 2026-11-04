@@ -49,9 +49,6 @@ enum LightDay {
         /// Separate from brightness: 0 is the bulb's dimmest, and an off
         /// keyframe remembers its brightness for when it's switched back on.
         var on = true
-        /// Off is a dark moment the bulb fades through. Disabled is as if the keyframe
-        /// weren't there, keeping its settings for when it's enabled again.
-        var enabled = true
         var brightness: Double
         var x: Double
         var y: Double
@@ -98,6 +95,19 @@ enum LightDay {
         var on: Bool
         var brightness: Double
         var xy: LampBlend.XY
+    }
+
+    /// A look set by hand on one bulb, standing in for its day until `until`.
+    struct Hold: Equatable {
+        var look: State
+        var until: Date
+    }
+
+    /// When a hold made at `date` ends: the next sunrise, so a forgotten one can't
+    /// outlast the night the way a forgotten Pause does.
+    static func holdEnd(from date: Date, sunrise: Int, in calendar: Calendar = .current) -> Date {
+        let today = clockTime(sunrise, on: date, in: calendar)
+        return today > date ? today : calendar.date(byAdding: .day, value: 1, to: today) ?? today
     }
 
     static let day = 24 * 60
@@ -175,7 +185,7 @@ enum LightDay {
     /// of what it's sampling. Nil for a bulb with no keyframes, which Sundial
     /// leaves alone.
     static func state(_ keys: [Key], at minute: Double, marks: Marks, without: UUID? = nil) -> State? {
-        let list = keys.filter { $0.enabled && ($0.id != without || keys.count == 1) }
+        let list = keys.filter { $0.id != without || keys.count == 1 }
             .map { (key: $0, at: Double(Self.minute(of: $0, marks: marks))) }
             .sorted { $0.at < $1.at }
         guard let first = list.first else { return nil }
@@ -365,7 +375,6 @@ extension LightDay.Key {
                   minute: try c.decode(Int.self, forKey: .minute),
                   anchor: try c.decodeIfPresent(LightDay.Anchor.self, forKey: .anchor),
                   on: try c.decodeIfPresent(Bool.self, forKey: .on) ?? true,
-                  enabled: try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true,
                   brightness: try c.decode(Double.self, forKey: .brightness),
                   x: try c.decode(Double.self, forKey: .x),
                   y: try c.decode(Double.self, forKey: .y))

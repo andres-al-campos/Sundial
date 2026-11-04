@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 12:52, at 1.1.0.
+Updated 2026-11-04 14:17, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -27,12 +27,15 @@ artificial light follows the natural light along with the screen.
 - **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
   with a badge in the top row saying what it lands on, such as 45% at 6:48 PM. On letting go the bulb fades back to where
   the day has it, over 1 second.
-- **Disabling.** A disabled keyframe draws as a ring of six dashes and the day runs as if it
-  weren't there, keeping its settings. Right-click it, or use Disable in its settings.
+- **Holding.** Click a bulb's name and the same card changes that bulb right now, from what the
+  lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
+  and the card says "Held until sunrise" with Back to schedule, which fades it back in 1 second.
+  A hold ends by itself at the next sunrise, covers only the bulb clicked and not those linked to
+  it, and is forgotten on relaunch. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows, which stay put: a colour wheel, then the settings reading left to right and top
-  to bottom: which bulb, long Brightness and Temperature sliders, then the time, Light on,
-  Disable and Delete. The rows scroll only if the
+  to bottom: the bulb with its on/off switch, long Brightness and Temperature sliders, then the
+  time with Delete in the far corner. Off dims the rest and shows "Off". The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
@@ -83,8 +86,10 @@ the keyframe rules: straight lines, fading to off, leaving out a dragged
 keyframe, snapping, anchors, and reading whites back as a temperature, and that a
 lamp someone switched off is left alone.
 
-It also checks a new bulb's three keyframes, what counts as new, and that whites have a
+It also checks that a keyframe saved as disabled counts, a new bulb's three keyframes, what counts as new, and that whites have a
 temperature and colours don't.
+
+It also checks when a hold ends. What a held bulb is sent has no check yet.
 
 By hand only: the window, how the card moves, pairing, that the bridge takes the fades, how the
 blend looks in the room.
@@ -101,8 +106,16 @@ blend looks in the room.
   the space below them isn't the problem *Empty space is spread out* is about: that was the
   writing on the card.
 
-- 2026-11-03 23:34, 1.1.0. Off and disabled are two settings: off is a dark moment the bulb fades through, disabled
-  is as if the keyframe weren't there.
+- 2026-11-04 14:17, 1.1.0. **No Disable.** It only existed to hold a colour for a while, and two on/off controls side by side were
+  the cost: a new person can't tell them apart. Holding does that job, so a keyframe is either in the day or
+  deleted. Keyframes saved as disabled count again.
+
+- 2026-11-04 14:17, 1.1.0. **Every control says what it is.** The switch sits beside the name it controls and always means the bulb.
+  Time keeps its label even though the value explains itself, and off is a switch rather than the bottom of
+  the slider, which only looks obvious to whoever built it. Applies *Never a fight with the controls*.
+
+- 2026-11-04 14:17, 1.1.0. **Delete is far from Close.** Side by side they're "very easy to mix up", so Delete takes the bottom right
+  corner and Close the top right.
 
 - 2026-11-02 05:18, 1.1.0. **A lamp switched off by hand stays off.** Sundial used to send on with every
   fade, so a lamp switched off from the phone came back on within a minute: "It

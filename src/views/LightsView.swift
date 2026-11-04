@@ -53,8 +53,8 @@ final class LightsHistory: ObservableObject {
 
 /// One row per bulb across the day, the band being what the bulb does: its colour,
 /// dimmed by its brightness. Click a band for a keyframe, drag one to move it,
-/// click one for its settings on the card that comes down below. Right-click for
-/// copy, paste and linking.
+/// click one for its settings on the card that comes down below, or click a bulb's
+/// name to change it right now. Right-click for copy, paste and linking.
 struct LightsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.undoManager) private var undo
@@ -71,17 +71,20 @@ struct LightsView: View {
     /// What the card last showed, so it still has it while it slides away. Something from
     /// the start, because a card whose contents are new on its first open jumps open
     /// instead of sliding.
-    @State private var lastShown = Shown(bulb: "", key: LightDay.Key(minute: 0, brightness: 0, x: 0.4, y: 0.4))
+    @State private var lastShown = Shown(bulb: "", bulbID: "", key: nil, look: .init(on: true, brightness: 0, xy: .init(x: 0.4, y: 0.4)))
+    /// What the lamps were doing when one was last selected, for its right-now card.
+    @State private var lampsNow: [String: LightDay.State] = [:]
 
     /// Follows the selection a step behind, so the card already shows the keyframe when it
     /// starts to move. In one step the slide also caught its text and sliders, which
     /// travelled from the last keyframe's places, overlapping on the way.
     @State private var cardOpen = false
 
-    struct Selection: Equatable { var bulb: String; var key: UUID }
+    /// With no keyframe, it's the bulb itself, right now.
+    struct Selection: Equatable { var bulb: String; var key: UUID? }
     struct Clip { var key: LightDay.Key?; var day: [LightDay.Key]? }
     struct Previewing { var bulb: String; var look: LightDay.State; var minute: Int }
-    struct Shown: Equatable { var bulb: String; var key: LightDay.Key }
+    struct Shown: Equatable { var bulb: String; var bulbID: String; var key: LightDay.Key?; var look: LightDay.State }
 
     private var bulbs: [LightDay.Bulb] { appState.lights ?? [] }
 
@@ -173,24 +176,58 @@ struct LightsView: View {
     // MARK: - The card
 
     private var shown: Shown? {
-        guard let selection, let key = selectedKey else { return nil }
-        return Shown(bulb: bulbs.first { $0.id == selection.bulb }?.name ?? "Bulb", key: key)
+        guard let selection else { return nil }
+        let name = bulbs.first { $0.id == selection.bulb }?.name ?? "Bulb"
+        if selection.key == nil {
+            return Shown(bulb: name, bulbID: selection.bulb, key: nil, look: rightNow(selection.bulb))
+        }
+        guard let key = selectedKey else { return nil }
+        return Shown(bulb: name, bulbID: selection.bulb, key: key, look: Self.state(key))
+    }
+
+    /// What a bulb's card starts from: its hold, or the lamp as last read, or where the
+    /// day has it until that read comes back.
+    private func rightNow(_ id: String) -> LightDay.State {
+        if let held = appState.holds[id]?.look { return held }
+        if let read = lampsNow[id] { return read }
+        let bulb = bulbs.first { $0.id == id }
+        return bulb.flatMap { LightDay.state(LightDay.keys(of: $0, in: bulbs), at: nowMinute, marks: marks) }
+            ?? .init(on: true, brightness: 50, xy: LampBlend.xy(mirek: 370))
     }
 
     private var card: some View {
         let show = shown ?? lastShown
-        return KeyPanel(
+        return LookPanel(
             bulb: show.bulb,
-            key: show.key,
-            marks: marks,
-            change: { change(show.key.id, $0) },
-            commit: {
-                history.commit(undo, "Change Keyframe")
-                endPreviewNow()
+            look: show.look,
+            keptFor: show.key?.id.uuidString ?? show.bulbID,
+            change: { apply in
+                if let key = show.key {
+                    change(key.id) { k in
+                        var s = Self.state(k)
+                        apply(&s)
+                        k.on = s.on
+                        k.brightness = s.brightness
+                        k.xy = s.xy
+                    }
+                } else {
+                    hold(show.bulbID, apply)
+                }
             },
-            toggleEnabled: { if let selection { toggleEnabled(show.key.id, bulb: selection.bulb) } },
-            delete: { deleteSelected() }
-        )
+            commit: {
+                if show.key != nil { history.commit(undo, "Change Keyframe") }
+                endPreviewNow()
+            }
+        ) {
+            if let key = show.key {
+                KeyTimeRow(key: key, marks: marks, delete: { deleteSelected() }, change: { change(key.id, $0) }, commit: {
+                    history.commit(undo, "Change Keyframe")
+                    endPreviewNow()
+                })
+            } else {
+                HoldRow(held: appState.holds[show.bulbID] != nil, paused: !appState.lampsFollow, back: { backToSchedule(show.bulbID) })
+            }
+        }
         .padding(Layout.cardPadding)
         .frame(height: Layout.cardHeight)
         .frame(maxWidth: .infinity)
@@ -202,7 +239,7 @@ struct LightsView: View {
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) { Image(systemName: "xmark") }
                 .buttonStyle(.borderless)
-                .help("Close. Selecting a keyframe brings it back.")
+                .help("Close")
                 .padding(Layout.cardPadding)
         }
         .padding(.horizontal, Layout.edge)
@@ -416,6 +453,7 @@ struct LightsView: View {
                         .font(.subheadline)
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .foregroundStyle(appState.holds[bulb.id] != nil ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
                     if bulb.parent == nil, LightDay.isUntouchedDefault(bulb.keys) {
                         Text("Click a dot to edit")
                             .font(.caption2)
@@ -434,7 +472,8 @@ struct LightsView: View {
             .padding(.horizontal, 8)
             .frame(maxHeight: .infinity)
             .background(selection?.bulb == bulb.id ? Color.primary.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 5))
-            .onTapGesture { renaming = bulb.id }
+            .contentShape(Rectangle())
+            .onTapGesture { selectBulb(bulb.id) }
         }
     }
 
@@ -444,11 +483,9 @@ struct LightsView: View {
         let selected = selection?.key == key.id
         let size: CGFloat = selected ? 17 : 13
         let line: CGFloat = selected ? 3 : 1.5
-        // Six dashes, whatever the size: at smaller ones the ring read as nearly solid.
-        let dash = 2 * .pi * (size - line) / 2 / 12
         return Circle()
-            .fill(key.enabled ? Self.color(look) : .clear)
-            .overlay(Circle().strokeBorder(.white, style: StrokeStyle(lineWidth: line, dash: key.enabled ? [] : [dash, dash])))
+            .fill(Self.color(look))
+            .overlay(Circle().strokeBorder(.white, lineWidth: line))
             // White and a dark edge, because bands run from pale to nearly black and the
             // accent colour disappeared against the dark ones.
             .background(Circle().stroke(.black.opacity(selected ? 0.6 : 0), lineWidth: 1))
@@ -473,7 +510,6 @@ struct LightsView: View {
         Button("Paste Color and Brightness") { pasteLook(onto: key.id, bulb: bulb) }
             .disabled(clip.key == nil)
         Divider()
-        Button(key.enabled ? "Disable Keyframe" : "Enable Keyframe") { toggleEnabled(key.id, bulb: bulb.id) }
         Button("Delete Keyframe") {
             selection = Selection(bulb: bulb.id, key: key.id)
             deleteSelected()
@@ -525,8 +561,8 @@ struct LightsView: View {
     // MARK: - Editing
 
     private var selectedKey: LightDay.Key? {
-        guard let selection else { return nil }
-        return bulbs.first { $0.id == selection.bulb }?.keys.first { $0.id == selection.key }
+        guard let selection, let id = selection.key else { return nil }
+        return bulbs.first { $0.id == selection.bulb }?.keys.first { $0.id == id }
     }
 
     private func edit(_ change: (inout BulbIndex) -> Void) {
@@ -542,6 +578,28 @@ struct LightsView: View {
             // leave its row behind during that slide.
             if selection == nil { selection = s } else { withAnimation(.easeOut(duration: 0.15)) { selection = s } }
         }
+    }
+
+    /// The card for the bulb itself, from what the lamp is doing now.
+    private func selectBulb(_ id: String) {
+        toggle(Selection(bulb: id, key: nil))
+        guard selection?.key == nil, selection?.bulb == id else { return }
+        Task { if let read = try? await appState.onReadLamps?() { lampsNow = read } }
+    }
+
+    /// Changes the bulb and no keyframes. The first change is what starts the hold.
+    private func hold(_ id: String, _ apply: (inout LightDay.State) -> Void) {
+        var look = rightNow(id)
+        apply(&look)
+        appState.holds[id] = LightDay.Hold(look: look, until: LightDay.holdEnd(from: now, sunrise: marks.sunrise))
+        appState.onPreviewLamps?([id: look])
+    }
+
+    private func backToSchedule(_ id: String) {
+        appState.holds[id] = nil
+        lampsNow[id] = nil
+        // Through the preview's return, for its quick fade rather than the usual 30 seconds.
+        endPreviewNow()
     }
 
     private func deselect() {
@@ -629,20 +687,6 @@ struct LightsView: View {
             }
         }
         history.commit(undo, "Paste Color and Brightness")
-    }
-
-    private func toggleEnabled(_ id: UUID, bulb: String) {
-        var title = "Disable Keyframe"
-        edit { index in
-            index.withKey(bulb, id) {
-                $0.enabled.toggle()
-                if $0.enabled { title = "Enable Keyframe" }
-            }
-        }
-        history.commit(undo, title)
-        // Through the preview's return, so the change shows on the bulb right away
-        // rather than over the usual 30 seconds.
-        endPreviewNow()
     }
 
     private func deleteSelected() {
@@ -753,6 +797,7 @@ enum Layout {
     static let cardPadding: CGFloat = 14
     /// The card's close button sits over the end of its first line.
     static let cardCloseRoom: CGFloat = 24
+    static let cardLabel: CGFloat = 84
     /// The colour wheel's height plus its padding.
     static let cardHeight: CGFloat = 144
     static let cardRoom: CGFloat = cardHeight + rowsPadding
@@ -839,70 +884,56 @@ private struct Band: View {
 
 // MARK: - The card's contents
 
-/// A keyframe's settings, on the card under the rows.
-private struct KeyPanel: View {
+/// A look on the card under the rows, a keyframe's or a bulb's right now. The two differ
+/// only in the bottom row, so opening one after the other moves nothing.
+private struct LookPanel<Bottom: View>: View {
     let bulb: String
-    let key: LightDay.Key
-    let marks: LightDay.Marks
-    let change: ((inout LightDay.Key) -> Void) -> Void
+    let look: LightDay.State
+    let keptFor: String
+    let change: ((inout LightDay.State) -> Void) -> Void
     let commit: () -> Void
-    let toggleEnabled: () -> Void
-    let delete: () -> Void
+    @ViewBuilder let bottom: () -> Bottom
 
-    private static let labelWidth: CGFloat = 84
-    /// Each keyframe's temperature from before the wheel took it off the whites.
-    @State private var kept: [UUID: Int] = [:]
+    /// Each look's temperature from before the wheel took it off the whites.
+    @State private var kept: [String: Int] = [:]
 
     var body: some View {
         HStack(spacing: 20) {
-            ColorWheel(xy: key.xy, change: { xy in
-                kept[key.id] = LightDay.keptKelvin(leaving: key.xy, kept: kept[key.id])
+            ColorWheel(xy: look.xy, change: { xy in
+                kept[keptFor] = LightDay.keptKelvin(leaving: look.xy, kept: kept[keptFor])
                 change { $0.xy = xy }
             }, commit: commit)
                 .frame(width: wheel, height: wheel)
+                .disabled(!look.on)
+                .opacity(look.on ? 1 : 0.5)
             // Evenly down the wheel's height, so nothing piles up at the top of the card.
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
-                    Text("\(bulb) keyframe")
-                        .font(.headline)
-                        .lineLimit(1)
-                    if let text = LightsView.anchorText(key.anchor) {
-                        Text(text)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    // The switch is always the bulb: on or off at this keyframe, or now.
+                    Toggle(isOn: Binding(get: { look.on }, set: { on in
+                        change { $0.on = on }
+                        commit()
+                    })) {
+                        Text(bulb)
+                            .font(.headline)
                             .lineLimit(1)
-                            .fixedSize()
                     }
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .fixedSize()
                     Spacer(minLength: 0)
                 }
                 .padding(.trailing, Layout.cardCloseRoom)
                 Spacer(minLength: 0)
-                field("Brightness", value: "\(Int(key.brightness.rounded()))%") {
-                    Slider(value: Binding(get: { key.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
+                field("Brightness", value: look.on ? "\(Int(look.brightness.rounded()))%" : "Off") {
+                    Slider(value: Binding(get: { look.brightness }, set: { b in change { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
                 }
+                .disabled(!look.on)
                 Spacer(minLength: 0)
                 temperature
+                    .disabled(!look.on)
                 Spacer(minLength: 0)
-                HStack(spacing: 8) {
-                    DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                        .controlSize(.small)
-                    Spacer(minLength: 8)
-                    // Named because Disable sits beside it: off is a dark moment the bulb
-                    // fades through, disabled is as if the keyframe weren't there.
-                    Toggle("Light on", isOn: Binding(get: { key.on }, set: { on in
-                        change { $0.on = on }
-                        commit()
-                    }))
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .fixedSize()
-                    Spacer(minLength: 8)
-                    Button(key.enabled ? "Disable" : "Enable", action: toggleEnabled)
-                        .controlSize(.small)
-                    Button("Delete", action: delete)
-                        .controlSize(.small)
-                }
+                bottom()
             }
             .frame(height: wheel)
         }
@@ -915,23 +946,23 @@ private struct KeyPanel: View {
     /// staying where it was and the reason in place of a number. It can still be dragged,
     /// since that's the way back to a white.
     private var temperature: some View {
-        let white = LightDay.hasTemperature(key.xy)
-        return field("Temperature", value: white ? "\(LightDay.kelvin(key.xy)) K" : "Color") {
+        let white = LightDay.hasTemperature(look.xy)
+        return field("Temperature", value: white ? "\(LightDay.kelvin(look.xy)) K" : "Color") {
             // Rounded here rather than with the slider's step, which draws a tick at
             // every step and made it look unlike Brightness.
-            Slider(value: Binding(get: { Double(LightDay.sliderKelvin(key.xy, kept: kept[key.id])) }, set: { k in
+            Slider(value: Binding(get: { Double(LightDay.sliderKelvin(look.xy, kept: kept[keptFor])) }, set: { k in
                 change { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
             }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
             .tint(white ? nil : .gray)
             .opacity(white ? 1 : 0.5)
         }
-        .foregroundStyle(white ? .primary : .secondary)
+        .foregroundStyle(white && look.on ? .primary : .secondary)
         .help(white ? "" : "Only whites have a temperature, and this color isn't one. Drag to go back to a white.")
     }
 
     private func field<C: View>(_ label: String, value: String, @ViewBuilder control: () -> C) -> some View {
         HStack(spacing: 8) {
-            Text(label).frame(width: Self.labelWidth, alignment: .leading)
+            Text(label).frame(width: Layout.cardLabel, alignment: .leading)
             control()
             Text(value)
                 .font(.caption.monospacedDigit())
@@ -941,6 +972,36 @@ private struct KeyPanel: View {
     }
 
     private func edited(_ editing: Bool) { if !editing { commit() } }
+}
+
+/// A keyframe's time, with Delete in the corner furthest from the card's close button,
+/// since the two are easy to mix up side by side.
+private struct KeyTimeRow: View {
+    let key: LightDay.Key
+    let marks: LightDay.Marks
+    let delete: () -> Void
+    let change: ((inout LightDay.Key) -> Void) -> Void
+    let commit: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
+            DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .controlSize(.small)
+            if let text = LightsView.anchorText(key.anchor) {
+                Text(text)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            Spacer(minLength: 8)
+            Button(action: delete) { Image(systemName: "trash") }
+                .buttonStyle(.borderless)
+                .help("Delete this keyframe")
+        }
+    }
 
     /// A typed time keeps the keyframe's look. Only a drag takes what's under it.
     private var timeBinding: Binding<Date> {
@@ -956,6 +1017,32 @@ private struct KeyPanel: View {
                 commit()
             }
         )
+    }
+}
+
+/// Whether a bulb is on its schedule, and the way back when it isn't.
+private struct HoldRow: View {
+    let held: Bool
+    let paused: Bool
+    let back: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("Right now").frame(width: Layout.cardLabel, alignment: .leading)
+            if held {
+                Text("Held until sunrise")
+                    .foregroundStyle(.orange)
+            } else {
+                Text(paused ? "Paused" : "Following the schedule")
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            // There either way and only usable when held, so nothing moves as it starts.
+            Button("Back to schedule", action: back)
+                .controlSize(.small)
+                .opacity(held ? 1 : 0)
+                .allowsHitTesting(held)
+        }
     }
 }
 

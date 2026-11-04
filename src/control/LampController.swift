@@ -183,15 +183,24 @@ final class LampController {
         beforePreview = nil
         returning = false
         guard let bridge else { return }
-        let ids = previewed
+        let holds = state?.holds ?? [:]
+        let ids = previewed.union(holds.keys)
         previewed = []
         do {
             for id in ids {
-                if let s = before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
+                if let s = holds[id]?.look ?? before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
             }
         } catch {
             state?.lampStatus = error.localizedDescription
         }
+    }
+
+    /// What the lamps are doing, for the card that changes a bulb right now.
+    func lampsNow() async throws -> [String: LightDay.State] {
+        guard let bridge, bridge.isPaired else {
+            throw HueError("Sundial isn't paired with the bridge. Open Settings → Lamps and pair it.")
+        }
+        return try await bridge.lampStates()
     }
 
     func scenesAsStored() async throws -> Data {
@@ -226,6 +235,8 @@ final class LampController {
         defer { busy = false }
         do {
             try await syncBulbs(bridge, state)
+            let ended = state.holds.filter { $0.value.until <= Date() }.keys
+            for id in ended { state.holds[id] = nil }
             guard state.lampsFollow else {
                 state.lampStatus = "Paired · paused"
                 return
@@ -240,9 +251,13 @@ final class LampController {
             let lit = try await bridge.lampsOn()
             var sends = 0, leftOff = 0
             for bulb in bulbs {
-                guard let target = LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
+                let hold = state.holds[bulb.id]?.look
+                guard let target = hold ?? LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
                       let isOn = lit[bulb.id] else { continue }
                 if isOn { offByDay.remove(bulb.id) }
+                // Off on the card isn't someone leaving the room: Back to schedule has
+                // to be able to light it again.
+                if hold?.on == false { offByDay.insert(bulb.id) }
                 let send = LightDay.send(targetOn: target.on, lampIsOn: isOn, dayTurnedItOff: offByDay.contains(bulb.id))
                 if send == .leave {
                     // Forgotten, so the tick after it's switched back on catches it up.
