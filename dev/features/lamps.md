@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-03 20:28, at 1.1.0.
+Updated 2026-11-03 20:36, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -29,6 +29,7 @@ artificial light follows the natural light along with the screen.
 - **Play the day** runs the day on the bulbs in 10 seconds and returns to now.
 - **Pause** stops Sundial changing the bulbs until Resume, so the Hue app can use them.
   A preview while paused still shows on the bulb, then fades back to what the bulb was.
+  While paused the status line is orange and Resume is filled orange.
 - **Import.** The first run makes each bulb's day from the seven named scenes on
   the bridge, keeping what the lamps did at every minute. After that Sundial holds the
   settings, and scene edits in the Hue app aren't read.

@@ -155,9 +155,13 @@ struct LightsView: View {
                         .font(.title3.monospacedDigit())
                         .foregroundStyle(.secondary)
                 } else {
-                    Text(statusLine)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Label {
+                        Text(statusLine)
+                    } icon: {
+                        if isPaused { Image(systemName: "pause.fill") }
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(isPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                 }
             }
             .frame(height: 28)
@@ -165,10 +169,16 @@ struct LightsView: View {
             Spacer()
             Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
                 .disabled(bulbs.isEmpty)
-            Button(appState.lampsFollow ? "Pause" : "Resume") {
-                appState.lampsFollow.toggle()
-                appState.save()
-                appState.onLampsChanged?()
+            // Filled while paused, because the lamps have stopped following the day and
+            // nothing else would say so once you look away from the status line.
+            Group {
+                if isPaused {
+                    Button("Resume", action: togglePause)
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                } else {
+                    Button(appState.lampsFollow ? "Pause" : "Resume", action: togglePause)
+                }
             }
             .disabled(appState.hueHost == nil)
         }
@@ -196,6 +206,16 @@ struct LightsView: View {
         if let playMinute { return "Playing, \(Self.time(Int(playMinute)))" }
         if !appState.lampStatus.hasPrefix("Paired"), appState.hueHost != nil { return nil }
         return appState.lampsFollow ? "Now, \(Self.time(Int(nowMinute)))" : nil
+    }
+
+    private var isPaused: Bool {
+        !appState.lampsFollow && appState.hueHost != nil && appState.lampStatus.hasPrefix("Paired")
+    }
+
+    private func togglePause() {
+        appState.lampsFollow.toggle()
+        appState.save()
+        appState.onLampsChanged?()
     }
 
     private var statusLine: String {
