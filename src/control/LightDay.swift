@@ -154,6 +154,22 @@ enum LightDay {
         return bulbs.first { $0.id == parent }?.keys ?? bulb.keys
     }
 
+    /// The day a bulb starts with when the bridge has no scene for it: awake at sunrise,
+    /// warmer by sunset, dim at bedtime. Tied to the marks, so it moves with the seasons.
+    static func defaultKeys(marks: Marks) -> [Key] {
+        [(Mark.sunrise, 4000.0, 100.0), (.sunset, 2700, 70), (.darkest, 2000, 15)].map { mark, kelvin, level in
+            let white = LampBlend.xy(mirek: 1_000_000 / kelvin)
+            return Key(minute: marks.minute(of: mark), anchor: Anchor(mark: mark, offset: 0), brightness: level, x: white.x, y: white.y)
+        }
+    }
+
+    /// Whether these are still the keyframes `defaultKeys` gave, whatever the day's marks.
+    static func isUntouchedDefault(_ keys: [Key]) -> Bool {
+        let same: (Key) -> Key = { var k = $0; k.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!; k.minute = 0; return k }
+        let start = defaultKeys(marks: Marks(sunrise: 0, sunset: 0, darkest: 0))
+        return keys.map(same) == start.map(same)
+    }
+
     /// Where a bulb should be at `minute`, leaving out one keyframe if asked:
     /// while a keyframe is dragged it shows what's under it, so it can't be part
     /// of what it's sampling. Nil for a bulb with no keyframes, which Sundial
@@ -305,6 +321,25 @@ enum LightDay {
                 return (k, hypot(w.x - xy.x, w.y - xy.y))
             }
             .min { $0.1 < $1.1 }?.0 ?? 2700
+    }
+
+    /// How far off the line of glowing-metal whites a colour may sit and still have a
+    /// temperature, in CIE 1960 uv.
+    static let whiteTolerance = 0.02
+
+    /// Whether a colour is a white with a temperature. The rest have a nearest number
+    /// that says nothing about how they look.
+    static func hasTemperature(_ xy: LampBlend.XY) -> Bool {
+        offWhiteLine(xy) <= whiteTolerance
+    }
+
+    static func offWhiteLine(_ xy: LampBlend.XY) -> Double {
+        func uv(_ c: LampBlend.XY) -> (u: Double, v: Double) {
+            let d = -2 * c.x + 12 * c.y + 3
+            return (4 * c.x / d, 6 * c.y / d)
+        }
+        let a = uv(xy), b = uv(LampBlend.xy(mirek: 1_000_000 / Double(kelvin(xy))))
+        return hypot(a.u - b.u, a.v - b.v)
     }
 }
 

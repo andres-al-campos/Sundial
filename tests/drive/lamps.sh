@@ -172,6 +172,30 @@ for (name, parts) in clockDays {
 }
 check("24:00 bedtime reads as midnight", read(LightDay.clockTime(24 * 60, on: chicago.date(from: clockDays["fall back"]!)!, in: chicago)) == 0, "bedtime")
 
+// A new bulb's day, and whether a colour has a temperature.
+let starting = LightDay.defaultKeys(marks: mNone)
+check("a new bulb starts on sunrise, sunset and bedtime, following them", starting.map { $0.anchor?.mark } == [.sunrise, .sunset, .darkest] && starting.allSatisfy { $0.anchor?.offset == 0 }, starting)
+check("its keyframes land on today's marks", starting.map { LightDay.minute(of: $0, marks: mNone) } == [420, 1020, 0], starting.map(\.minute))
+check("and it dims into the night", starting[0].brightness > starting[1].brightness && starting[1].brightness > starting[2].brightness, starting.map(\.brightness))
+check("and it starts on whites", starting.allSatisfy { LightDay.hasTemperature($0.xy) }, starting)
+let otherDay = LightDay.defaultKeys(marks: LightDay.Marks(sunrise: 300, sunset: 1200, darkest: 60))
+check("a day's marks don't make a new bulb's day look edited", LightDay.isUntouchedDefault(otherDay), otherDay)
+var edited = starting; edited[1].brightness = 40
+check("an edited one no longer counts as new", !LightDay.isUntouchedDefault(edited), edited)
+var moved2 = starting; moved2[1].anchor = nil
+check("nor does one taken off its mark", !LightDay.isUntouchedDefault(moved2), moved2)
+check("nor one with a keyframe removed", !LightDay.isUntouchedDefault(Array(starting.dropLast())), "dropped")
+for k in stride(from: 700.0, through: 6500, by: 7) {
+    check("\(k) K has a temperature", LightDay.hasTemperature(LampBlend.xy(mirek: 1_000_000 / k)), k)
+}
+// Dropping a dragged keyframe takes the blend between two whites, a little off the line.
+let blendA = LampBlend.xy(mirek: 500), blendB = LampBlend.xy(mirek: 250)
+check("a blend of two nearby whites still has one", LightDay.hasTemperature(.init(x: (blendA.x + blendB.x) / 2, y: (blendA.y + blendB.y) / 2)), "blend")
+for (name, hue) in [("green", 0.33), ("cyan", 0.5), ("blue", 0.66), ("magenta", 0.83)] {
+    check("full \(name) has no temperature", !LightDay.hasTemperature(LightDay.xy(hue: hue, saturation: 1)), name)
+}
+check("the wheel's centre has one", LightDay.hasTemperature(LightDay.xy(hue: 0, saturation: 0)), "centre")
+
 if !failures.isEmpty {
     failures.forEach { print("    \($0)") }
     exit(1)
@@ -192,4 +216,8 @@ if ! grep -q 'ViewThatFits(in: .vertical)' src/views/LightsView.swift; then
     echo "✗ lamps: LightsView's rows lost their ViewThatFits. A ScrollView that's always there shows a scroll bar when the panel slides, since each frame's rounding leaves its content a fraction taller. Put the rows back in a ViewThatFits, with the ScrollView as its second choice."
     exit 1
 fi
-echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same, and time pickers read the clock on the days it changes"
+if ! grep -q 'days\[l.id\] ?? LightDay.defaultKeys' src/control/LampController.swift; then
+    echo "✗ lamps: a new bulb no longer gets LightDay.defaultKeys, so it has no keyframes and Sundial leaves it alone. Use them for a bulb with no scene, in LampController.syncBulbs."
+    exit 1
+fi
+echo "✓ lamps: scenes blend in brightness and xy between keyframes, wrap midnight, the night scene holds until 30 minutes before Morning, whites convert to xy, and the scenes sit on the sun and Night Shift's ramp, DuskLight at bedtime; importing them into per-bulb keyframes keeps every minute the same, time pickers read the clock on the days it changes, a new bulb starts on sunrise, sunset and bedtime, and only whites have a temperature"

@@ -98,17 +98,18 @@ final class LampController {
         let found = try await bridge.lights().sorted { $0.name < $1.name }
         bulbsRead = Date()
         var days: [String: [LightDay.Key]] = [:]
+        let now = Date()
+        let warm = SunClock.schedule(on: now, bedtime: state.bedtime), sun = SunClock.sun(on: now)
+        let marks = LightDay.Marks(warm: warm, sun: sun)
         if state.lights == nil {
-            let now = Date()
-            let warm = SunClock.schedule(on: now, bedtime: state.bedtime), sun = SunClock.sun(on: now)
             let scenes = try await bridge.scenes()
             days = LightDay.imported(scenes: Dictionary(scenes.map { ($0.name, $0.lamps) }, uniquingKeysWith: { a, _ in a }),
                                      times: LampBlend.defaultTimes(warm: warm, sun: sun),
-                                     marks: LightDay.Marks(warm: warm, sun: sun))
+                                     marks: marks)
         }
         let old = state.lights ?? []
         let merged = found.map { l -> LightDay.Bulb in
-            var b = old.first { $0.id == l.id } ?? LightDay.Bulb(id: l.id, deviceID: l.deviceID, name: l.name, keys: days[l.id] ?? [])
+            var b = old.first { $0.id == l.id } ?? LightDay.Bulb(id: l.id, deviceID: l.deviceID, name: l.name, keys: days[l.id] ?? LightDay.defaultKeys(marks: marks))
             b.name = l.name
             b.deviceID = l.deviceID
             return b
