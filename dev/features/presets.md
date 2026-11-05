@@ -92,8 +92,8 @@ preview, add, delete).
 
 - 2026-10-12 19:29, 1.0.3. The HDR note is always shown, left-aligned, in the
   slider's place, not on hover: a slider that can't move has nothing to show,
-  and the reason is the thing worth reading. Applies *What you touch is what
-  the monitor does*.
+  and the reason is the thing worth reading. Applies *The room shows what
+  you're changing*.
 - 2026-10-21 21:31, 1.0.3. Jitter on the first open after launch counts too,
   though nothing is kept yet: the list's first height is computed from its
   rows. A case of walled_garden's "A menu bar popup opens at its final size".
