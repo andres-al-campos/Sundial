@@ -902,13 +902,18 @@ private struct KeyDot: View {
         let line: CGFloat = selected ? 3 : 2.5
         let c = LightDay.rgb(look.xy)
         ZStack {
-            Circle().fill(look.on ? Color(red: c.r, green: c.g, blue: c.b) : Color.black.opacity(0.6))
+            Circle().fill(Color(red: c.r, green: c.g, blue: c.b))
             Circle().inset(by: line / 2).stroke(.black.opacity(0.5), lineWidth: line)
-            Circle().inset(by: line / 2).trim(from: 0, to: look.on ? look.brightness / 100 : 0)
-                .rotation(.degrees(-90)).stroke(.white, lineWidth: line)
+            if look.on {
+                Circle().inset(by: line / 2).trim(from: 0, to: look.brightness / 100)
+                    .rotation(.degrees(-90)).stroke(.white, lineWidth: line)
+            } else {
+                Capsule().fill(.white).frame(width: line, height: size).rotationEffect(.degrees(45))
+            }
         }
         .frame(width: size, height: size)
         .background(Circle().stroke(.black.opacity(0.55), lineWidth: selected ? 1.5 : 0.75))
+        .dimmed(look.on)
     }
 }
 

@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 21:43, at 1.1.0.
+Updated 2026-11-04 21:49, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -9,7 +9,7 @@ artificial light follows the natural light along with the screen.
 
 - **Lights window.** One row per bulb across the day, on a card, read from the bridge, the
   band showing the bulb's colour dimmed part way by its brightness. A keyframe is its true colour in a ring whose white fills
-  with its brightness, clockwise from the top; an off one is an empty ring around a dark centre. Above the bands are
+  with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash across it. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
@@ -27,7 +27,7 @@ artificial light follows the natural light along with the screen.
   minutes before sunset.
 - **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
   with a badge in the top row saying what it lands on, such as 45% at 6:48 PM. On letting go the bulb fades back to where
-  the day has it, over half a second, and only the bulbs that moved are sent.
+  the day has it, or to its hold, over half a second, and only the bulbs that moved are sent.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
   and the card says "Held until sunrise" with Back to schedule in orange text, which fades it back in half a second.
@@ -118,9 +118,10 @@ blend looks in the room.
 - 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
   schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
 
-- 2026-11-04 21:19, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, then "a bit bigger
-  and thinner": 22 points with a 2.5 line, since at 24 keyframes 51 minutes apart overlap. With the true colour here, the band can dim part way, to 55% at the bottom: at 22% colours
-  looked "very different from the actual color", and no dimming was "a bit too bright".
+- 2026-11-04 21:49, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, then "a bit bigger
+  and thinner": 22 points with a 2.5 line, since at 24 keyframes 51 minutes apart overlap. With the true colour here, the band runs from 62% to 88% of it: at 22% colours
+  looked "very different from the actual color", no dimming was "a bit too bright", and then "the actual brightest colors should be a bit dimmer than the actual colors and the
+  lowest brightness a little brighter". An off keyframe isn't pitch black: it's dimmed as the card's wheel is, with a diagonal "so it looks like that empty set symbol".
 
 - 2026-11-04 21:17, 1.1.0. **A follower follows a hold too.** "When a light is following another light the temp colors should also be followed." Its day is the other bulb's, and a held
   colour sits on top of that day. Applies *Never a fight with the controls*.
