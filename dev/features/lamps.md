@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 22:51, at 1.1.0.
+Updated 2026-11-04 23:22, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -99,7 +99,7 @@ The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's fu
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
 
-By hand only: the window, how the card moves, pairing, that the bridge takes the fades, how the
+By hand only: the window, a real drag and the right-click menus (SwiftUI's gestures and menus take nothing off-screen), how the card moves, pairing, that the bridge takes the fades, how the
 blend looks in the room.
 
 ## Calls
@@ -117,6 +117,9 @@ blend looks in the room.
 
 - 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
   schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
+
+- 2026-11-04 23:22, 1.1.0. **Sundial is the lights' only schedule.** The bridge's own routines were turned off in the Hue app "so they don't get in the way". The cost is that the lights stay where they are while the Mac is asleep or off,
+  and catch up on wake.
 
 - 2026-11-04 22:14, 1.1.0. **A hold holds against the bridge too.** "The hold color doesn't actually hold it sometimes? It goes back to the preset colors." Sundial only sent when its target moved and a hold's
   doesn't, so anything else moving the bulb had it to itself: the room log showed both bulbs falling from 100% for four minutes while every tick sent 0. So a tick also compares what
