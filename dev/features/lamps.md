@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 22:33, at 1.1.0.
+Updated 2026-11-04 22:41, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -11,7 +11,7 @@ artificial light follows the natural light along with the screen.
   band showing the bulb's colour dimmed by its brightness, reaching 90% of the real colour at full brightness. A keyframe is its true colour in a ring whose white fills
   with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash in the ring's grey running past the rim, as in ∅. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
-  to another moves aside, and a tick stays on the real time.
+  to another moves aside, and a tick stays on the real time. A line marks the time now, ending in a solid head under the last row.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change). Click a dot for its time, on/off, brightness, temperature

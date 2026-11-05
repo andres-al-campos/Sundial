@@ -66,6 +66,7 @@ struct LightsView: View {
     @State private var clip: Clip = .init()
     @State private var renaming: String?
     @State private var playMinute: Double?
+    @Environment(\.colorScheme) private var scheme
     @State private var playTask: Task<Void, Never>?
     @State private var previewing: Previewing?
     /// What the card last showed, so it still has it while it slides away. Something from
@@ -432,8 +433,9 @@ struct LightsView: View {
                         }
                         .overlay(alignment: .leading) {
                             if bulb.id == bulbs.last?.id {
+                                // Solid, because `.primary` is 85% on macOS and the line showed through to its centre.
                                 Circle()
-                                    .fill(.primary)
+                                    .fill(scheme == .dark ? Color.white : Color.black)
                                     .frame(width: 9, height: 9)
                                     .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (Layout.rowHeight + Layout.rowGap) / 2)
                             }
