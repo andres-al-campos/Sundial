@@ -26,10 +26,10 @@ artificial light follows the natural light along with the screen.
   minutes before sunset.
 - **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
   with a badge in the top row saying what it lands on, such as 45% at 6:48 PM. On letting go the bulb fades back to where
-  the day has it, over 1 second.
+  the day has it, over half a second, and only the bulbs that moved are sent.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
-  and the card says "Held until sunrise" with Back to schedule in orange text, which fades it back in 1 second.
+  and the card says "Held until sunrise" with Back to schedule in orange text, which fades it back in half a second.
   A hold ends by itself at the next sunrise, covers only the bulb clicked and not those linked to
   it, and is forgotten on relaunch. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
@@ -144,6 +144,9 @@ blend looks in the room.
 - 2026-11-04 18:22, 1.1.0. **A drag leaves on and off alone.** Taking what's under it used to turn an off keyframe back on: "why does dragging a keyframe that is
   off turn it back on?" The switch is what says on or off. Applies *Never a fight with the controls*.
 
+- 2026-11-04 20:47, 1.1.0. **The way back is quick.** 1 second "still feels a bit slow", and the wait before it counted too: the moved bulb took its turn behind the rest. Gradually is for
+  the day (*Just right for the room*); this answers your hand. Half a second, the moved bulbs first, with the preview's pacing cut short.
+
 - 2026-11-02 05:18, 1.1.0. **A lamp switched off by hand stays off.** Sundial used to send on with every
   fade, so a lamp switched off from the phone came back on within a minute: "It
   should not re set the light color when I've turned off the lights". Only the
@@ -155,7 +158,7 @@ blend looks in the room.
 
 ## Gotchas
 
-- The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`.
+- The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`. A "back to the day" line says how long a return took to send.
 - A lit lamp's colour or brightness changed in the Hue app is set back within a minute while Follow is on. Pause keeps it.
 - Previewing a keyframe or Play the day lights a bulb that was off, and it stays on afterwards.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.

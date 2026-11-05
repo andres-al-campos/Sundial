@@ -19,6 +19,7 @@ final class LampController {
     private var busy = false
     private var readingKey = false
     private var returning = false
+    private var returnStarted = Date.distantPast
     /// While paused a preview returns to what the lamps were, since the day isn't
     /// theirs to follow: Pause is there so the Hue app can use them.
     private var beforePreview: [String: LightDay.State]?
@@ -34,7 +35,7 @@ final class LampController {
     /// A bulb added or renamed in the Hue app is seen within this long.
     static let rereadBulbs: TimeInterval = 600
     static let previewPace: TimeInterval = 0.5
-    static let returnFade: TimeInterval = 1
+    static let returnFade: TimeInterval = 0.5
     static let previewBulbsPerPace = 2.0
 
     func start(state: AppState) {
@@ -153,8 +154,10 @@ final class LampController {
                 } catch {
                     state?.lampStatus = error.localizedDescription
                 }
-                let spare = Self.previewPace * Double(max(batch.count, 1)) / Self.previewBulbsPerPace - Date().timeIntervalSince(started)
-                if spare > 0 { try? await Task.sleep(for: .seconds(spare)) }
+                // Cut short on letting go: the way back is one call a bulb, nowhere near what
+                // slows the bridge, and waiting here is time the bulb sits on the preview.
+                let until = started.addingTimeInterval(Self.previewPace * Double(max(batch.count, 1)) / Self.previewBulbsPerPace)
+                while previewing, Date() < until { try? await Task.sleep(for: .milliseconds(20)) }
             }
             previewTask = nil
         }
@@ -166,7 +169,9 @@ final class LampController {
         pendingPreview = [:]
         previewing = false
         returning = true
-        sent = [:]
+        returnStarted = Date()
+        // Only these moved. Resending the rest made the one you were watching wait its turn.
+        for id in previewed { sent[id] = nil }
         Task {
             await previewTask?.value
             while busy { try? await Task.sleep(for: .milliseconds(50)) }
@@ -242,6 +247,7 @@ final class LampController {
                 return
             }
             guard !previewing else { return }
+            let moved = previewed
             previewed = []
             let now = Date()
             let marks = LightDay.Marks(warm: SunClock.schedule(on: now, bedtime: state.bedtime), sun: SunClock.sun(on: now))
@@ -249,8 +255,9 @@ final class LampController {
             let minute = (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
             let bulbs = state.lights ?? []
             let lit = try await bridge.lampsOn()
+            let backFirst = bulbs.filter { moved.contains($0.id) } + bulbs.filter { !moved.contains($0.id) }
             var sends = 0, leftOff = 0
-            for bulb in bulbs {
+            for bulb in backFirst {
                 let hold = state.holds[bulb.id]?.look
                 guard let target = hold ?? LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
                       let isOn = lit[bulb.id] else { continue }
@@ -272,6 +279,10 @@ final class LampController {
                 if send == .power {
                     if target.on { offByDay.remove(bulb.id) } else { offByDay.insert(bulb.id) }
                 }
+            }
+            if returning {
+                let seconds = Date().timeIntervalSince(returnStarted)
+                Self.log.notice("back to the day: sent \(sends) within \(seconds, format: .fixed(precision: 2))s of letting go")
             }
             returning = false
             state.lampStatus = "Paired · following the day"
