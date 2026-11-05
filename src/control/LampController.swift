@@ -225,6 +225,10 @@ final class LampController {
     }
 
     private func tick() async {
+        // A drop saves, which asks for a tick before the preview has handed back, and its last
+        // send can still be on its way. Landing after this tick's it would stay: `sent` says the
+        // bulb is on target, and under a hold the target never moves to correct it.
+        if !previewing { await previewTask?.value }
         guard let state, !busy else {
             Self.log.notice("tick skipped: the last one hasn't finished")
             return

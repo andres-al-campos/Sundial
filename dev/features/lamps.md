@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 21:19, at 1.1.0.
+Updated 2026-11-04 21:43, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -91,7 +91,10 @@ lamp someone switched off is left alone.
 It also checks that a keyframe saved as disabled counts, a new bulb's three keyframes, what counts as new, and that whites have a
 temperature and colours don't.
 
-It also checks when a hold ends and whose hold a follower is under. What a held bulb is sent has no check yet.
+It also checks when a hold ends and whose hold a follower is under.
+
+`./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. After a drag a bulb goes back to its hold or the
+day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and an off keyframe's drag doesn't leave it off.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
@@ -168,7 +171,7 @@ blend looks in the room.
 
 - The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`. A "back to the day" line says how long a return took to send.
 - A lit lamp's colour or brightness changed in the Hue app is set back within a minute while Follow is on. Pause keeps it.
-- Previewing a keyframe or Play the day lights a bulb that was off, and it stays on afterwards.
+- Previewing a keyframe or Play the day lights a bulb that was off, and it stays on afterwards. Previewing an off keyframe counts as Sundial turning it off, so the way back lights it even if someone had switched it off first.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
 - Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly. Below that the white curve is a table of Planck's law, ending at 700 K, where it reaches these bulbs' red corner (xy 0.692, 0.308).
