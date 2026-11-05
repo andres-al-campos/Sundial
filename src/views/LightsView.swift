@@ -428,16 +428,16 @@ struct LightsView: View {
                         .overlay(alignment: .leading) {
                             Rectangle()
                                 .fill(.primary.opacity(0.85))
-                                .frame(width: 1.5, height: Layout.rowHeight + Layout.rowGap)
-                                .offset(x: geo.size.width * Layout.position(lineMinute) - 0.75)
+                                .frame(width: Layout.scrubberLine, height: Layout.rowHeight + Layout.rowGap)
+                                .offset(x: geo.size.width * Layout.position(lineMinute) - Layout.scrubberLine / 2)
                         }
                         .overlay(alignment: .leading) {
                             if bulb.id == bulbs.last?.id {
                                 // Solid, because `.primary` is 85% on macOS and the line showed through to its centre.
                                 Circle()
                                     .fill(scheme == .dark ? Color.white : Color.black)
-                                    .frame(width: 9, height: 9)
-                                    .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (Layout.rowHeight + Layout.rowGap) / 2)
+                                    .frame(width: Layout.scrubberHead, height: Layout.scrubberHead)
+                                    .offset(x: geo.size.width * Layout.position(lineMinute) - Layout.scrubberHead / 2, y: (Layout.rowHeight + Layout.rowGap) / 2)
                             }
                         }
                         .allowsHitTesting(false)
@@ -828,6 +828,10 @@ enum Layout {
     static let rowHeight: CGFloat = bandHeight + 2 * bandMargin
     static let rowGap: CGFloat = 8
     static let rowsPadding: CGFloat = 16
+    /// Views land on whole pixels, so a line and a head share a centre only when both are odd in
+    /// pixels or both even. At 2x these are 3 and 19; a head of 9 sat half a pixel off the line.
+    static let scrubberLine: CGFloat = 1.5
+    static let scrubberHead: CGFloat = 9.5
 
     static let cardCorner: CGFloat = 12
     static let cardPadding: CGFloat = 14
