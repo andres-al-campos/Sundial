@@ -161,6 +161,13 @@ check("a hold before sunrise ends that morning", LightDay.holdEnd(from: holdDay,
 let afternoon = holdDay.addingTimeInterval(12 * 3600)
 check("a hold after sunrise ends the next morning", LightDay.holdEnd(from: afternoon, sunrise: 360, in: holdCalendar) == holdDay.addingTimeInterval(27 * 3600), "after")
 
+// The room log's column: names kept apart from the CSV's own separators.
+var logged = LightDay.Bulb(id: "x", deviceID: "dx", name: "Desk, left", keys: [])
+let loggedOff = LightDay.Bulb(id: "y", deviceID: "dy", name: "Floor", keys: [])
+logged.parent = nil
+let line = LightDay.logged(["x": .init(on: true, brightness: 45.4, xy: .init(x: 0.5123, y: 0.4)), "y": .init(on: false, brightness: 45, xy: .init(x: 0.5, y: 0.4))], bulbs: [logged, loggedOff])
+check("the room log says each bulb's look, or off", line == "Desk left=45/0.512/0.400;Floor=off", line)
+
 // A follower is under the hold of the bulb it follows, unless it has its own.
 var leader = LightDay.Bulb(id: "lead", deviceID: "d1", name: "Lead", keys: [])
 var follower = LightDay.Bulb(id: "follow", deviceID: "d2", name: "Follow", keys: [])

@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-04 20:47, at 1.1.0.
+Updated 2026-11-04 21:46, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -61,8 +61,8 @@ presets; Schedule (the presets) is the other.
   `room-log.csv` next to `config.json`. The `dark` column is how far along the
   evening's slide it was (0 to 1), and from 2026-11-01 runs all evening, not
   only at 0 lux; `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
-  night minimum and `dark` columns, and from 2026-10-31 night contrast; a log started before then has the older
-  header.
+  night minimum and `dark` columns, from 2026-10-31 night contrast, and from 2026-11-04 `lamps`, each bulb's brightness and xy or "off" at the last
+  read, up to 30 seconds old, as `Light 1=45/0.512/0.414;Light 2=off`. A log started before then has the older header.
 - **Auto | Schedule** under the header picks which one drives the monitor.
 
 ## How to get to it
@@ -184,6 +184,8 @@ row.
 - 2026-10-27 01:02, 1.0.3. Night Shift's start and end follow sunset and sunrise, located by the time
   zone rather than Location Services: "timezone is good enough". Full warmth
   stays at midnight ("just midnight is fine"), which the sun doesn't move. Applies *Just right for the room*.
+- 2026-11-04 21:46, 1.1.0. The room log says what the lamps were doing too, since they're part of the light the sensor reads: "it should also track what the current light colors are, not just
+  the monitors, since it affects the lux obviously." Paused included, when the Hue app may have them doing anything. Applies *Just right for the room*.
 - 2026-11-02 16:21, 1.1.0. A sunset set by the time zone alone isn't good enough after all: in a big zone
   it can be an hour from the real one. So Settings shows a map to confirm
   the spot, but stays coarse, rounded to whole degrees and with no Location Services:

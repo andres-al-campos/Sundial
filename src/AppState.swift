@@ -34,6 +34,9 @@ class AppState: ObservableObject {
     @Published var lampsFollow: Bool = false
     /// Bulbs set by hand for now. Not saved: a relaunch hands them back to the day.
     @Published var holds: [String: LightDay.Hold] = [:]
+    /// What the bulbs were doing at the last tick, for the room log. Not published: nothing on
+    /// screen shows it, and it would redraw every window twice a minute.
+    var lampsRead: [String: LightDay.State] = [:]
     /// Each bulb's day. Nil until the scenes on the bridge have been imported.
     @Published var lights: [LightDay.Bulb]?
     /// The paired Hue Bridge's host name; its key is in the Keychain.

@@ -103,6 +103,16 @@ enum LightDay {
         var until: Date
     }
 
+    /// The room log's lamps column: each bulb's brightness and xy, or off. The sensor reads the
+    /// lamps too, so a curve fitted to that log needs to know what they were doing.
+    static func logged(_ read: [String: State], bulbs: [Bulb]) -> String {
+        bulbs.compactMap { bulb -> String? in
+            guard let s = read[bulb.id] else { return nil }
+            let name = bulb.name.filter { !",;=".contains($0) }
+            return s.on ? String(format: "%@=%.0f/%.3f/%.3f", name, s.brightness, s.xy.x, s.xy.y) : "\(name)=off"
+        }.joined(separator: ";")
+    }
+
     /// Whose hold a bulb is under: its own, or else that of the bulb it follows, as it follows
     /// that bulb's day.
     static func holdOwner(of id: String, in bulbs: [Bulb], holds: [String: Hold]) -> String? {

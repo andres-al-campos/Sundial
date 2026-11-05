@@ -151,6 +151,14 @@ Task { @MainActor in
     await drag()
     expect("a drag while held and paused", ["a": held, "b": held])
 
+    // Paused is when the Hue app may have them doing anything, and the room log still wants to know.
+    Bulbs.now["a"] = day
+    lamps.refresh()
+    await settle()
+    if state.lampsRead["a"].map(named) != named(day) {
+        failures.append("the room log's read while paused: bulb a read \(named(state.lampsRead["a"])), wanted the day. Read the lamps above the pause guard in tick.")
+    }
+
     hung.cancel()
     if failures.isEmpty { exit(0) }
     print("✗ held-lamp: a bulb ended on the wrong look. Fix it in src/control/LampController.swift, where a preview hands back (endPreview, tick, restore):")

@@ -251,6 +251,8 @@ final class LampController {
             try await syncBulbs(bridge, state)
             let ended = state.holds.filter { $0.value.until <= Date() }.keys
             for id in ended { state.holds[id] = nil }
+            // Above the pause, since paused is when the Hue app may have them doing anything.
+            state.lampsRead = try await bridge.lampStates()
             guard state.lampsFollow else {
                 state.lampStatus = "Paired · paused"
                 return

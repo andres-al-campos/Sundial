@@ -284,11 +284,12 @@ final class AutoController {
             String(format: "%.2f", dark),
             set == .nightContrast ? String(format: "%.1f", state.autoNightContrast) : "",
             set == .hold ? "1" : "",
+            LightDay.logged(state.lampsRead, bulbs: state.lights ?? []),
         ]
         let line = fields.joined(separator: ",") + "\n"
         let fm = FileManager.default
         if !fm.fileExists(atPath: Self.logURL.path) {
-            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark,night_contrast_set,dark_hold\n".utf8))
+            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark,night_contrast_set,dark_hold,lamps\n".utf8))
         }
         guard let handle = try? FileHandle(forWritingTo: Self.logURL) else { return }
         defer { try? handle.close() }
