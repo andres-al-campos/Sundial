@@ -356,9 +356,9 @@ enum LightDay {
         return (hue - hue.rounded(.down), span / top)
     }
 
-    /// How far a colour is dimmed on the band. The floor keeps a dim band's colour readable, and
-    /// the ceiling keeps a bright band below the true colour at the centre of its keyframes.
-    static func shade(brightness: Double) -> Double { 0.62 + 0.26 * pow(max(0, brightness) / 100, 0.6) }
+    /// How far a colour is dimmed on the band. Keyframes' rings say the brightness, so only the
+    /// bright end is held back: near-white across the window is too much at night.
+    static func shade(brightness: Double) -> Double { 1 - 0.1 * max(0, brightness) / 100 }
 
     /// The colour temperature nearest an xy, a colour's too.
     static func kelvin(_ xy: LampBlend.XY) -> Int {

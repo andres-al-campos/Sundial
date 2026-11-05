@@ -51,8 +51,8 @@ final class LightsHistory: ObservableObject {
     }
 }
 
-/// One row per bulb across the day, the band being what the bulb does: its colour,
-/// dimmed by its brightness. Click a band for a keyframe, drag one to move it,
+/// One row per bulb across the day, the band being what the bulb does: its colour, with
+/// its brightness on the keyframes' rings. Click a band for a keyframe, drag one to move it,
 /// click one for its settings on the card that comes down below, or click a bulb's
 /// name to change it right now. Right-click for copy, paste and linking.
 struct LightsView: View {
@@ -505,7 +505,7 @@ struct LightsView: View {
         let look = dragging == key.id ? (dragLook ?? Self.state(key)) : Self.state(key)
         let selected = selection?.key == key.id
         return KeyDot(look: look, selected: selected)
-            .contentShape(Circle())
+            .contentShape(Circle().inset(by: -1))
             .position(x: width * Layout.position(at), y: Layout.rowHeight / 2)
             .gesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .local)
@@ -898,17 +898,21 @@ private struct KeyDot: View {
     let selected: Bool
 
     var body: some View {
-        let size: CGFloat = selected ? 26 : 22
-        let line: CGFloat = selected ? 3 : 2.5
+        let size: CGFloat = selected ? 24 : 20
+        let line = size * 0.114
         let c = LightDay.rgb(look.xy)
         ZStack {
             Circle().fill(Color(red: c.r, green: c.g, blue: c.b))
-            Circle().inset(by: line / 2).stroke(.black.opacity(0.5), lineWidth: line)
+            // Together, so the grey is one grey where the slash crosses the ring.
+            ZStack {
+                Circle().inset(by: line / 2).stroke(.black, lineWidth: line)
+                if !look.on { Capsule().fill(.black).frame(width: line, height: size).rotationEffect(.degrees(45)) }
+            }
+            .compositingGroup()
+            .opacity(0.5)
             if look.on {
                 Circle().inset(by: line / 2).trim(from: 0, to: look.brightness / 100)
                     .rotation(.degrees(-90)).stroke(.white, lineWidth: line)
-            } else {
-                Capsule().fill(.white).frame(width: line, height: size).rotationEffect(.degrees(45))
             }
         }
         .frame(width: size, height: size)
