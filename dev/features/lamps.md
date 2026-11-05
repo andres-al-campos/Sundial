@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 22:29, at 1.1.0.
+Updated 2026-11-04 22:30, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -8,7 +8,7 @@ artificial light follows the natural light along with the screen.
 ## Sub-features
 
 - **Lights window.** One row per bulb across the day, on a card, read from the bridge, the
-  band showing the bulb's colour, from its real colour at the dim end to 90% of it at the bright end. A keyframe is its true colour in a ring whose white fills
+  band showing the bulb's colour dimmed by its brightness, reaching 90% of the real colour at full brightness. A keyframe is its true colour in a ring whose white fills
   with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash across it in the ring's grey. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time.
@@ -122,9 +122,9 @@ blend looks in the room.
   doesn't, so anything else moving the bulb had it to itself: the room log showed both bulbs falling from 100% for four minutes while every tick sent 0. So a tick also compares what
   the bulb reads. Applies *Never a fight with the controls*.
 
-- 2026-11-04 22:15, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, at 20 points with a thin
-  line: 22 was "a bit" big, so it came back down keeping "the ratio of circle to ring". With the true colour and the brightness both here, the band doesn't have to say either: "it's fine to
-  show the real colors on the dim end", and the bright end stays at 90% because it's "a bit too bright sometimes at night". An off keyframe isn't pitch black: it's dimmed as the card's wheel
+- 2026-11-04 22:30, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, at 20 points with a thin
+  line: 22 was "a bit" big, so it came back down keeping "the ratio of circle to ring". With the true colour and the brightness both here, the band's top can hold back: full brightness shows 90% of the real colour because it's "a bit too bright sometimes at night". The dim end stays
+  dim, since lifting it looked "a bit too bright": "the real dimness from before". An off keyframe isn't pitch black: it's dimmed as the card's wheel
   is, with a diagonal in the ring's grey "so it looks like that empty set symbol".
 
 - 2026-11-04 21:17, 1.1.0. **A follower follows a hold too.** "When a light is following another light the temp colors should also be followed." Its day is the other bulb's, and a held
