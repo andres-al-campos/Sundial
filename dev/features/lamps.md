@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 13:18, at 1.1.0.
+Updated 2026-11-05 14:06, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -89,7 +89,7 @@ temperature and colours don't.
 It also checks when a hold ends and whose hold a follower is under.
 
 `./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. A keyframe's drag sends nothing, even with a tick landing during it, and its drop arrives at the usual fade. After a preview a bulb goes back to its hold or the
-day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and previewing an off keyframe doesn't leave it off. A routine moving a bulb gets put back, held or on a flat stretch.
+day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and previewing an off keyframe doesn't leave it off, while a bulb switched off by hand goes back off after a preview. A routine moving a bulb gets put back, held or on a flat stretch.
 
 The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band. `tests/card-stays-open.sh` checks that only `deselect` closes the card and the menus don't call it.
 
@@ -153,7 +153,6 @@ blend looks in the room.
 
 - The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`. A "back to the day" line says how long a return took to send.
 - A lit lamp's colour or brightness changed in the Hue app, or by a routine there, is set back within a minute or so while Follow is on, held or not. A tick's log line says how many it put back. Pause keeps the change.
-- Previewing a keyframe or Play the day lights a bulb that was off, and it stays on afterwards. Previewing an off keyframe counts as Sundial turning it off, so the way back lights it even if someone had switched it off first.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
 - Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly. Below that the white curve is a table of Planck's law, ending at 700 K, where it reaches these bulbs' red corner (xy 0.692, 0.308).

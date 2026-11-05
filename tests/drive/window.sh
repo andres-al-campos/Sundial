@@ -49,9 +49,12 @@ Task { @MainActor in
         print("✗ window: the test would write to the real config at \(AppState.supportDirectory.path). Run it through this script, which gives it a home of its own."); exit(1)
     }
     if state.lights == nil {
-        func key(_ m: Int, _ b: Double, _ x: Double, _ y: Double) -> LightDay.Key { .init(minute: m, anchor: nil, on: true, brightness: b, x: x, y: y) }
-        state.lights = [.init(id: "a", deviceID: "da", name: "Lamp", keys: [key(420, 30, 0.52, 0.41), key(720, 100, 0.34, 0.35), key(1260, 15, 0.60, 0.38)])]
+        func key(_ m: Int, _ b: Double, _ x: Double, _ y: Double, on: Bool = true) -> LightDay.Key { .init(minute: m, anchor: nil, on: on, brightness: b, x: x, y: y) }
+        state.lights = [.init(id: "a", deviceID: "da", name: "Lamp", keys: [key(420, 30, 0.52, 0.41), key(720, 100, 0.34, 0.35), key(1260, 15, 0.60, 0.38), key(60, 0, 0.60, 0.38, on: false)])]
     }
+    // Unpaired, the section is a pairing prompt whose button alone has enough colours to pass. No
+    // bridge is reached: nothing here starts the LampController.
+    if state.hueHost == nil { state.hueHost = "bridge.test" }
     state.lampStatus = "Paired · following the day"
     state.lampsFollow = true
     state.windowSection = .lights

@@ -222,9 +222,10 @@ enum LightDay {
         let gap = (b.at - a.at + total).truncatingRemainder(dividingBy: total)
         let t = gap == 0 ? 0 : (minute - a.at + total).truncatingRemainder(dividingBy: total) / gap
 
-        // Fading to or from off goes through the bulb's dimming, in the lit
-        // keyframe's colour.
-        let from = a.key.on ? a.key : b.key, to = b.key.on ? b.key : a.key
+        // Fading to or from off goes through the bulb's dimming, and through the off keyframe's own
+        // colour: taking the lit one's on both sides jumped from one colour to the other at the
+        // off keyframe.
+        let from = a.key, to = b.key
         let fromLevel = a.key.on ? a.key.brightness : 0, toLevel = b.key.on ? b.key.brightness : 0
         return State(
             on: (a.key.on || b.key.on) && !(t == 0 && !a.key.on),

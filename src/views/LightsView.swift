@@ -947,7 +947,10 @@ private struct Band: View {
             for x in 0..<columns {
                 let minute = (Double(Layout.start) + Double(x) / Double(columns) * Double(LightDay.day))
                     .truncatingRemainder(dividingBy: Double(LightDay.day))
-                guard let s = LightDay.state(keys, at: minute, marks: marks), s.on else { continue }
+                guard var s = LightDay.state(keys, at: minute, marks: marks) else { continue }
+                // Off draws as the dimmest the bulb goes, in its colour, so the fade into it doesn't
+                // stop at a hard edge.
+                if !s.on { s = .init(on: true, brightness: 0, xy: s.xy) }
                 context.fill(Path(CGRect(x: CGFloat(x), y: 0, width: 1.5, height: size.height)), with: .color(LightsView.color(s)))
             }
         }
