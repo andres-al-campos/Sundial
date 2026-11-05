@@ -152,11 +152,12 @@ Task { @MainActor in
     expect("a drag while held and paused", ["a": held, "b": held])
 
     // Paused is when the Hue app may have them doing anything, and the room log still wants to know.
-    Bulbs.now["a"] = day
+    // A look bulb a has had at no earlier read, so a stale read can't pass for this one.
+    Bulbs.now["a"] = apart
     lamps.refresh()
     await settle()
-    if state.lampsRead["a"].map(named) != named(day) {
-        failures.append("the room log's read while paused: bulb a read \(named(state.lampsRead["a"])), wanted the day. Read the lamps above the pause guard in tick.")
+    if named(state.lampsRead["a"]) != named(apart) {
+        failures.append("the room log's read while paused: bulb a read \(named(state.lampsRead["a"])), wanted what it's doing now. Read the lamps above the pause guard in tick.")
     }
 
     hung.cancel()
