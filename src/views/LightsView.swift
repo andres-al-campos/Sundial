@@ -127,6 +127,11 @@ struct LightsView: View {
         }
         .onChange(of: shown) { _, new in if let new { lastShown = new } }
         .onChange(of: selection != nil) { _, selected in cardOpen = selected }
+        // A delete from the right-click menu, Paste Day or an undo. A right-click leaves the card
+        // open, and the row is what's left of where that keyframe was.
+        .onChange(of: keyframeGone) { _, gone in
+            if gone, let selection { showRow(selection.bulb) }
+        }
         .onDisappear {
             playTask?.cancel()
             endPreviewNow()
@@ -525,10 +530,7 @@ struct LightsView: View {
         Button("Paste Color and Brightness") { pasteLook(onto: key.id, bulb: bulb) }
             .disabled(clip.key == nil)
         Divider()
-        Button("Delete Keyframe") {
-            selection = Selection(bulb: bulb.id, key: key.id)
-            deleteSelected()
-        }
+        Button("Delete Keyframe") { deleteKey(key.id, of: bulb.id) }
     }
 
     @ViewBuilder
@@ -565,7 +567,8 @@ struct LightsView: View {
                 ForEach(bulbs.filter { $0.id != bulb.id && $0.parent == nil }) { other in
                     Button(other.name) {
                         edit { $0[bulb.id]?.parent = other.id }
-                        if selection?.bulb == bulb.id { selection = nil }
+                        // Its keyframes are no longer what it does, so its own card stands in.
+                        if selection?.bulb == bulb.id, selection?.key != nil { showRow(bulb.id) }
                         history.commit(undo, "Link Bulbs")
                     }
                 }
@@ -589,17 +592,32 @@ struct LightsView: View {
     private func toggle(_ s: Selection) {
         if selection == s { deselect() } else {
             history.commit(undo, "Change Keyframe")
-            // Opening takes the card's slide. A dot with an animation of its own would
-            // leave its row behind during that slide.
-            if selection == nil { selection = s } else { withAnimation(.easeOut(duration: 0.15)) { selection = s } }
+            show(s)
         }
+    }
+
+    private func show(_ s: Selection) {
+        // Opening takes the card's slide. A dot with an animation of its own would
+        // leave its row behind during that slide.
+        if selection == nil { selection = s } else { withAnimation(.easeOut(duration: 0.15)) { selection = s } }
+    }
+
+    private var keyframeGone: Bool { selection?.key != nil && selectedKey == nil }
+
+    private func showRow(_ id: String) {
+        show(Selection(bulb: id, key: nil))
+        readLampsNow()
+    }
+
+    private func readLampsNow() {
+        Task { if let read = try? await appState.onReadLamps?() { lampsNow = read } }
     }
 
     /// The card for the bulb itself, from what the lamp is doing now.
     private func selectBulb(_ id: String) {
         toggle(Selection(bulb: id, key: nil))
         guard selection?.key == nil, selection?.bulb == id else { return }
-        Task { if let read = try? await appState.onReadLamps?() { lampsNow = read } }
+        readLampsNow()
     }
 
     private func holdOwner(_ id: String) -> String? {
@@ -704,10 +722,8 @@ struct LightsView: View {
         history.commit(undo, "Paste Color and Brightness")
     }
 
-    private func deleteSelected() {
-        guard let selection else { return }
-        edit { $0[selection.bulb]?.keys.removeAll { $0.id == selection.key } }
-        self.selection = nil
+    private func deleteKey(_ id: UUID, of bulb: String) {
+        edit { $0[bulb]?.keys.removeAll { $0.id == id } }
         history.commit(undo, "Delete Keyframe")
         endPreviewNow()
     }

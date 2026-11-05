@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 22:50, at 1.1.0.
+Updated 2026-11-04 22:51, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -38,7 +38,7 @@ artificial light follows the natural light along with the screen.
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
   sliders, keeping their fill, and both say "Off". Every button shades on hover. The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
-  away, as does clicking around the rows.
+  away, as does clicking around the rows. A right-click leaves it open. If its keyframe goes, from a delete, Paste Day or an undo, it moves to that bulb's own card.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
   temperature has its own spot. Screens run out of red around 900 K, so below that the
   thumb moves and the bulb changes while the colours on screen stay the same red.
@@ -94,7 +94,7 @@ It also checks when a hold ends and whose hold a follower is under.
 `./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. A keyframe's drag sends nothing, even with a tick landing during it, and its drop arrives at the usual fade. After a preview a bulb goes back to its hold or the
 day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and previewing an off keyframe doesn't leave it off. A routine moving a bulb gets put back, held or on a flat stretch.
 
-The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band.
+The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band. `tests/card-stays-open.sh` checks that only `deselect` closes the card and the menus don't call it.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
@@ -156,6 +156,9 @@ blend looks in the room.
 - 2026-11-04 20:47, 1.1.0. **A time looks the same everywhere.** "Why is there no line on the popup one?" and "theres more padding on the bottom than the top": the window, the
   popup and the Schedule share `TimeField`, so they can't drift apart. Its arrows are the system's stepper and step what's highlighted, as the picker's own
   did. Applies *Never a fight with the controls*.
+
+- 2026-11-04 22:51, 1.1.0. **A right-click leaves the card open.** "Right click actions should not close the color setting if it's open." Deleting the keyframe it shows leaves nothing to show, and then "it can just select the row
+  instead". Applies *Never a fight with the controls*.
 
 - 2026-11-04 22:50, 1.1.0. **A drag moves the time, not the room.** Dragging a keyframe used to show it on the bulb: "there's no need since dragging just means change the time not the colors". The band already
   shows the day it makes, and scrubbing past noon at night would flood the room (*Motion spends attention*). *What you touch is what the monitor does* is about sliders: a time isn't something
