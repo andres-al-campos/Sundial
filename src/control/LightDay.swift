@@ -339,7 +339,7 @@ enum LightDay {
 
     /// How far a colour is dimmed on the band. The floor keeps a dim band's
     /// colour readable.
-    static func shade(brightness: Double) -> Double { 0.22 + 0.78 * pow(max(0, brightness) / 100, 0.6) }
+    static func shade(brightness: Double) -> Double { 0.55 + 0.45 * pow(max(0, brightness) / 100, 0.6) }
 
     /// The colour temperature nearest an xy, a colour's too.
     static func kelvin(_ xy: LampBlend.XY) -> Int {

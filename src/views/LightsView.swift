@@ -504,16 +504,8 @@ struct LightsView: View {
         let at = LightDay.minute(of: key, marks: marks)
         let look = dragging == key.id ? (dragLook ?? Self.state(key)) : Self.state(key)
         let selected = selection?.key == key.id
-        let size: CGFloat = selected ? 17 : 13
-        let line: CGFloat = selected ? 3 : 1.5
-        return Circle()
-            .fill(Self.color(look))
-            .overlay(Circle().strokeBorder(.white, lineWidth: line))
-            // White and a dark edge, because bands run from pale to nearly black and the
-            // accent colour disappeared against the dark ones.
-            .background(Circle().stroke(.black.opacity(selected ? 0.6 : 0), lineWidth: 1))
-            .frame(width: size, height: size)
-            .contentShape(Circle().inset(by: -4))
+        return KeyDot(look: look, selected: selected)
+            .contentShape(Circle())
             .position(x: width * Layout.position(at), y: Layout.rowHeight / 2)
             .gesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .local)
@@ -821,7 +813,7 @@ enum Layout {
     static let edge: CGFloat = 28
     static let name: CGFloat = 130
     static let gap: CGFloat = 12
-    static let bandHeight: CGFloat = 28
+    static let bandHeight: CGFloat = 34
     static let linkedHeight: CGFloat = 12
     /// What shows of a row above and below its band.
     static let bandMargin: CGFloat = 5
@@ -897,6 +889,28 @@ struct BulbIndex {
 }
 
 // MARK: - The band
+
+/// A keyframe: its true colour, in a ring that fills with its brightness clockwise from the top.
+/// The band is dimmed so the day reads at a glance, which leaves this as the one place the real
+/// colour shows. The track and edge are dark because white alone vanishes on a pale band.
+private struct KeyDot: View {
+    let look: LightDay.State
+    let selected: Bool
+
+    var body: some View {
+        let size: CGFloat = selected ? 26 : 22
+        let line: CGFloat = selected ? 3 : 2.5
+        let c = LightDay.rgb(look.xy)
+        ZStack {
+            Circle().fill(look.on ? Color(red: c.r, green: c.g, blue: c.b) : Color.black.opacity(0.6))
+            Circle().inset(by: line / 2).stroke(.black.opacity(0.5), lineWidth: line)
+            Circle().inset(by: line / 2).trim(from: 0, to: look.on ? look.brightness / 100 : 0)
+                .rotation(.degrees(-90)).stroke(.white, lineWidth: line)
+        }
+        .frame(width: size, height: size)
+        .background(Circle().stroke(.black.opacity(0.55), lineWidth: selected ? 1.5 : 0.75))
+    }
+}
 
 /// One column per pixel, because a gradient with stops at the keyframes would be
 /// a straight line in sRGB, which isn't where the bulb goes.

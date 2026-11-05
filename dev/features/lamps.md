@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 21:17, at 1.1.0.
+Updated 2026-11-04 21:19, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -8,7 +8,8 @@ artificial light follows the natural light along with the screen.
 ## Sub-features
 
 - **Lights window.** One row per bulb across the day, on a card, read from the bridge, the
-  band showing the bulb's colour dimmed by its brightness. Above the bands are
+  band showing the bulb's colour dimmed part way by its brightness. A keyframe is its true colour in a ring whose white fills
+  with its brightness, clockwise from the top; an off one is an empty ring around a dark centre. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
@@ -106,13 +107,17 @@ blend looks in the room.
   one": the dots are "the most obvious thing to explore". It comes down from under the timeline
   and never covers it, "always below the timeline".
 
-- 2026-11-04 20:47, 1.1.0. **Rows keep their height.** Rows stretched to fill the window looked "horrendous", and
+- 2026-11-04 21:19, 1.1.0. **Rows keep their height.** Rows stretched to fill the window looked "horrendous", and
   the space below them isn't the problem *Empty space is spread out* is about: that was the
-  writing on the card. They grew once, to a 28-point band, so a keyframe has room
+  writing on the card. They grew twice, to a 34-point band, so a keyframe has room
   around it: "you can barely see the bg around it when its near the bright spots".
 
 - 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
   schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
+
+- 2026-11-04 21:19, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, then "a bit bigger
+  and thinner": 22 points with a 2.5 line, since at 24 keyframes 51 minutes apart overlap. With the true colour here, the band can dim part way, to 55% at the bottom: at 22% colours
+  looked "very different from the actual color", and no dimming was "a bit too bright".
 
 - 2026-11-04 21:17, 1.1.0. **A follower follows a hold too.** "When a light is following another light the temp colors should also be followed." Its day is the other bulb's, and a held
   colour sits on top of that day. Applies *Never a fight with the controls*.
