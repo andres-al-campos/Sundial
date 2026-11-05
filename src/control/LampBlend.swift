@@ -8,7 +8,7 @@ import Foundation
 ///
 /// Pure, so tests/drive/lamps.sh can run it without a bridge.
 enum LampBlend {
-    struct XY: Equatable { var x: Double; var y: Double }
+    struct XY: Codable, Equatable { var x: Double; var y: Double }
     struct LampState: Equatable { var brightness: Double; var xy: XY }
 
     /// A scene placed on the day: its lamps' values, keyed by lamp id.

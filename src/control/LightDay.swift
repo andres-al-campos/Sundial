@@ -91,14 +91,14 @@ enum LightDay {
         var parent: String?
     }
 
-    struct State: Equatable {
+    struct State: Codable, Equatable {
         var on: Bool
         var brightness: Double
         var xy: LampBlend.XY
     }
 
     /// A look set by hand on one bulb, standing in for its day until `until`.
-    struct Hold: Equatable {
+    struct Hold: Codable, Equatable {
         var look: State
         var until: Date
     }

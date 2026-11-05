@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 12:13, at 1.1.0.
+Updated 2026-11-05 13:18, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -30,7 +30,7 @@ artificial light follows the natural light along with the screen.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
   and the card says "Held until sunrise" with Return to schedule in orange text, which fades it back in half a second.
-  A hold ends by itself at the next sunrise and is forgotten on relaunch. Bulbs following the one clicked take the hold too, unless they're held themselves:
+  A hold ends by itself at the next sunrise, and a relaunch keeps it until then. Bulbs following the one clicked take the hold too, unless they're held themselves:
   a follower's own card can hold it apart, and its Return to schedule ends whichever hold it's under. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows' card, which stays put: a colour wheel, then the settings reading left to right and top

@@ -32,8 +32,9 @@ class AppState: ObservableObject {
     @Published var place: RoomLight.Place? { didSet { SunClock.picked = place } }
     /// The Hue lamps follow their days. False while paused from the Lights window.
     @Published var lampsFollow: Bool = false
-    /// Bulbs set by hand for now. Not saved: a relaunch hands them back to the day.
-    @Published var holds: [String: LightDay.Hold] = [:]
+    /// Bulbs set by hand until sunrise. A relaunch keeps them: a hold that vanished with an install
+    /// would put the room back on the day while it was still wanted.
+    @Published var holds: [String: LightDay.Hold] = [:] { didSet { saveHolds() } }
     /// What the bulbs were doing at the last tick, for the room log. Not published: nothing on
     /// screen shows it, and it would redraw every window twice a minute.
     var lampsRead: [String: LightDay.State] = [:]
@@ -122,9 +123,24 @@ class AppState: ObservableObject {
     }()
 
     private let configURL = AppState.supportDirectory.appendingPathComponent("config.json")
+    /// Apart from config.json: a hold is rewritten on every tick of a slider's drag, and a write
+    /// that small shouldn't rewrite everything else too.
+    private let holdsURL = AppState.supportDirectory.appendingPathComponent("holds.json")
 
     init() {
         load()
+        if let data = try? Data(contentsOf: holdsURL),
+           let saved = try? JSONDecoder().decode([String: LightDay.Hold].self, from: data) {
+            holds = saved.filter { $0.value.until > Date() }
+        }
+    }
+
+    private func saveHolds() {
+        do {
+            try JSONEncoder().encode(holds).write(to: holdsURL, options: .atomic)
+        } catch {
+            print("[Sundial] Saving the held bulbs failed: \(error). They go back to the day at the next launch.")
+        }
     }
 
     // MARK: - Persistence

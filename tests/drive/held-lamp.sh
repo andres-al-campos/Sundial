@@ -154,6 +154,17 @@ Task { @MainActor in
     await settle()
     expect("holding the bulb followed", ["a": held, "b": held])
 
+    // A relaunch keeps a hold until it ends, and drops one that ended while Sundial was closed.
+    state.holds["gone"] = .init(look: held, until: Date().addingTimeInterval(-60))
+    let relaunched = AppState()
+    if relaunched.holds["a"] != state.holds["a"] {
+        failures.append("a relaunch: bulb a's hold came back as \(String(describing: relaunched.holds["a"])). AppState saves holds to holds.json and reads them back in init.")
+    }
+    if relaunched.holds["gone"] != nil {
+        failures.append("a relaunch: a hold that had already ended came back. AppState's init drops holds whose until has passed.")
+    }
+    state.holds["gone"] = nil
+
     // A routine in the Hue app moves a bulb on its own, and Sundial never hears of it. Two ticks
     // with nothing to send, as the 30-second timer's would be, and `sent` still says on target.
     @MainActor func routineMoves(_ wanted: [String: Look], _ what: String) async {
@@ -220,4 +231,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/held-lamp" "$work/main.swift" 
 fi
 mkdir -p "$work/held-home"
 CFFIXED_USER_HOME="$work/held-home" "$work/held-lamp"
-echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it, and goes back to the day once it ends"
+echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it and across a relaunch, and goes back to the day once it ends"
