@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 21:49, at 1.1.0.
+Updated 2026-11-04 22:14, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -94,7 +94,7 @@ temperature and colours don't.
 It also checks when a hold ends and whose hold a follower is under.
 
 `./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. After a drag a bulb goes back to its hold or the
-day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and an off keyframe's drag doesn't leave it off.
+day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and an off keyframe's drag doesn't leave it off. A routine moving a bulb gets put back, held or on a flat stretch.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
@@ -117,6 +117,10 @@ blend looks in the room.
 
 - 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
   schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
+
+- 2026-11-04 22:14, 1.1.0. **A hold holds against the bridge too.** "The hold color doesn't actually hold it sometimes? It goes back to the preset colors." Sundial only sent when its target moved and a hold's
+  doesn't, so anything else moving the bulb had it to itself: the room log showed both bulbs falling from 100% for four minutes while every tick sent 0. So a tick also compares what
+  the bulb reads. Applies *Never a fight with the controls*.
 
 - 2026-11-04 21:49, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, then "a bit bigger
   and thinner": 22 points with a 2.5 line, since at 24 keyframes 51 minutes apart overlap. With the true colour here, the band runs from 62% to 88% of it: at 22% colours
@@ -171,7 +175,7 @@ blend looks in the room.
 ## Gotchas
 
 - The status line stays on its last "Paired" through a stall. Each tick logs one line, so whether the lamps are being sent is read with `/usr/bin/log show --last 1h --predicate 'subsystem == "com.aurende.sundial" AND category == "lamps"'`. A "back to the day" line says how long a return took to send.
-- A lit lamp's colour or brightness changed in the Hue app is set back within a minute while Follow is on. Pause keeps it.
+- A lit lamp's colour or brightness changed in the Hue app, or by a routine there, is set back within a minute or so while Follow is on, held or not. A tick's log line says how many it put back. Pause keeps the change.
 - Previewing a keyframe or Play the day lights a bulb that was off, and it stays on afterwards. Previewing an off keyframe counts as Sundial turning it off, so the way back lights it even if someone had switched it off first.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.

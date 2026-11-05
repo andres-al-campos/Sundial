@@ -161,6 +161,15 @@ check("a hold before sunrise ends that morning", LightDay.holdEnd(from: holdDay,
 let afternoon = holdDay.addingTimeInterval(12 * 3600)
 check("a hold after sunrise ends the next morning", LightDay.holdEnd(from: afternoon, sunrise: 360, in: holdCalendar) == holdDay.addingTimeInterval(27 * 3600), "after")
 
+let wanted = LightDay.State(on: true, brightness: 80, xy: .init(x: 0.4, y: 0.4))
+var read = wanted
+read.brightness = 80.4
+check("a lamp read back rounded hasn't drifted", !LightDay.drifted(read, from: wanted), read)
+read.brightness = 75
+check("a lamp that lost 5% has drifted", LightDay.drifted(read, from: wanted), read)
+read.on = false
+check("a lamp someone switched off hasn't drifted, that's for send to judge", !LightDay.drifted(read, from: wanted), read)
+
 // The room log's column: names kept apart from the CSV's own separators.
 var logged = LightDay.Bulb(id: "x", deviceID: "dx", name: "Desk, left", keys: [])
 let loggedOff = LightDay.Bulb(id: "y", deviceID: "dy", name: "Floor", keys: [])

@@ -113,6 +113,15 @@ enum LightDay {
         }.joined(separator: ";")
     }
 
+    /// Whether a lit lamp has wandered from where it should be. Only colour and brightness: someone
+    /// switching one on or off is `send`'s to judge. The margins are wider than what the bridge
+    /// rounds a value to when it reads back.
+    static func drifted(_ read: State, from target: State) -> Bool {
+        guard read.on, target.on else { return false }
+        return abs(read.brightness - target.brightness) > 2
+            || abs(read.xy.x - target.xy.x) > 0.01 || abs(read.xy.y - target.xy.y) > 0.01
+    }
+
     /// Whose hold a bulb is under: its own, or else that of the bulb it follows, as it follows
     /// that bulb's day.
     static func holdOwner(of id: String, in bulbs: [Bulb], holds: [String: Hold]) -> String? {

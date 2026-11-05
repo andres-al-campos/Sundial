@@ -57,7 +57,7 @@ cat > "$work/main.swift" <<'SWIFT'
 import Foundation
 
 let hung = DispatchWorkItem { print("✗ held-lamp: the test hung. Something in LampController never finished."); exit(3) }
-DispatchQueue.global().asyncAfter(deadline: .now() + 30, execute: hung)
+DispatchQueue.global().asyncAfter(deadline: .now() + 45, execute: hung)
 
 typealias Look = LightDay.State
 func look(_ b: Double, _ x: Double, _ y: Double) -> Look { .init(on: true, brightness: b, xy: .init(x: x, y: y)) }
@@ -112,6 +112,14 @@ Task { @MainActor in
     await drag()
     expect("a drag with no hold", ["a": day, "b": day])
 
+    // The harness's day is flat, so its target stands still just as a hold's does.
+    lamps.endPreview()
+    await settle()
+    Bulbs.now["a"] = dragged
+    lamps.endPreview()
+    await settle()
+    expect("a routine moving a bulb on a flat stretch", ["a": day])
+
     var off = dragged
     off.on = false
     await drag(show: off)
@@ -124,6 +132,19 @@ Task { @MainActor in
     lamps.endPreview()
     await settle()
     expect("holding the bulb followed", ["a": held, "b": held])
+
+    // A routine in the Hue app moves a bulb on its own, and Sundial never hears of it. Two ticks
+    // with nothing to send, as the 30-second timer's would be, and `sent` still says on target.
+    @MainActor func routineMoves(_ wanted: [String: Look], _ what: String) async {
+        lamps.endPreview()
+        await settle()
+        Bulbs.now["a"] = dragged
+        Bulbs.now["b"] = dragged
+        lamps.endPreview()
+        await settle()
+        expect(what, wanted)
+    }
+    await routineMoves(["a": held, "b": held], "a routine moving a held bulb")
 
     await drag()
     expect("a drag while held", ["a": held, "b": held])
@@ -178,4 +199,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/held-lamp" "$work/main.swift" 
 fi
 mkdir -p "$work/held-home"
 CFFIXED_USER_HOME="$work/held-home" "$work/held-lamp"
-echo "✓ held-lamp: a bulb under a hold goes back to the hold after a drag, quickly, followers too, and back to the day once it ends"
+echo "✓ held-lamp: a bulb under a hold goes back to the hold after a drag, quickly, followers too, stays there when a routine moves it, and goes back to the day once it ends"

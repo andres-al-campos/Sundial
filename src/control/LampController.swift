@@ -19,6 +19,9 @@ final class LampController {
     private var busy = false
     private var readingKey = false
     private var returning = false
+    /// The last tick sent nothing, so what the bulbs read isn't a fade still landing. Read
+    /// sooner, the way back's half second would be replaced by the usual 30.
+    private var settled = false
     private var returnStarted = Date.distantPast
     /// While paused a preview returns to what the lamps were, since the day isn't
     /// theirs to follow: Pause is there so the Hue app can use them.
@@ -153,6 +156,7 @@ final class LampController {
                     for (id, s) in batch {
                         // Not someone leaving the room: the way back has to be able to light it again.
                         if !s.on { offByDay.insert(id) }
+                        settled = false
                         try await bridge.set(lamp: id, to: s, fade: Self.previewPace)
                     }
                 } catch {
@@ -267,7 +271,7 @@ final class LampController {
             let bulbs = state.lights ?? []
             let lit = try await bridge.lampsOn()
             let backFirst = bulbs.filter { moved.contains($0.id) } + bulbs.filter { !moved.contains($0.id) }
-            var sends = 0, leftOff = 0
+            var sends = 0, leftOff = 0, putBack = 0
             for bulb in backFirst {
                 let hold = LightDay.holdOwner(of: bulb.id, in: bulbs, holds: state.holds).flatMap { state.holds[$0]?.look }
                 guard let target = hold ?? LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
@@ -283,7 +287,12 @@ final class LampController {
                     leftOff += 1
                     continue
                 }
-                guard sent[bulb.id] != target else { continue }
+                // Something else on the bridge can move a bulb, such as a routine from the Hue app.
+                // A moving day sets it back anyway, but a hold's target stands still, as does a flat
+                // stretch's, and with nothing to send the routine would have the bulb to itself.
+                let drifted = settled && state.lampsRead[bulb.id].map { LightDay.drifted($0, from: target) } == true
+                if drifted { putBack += 1 }
+                guard sent[bulb.id] != target || drifted else { continue }
                 try await bridge.set(lamp: bulb.id, to: target, fade: returning ? Self.returnFade : Self.interval, power: send == .power)
                 sent[bulb.id] = target
                 sends += 1
@@ -296,8 +305,9 @@ final class LampController {
                 Self.log.notice("back to the day: sent \(sends) within \(seconds, format: .fixed(precision: 2))s of letting go")
             }
             returning = false
+            settled = sends == 0
             state.lampStatus = "Paired · following the day"
-            Self.log.notice("tick at minute \(minute): sent \(sends), left \(leftOff) off, \(state.lampStatus, privacy: .public)")
+            Self.log.notice("tick at minute \(minute): sent \(sends), put back \(putBack), left \(leftOff) off, \(state.lampStatus, privacy: .public)")
         } catch {
             state.lampStatus = error.localizedDescription
             Self.log.error("tick failed: \(error.localizedDescription, privacy: .public)")
