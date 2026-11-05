@@ -79,9 +79,6 @@ missing from a scene takes the other's value, 2000 K and 6400 K land on the
 right whites, and the scenes sit on the sun and Night Shift's ramp, with
 DuskLight at bedtime and the night scenes moving with it.
 
-Last driven: 2026-10-28, macOS. Passed; it failed as expected with a wrong
-halfway value.
-
 It also checks that importing the scenes matches the old blend at every minute,
 the keyframe rules: straight lines, fading to off, snapping, anchors, and reading whites back as a temperature, and that a
 lamp someone switched off is left alone.
@@ -123,57 +120,25 @@ blend looks in the room.
 - 2026-11-04 23:22, 1.1.0. **Sundial is the lights' only schedule.** The bridge's own routines were turned off in the Hue app "so they don't get in the way". The cost is that the lights stay where they are while the Mac is asleep or off,
   and catch up on wake.
 
-- 2026-11-04 22:14, 1.1.0. **A hold holds against the bridge too.** "The hold color doesn't actually hold it sometimes? It goes back to the preset colors." Sundial only sent when its target moved and a hold's
-  doesn't, so anything else moving the bulb had it to itself: the room log showed both bulbs falling from 100% for four minutes while every tick sent 0. So a tick also compares what
-  the bulb reads. Applies *Never a fight with the controls*.
-
 - 2026-11-04 22:30, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, at 20 points with a thin
   line: 22 was "a bit" big, so it came back down keeping "the ratio of circle to ring". With the true colour and the brightness both here, the band's top can hold back: full brightness shows 90% of the real colour because it's "a bit too bright sometimes at night". The dim end stays
   dim, since lifting it looked "a bit too bright": "the real dimness from before". An off keyframe isn't pitch black: it's dimmed as the card's wheel
   is, with a diagonal in the ring's grey that runs "a bit outside the circle so it looks like the ∅".
 
-- 2026-11-04 21:17, 1.1.0. **A follower follows a hold too.** "When a light is following another light the temp colors should also be followed." Its day is the other bulb's, and a held
-  colour sits on top of that day. Applies *Never a fight with the controls*.
-
 - 2026-11-04 14:17, 1.1.0. **No Disable.** It only existed to hold a colour for a while, and two on/off controls side by side were
   the cost: a new person can't tell them apart. Holding does that job, so a keyframe is either in the day or
   deleted. Keyframes saved as disabled count again.
-
-- 2026-11-04 14:17, 1.1.0. **Every control says what it is.** The switch sits beside the name it controls and always means the bulb.
-  Time keeps its label even though the value explains itself, and off is a switch rather than the bottom of
-  the slider, which only looks obvious to whoever built it. Applies *Never a fight with the controls*.
 
 - 2026-11-04 18:22, 1.1.0. **Delete is on right-click only.** "There's no good place to put it" on the card: a trash icon beside the X was "very easy to
   mix up", and in words it took the end of the time's row for something rarely used. The X stays at the top right, and the time goes
   right under the name because "the time is basically their id".
 
-- 2026-11-04 18:22, 1.1.0. **A card says whether it's a light or a keyframe.** The two look alike: "its not immediately obvious". So the name is followed by
-  "Keyframe" or "6 Keyframes", in the same style, and only the light lights up its whole row. A keyframe shows on its dot.
-
-- 2026-11-04 22:29, 1.1.0. **Return to schedule is orange text.** "It's the call to action", on an ordinary button rather than a filled one. It's worded as an imperative, since it's something you do: it used to say Back to schedule.
-
-- 2026-11-04 20:47, 1.1.0. **The rows are on a card too.** "Yeah the light can go in a card too." Both cards share one ground, and a keyframe's comes out from behind the rows'.
-
 - 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
   take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *What you
   touch is what the monitor does*: it says "Off" and can't be dragged.
 
-- 2026-11-04 20:47, 1.1.0. **A time looks the same everywhere.** "Why is there no line on the popup one?" and "theres more padding on the bottom than the top": the window, the
-  popup and the Schedule share `TimeField`, so they can't drift apart. Its arrows are the system's stepper and step what's highlighted, as the picker's own
-  did. Applies *Never a fight with the controls*.
-
-- 2026-11-04 22:51, 1.1.0. **A right-click leaves the card open.** "Right click actions should not close the color setting if it's open." Deleting the keyframe it shows leaves nothing to show, and then "it can just select the row
-  instead". Applies *Never a fight with the controls*.
-
-- 2026-11-04 22:50, 1.1.0. **A drag moves the time, not the room.** Dragging a keyframe used to show it on the bulb: "there's no need since dragging just means change the time not the colors". The band already
-  shows the day it makes, and scrubbing past noon at night would flood the room (*Motion spends attention*). *What you touch is what the monitor does* is about sliders: a time isn't something
-  the room can show. So the bulb waits for the drop and then fades at the usual pace, since nothing moved for it to come back from.
-
-- 2026-11-04 22:50, 1.1.0. **A drag changes only the time.** A dragged keyframe used to take the colour under it, worked out without itself, so a 10-minute nudge took noon from 100% to about 49%, and it used to turn an off one
-  back on: "why does dragging a keyframe that is off turn it back on?" A typed time already kept its look. "If you want a color between 2 keyframes that's what making a new keyframe is for." Applies *Never a fight with the controls*.
-
-- 2026-11-04 20:47, 1.1.0. **The way back is quick.** 1 second "still feels a bit slow", and the wait before it counted too: the moved bulb took its turn behind the rest. Gradually is for
-  the day (*Just right for the room*); this answers your hand. Half a second, the moved bulbs first, with the preview's pacing cut short.
+- 2026-11-05 12:13, 1.1.0. **The way back is quick.** 1 second "still feels a bit slow", and the wait before it counted too: the moved bulb took its turn behind the rest. Gradually is for
+  the day (*Just right for the room*); this answers your hand. Half a second, the moved bulbs first, with the preview's pacing cut short. A deleted keyframe's bulb goes the same way: half a second.
 
 - 2026-11-02 05:18, 1.1.0. **A lamp switched off by hand stays off.** Sundial used to send on with every
   fade, so a lamp switched off from the phone came back on within a minute: "It
