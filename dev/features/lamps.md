@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 22:15, at 1.1.0.
+Updated 2026-11-04 22:29, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -30,9 +30,9 @@ artificial light follows the natural light along with the screen.
   the day has it, or to its hold, over half a second, and only the bulbs that moved are sent.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
-  and the card says "Held until sunrise" with Back to schedule in orange text, which fades it back in half a second.
+  and the card says "Held until sunrise" with Return to schedule in orange text, which fades it back in half a second.
   A hold ends by itself at the next sunrise and is forgotten on relaunch. Bulbs following the one clicked take the hold too, unless they're held themselves:
-  a follower's own card can hold it apart, and its Back to schedule ends whichever hold it's under. Rename is on the right-click menu.
+  a follower's own card can hold it apart, and its Return to schedule ends whichever hold it's under. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows' card, which stays put: a colour wheel, then the settings reading left to right and top
   to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 Keyframes" after it, the time,
@@ -145,7 +145,7 @@ blend looks in the room.
 - 2026-11-04 18:22, 1.1.0. **A card says whether it's a light or a keyframe.** The two look alike: "its not immediately obvious". So the name is followed by
   "Keyframe" or "6 Keyframes", in the same style, and only the light lights up its whole row. A keyframe shows on its dot.
 
-- 2026-11-04 18:22, 1.1.0. **Back to schedule is orange text.** "It's the call to action", on an ordinary button rather than a filled one.
+- 2026-11-04 22:29, 1.1.0. **Return to schedule is orange text.** "It's the call to action", on an ordinary button rather than a filled one. It's worded as an imperative, since it's something you do: it used to say Back to schedule.
 
 - 2026-11-04 20:47, 1.1.0. **The rows are on a card too.** "Yeah the light can go in a card too." Both cards share one ground, and a keyframe's comes out from behind the rows'.
 

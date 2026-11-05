@@ -162,7 +162,7 @@ Task { @MainActor in
     state.holds = [:]
     lamps.endPreview()
     await settle()
-    expect("back to schedule", ["a": day, "b": day])
+    expect("return to schedule", ["a": day, "b": day])
 
     state.holds["a"] = .init(look: held, until: until)
     lamps.preview(["a": held, "b": held])

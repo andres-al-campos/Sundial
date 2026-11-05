@@ -277,7 +277,7 @@ final class LampController {
                 guard let target = hold ?? LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
                       let isOn = lit[bulb.id] else { continue }
                 if isOn { offByDay.remove(bulb.id) }
-                // Off on the card isn't someone leaving the room: Back to schedule has
+                // Off on the card isn't someone leaving the room: Return to schedule has
                 // to be able to light it again.
                 if hold?.on == false { offByDay.insert(bulb.id) }
                 let send = LightDay.send(targetOn: target.on, lampIsOn: isOn, dayTurnedItOff: offByDay.contains(bulb.id))

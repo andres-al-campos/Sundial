@@ -236,7 +236,7 @@ struct LightsView: View {
                     endPreviewNow()
                 })
             } else {
-                HoldRow(held: holdOwner(show.bulbID) != nil, paused: !appState.lampsFollow, back: { backToSchedule(show.bulbID) })
+                HoldRow(held: holdOwner(show.bulbID) != nil, paused: !appState.lampsFollow, back: { returnToSchedule(show.bulbID) })
             }
         }
         .padding(Layout.cardPadding)
@@ -618,7 +618,7 @@ struct LightsView: View {
     }
 
     /// From a follower too, whose button would otherwise do nothing while the hold it's under is another bulb's.
-    private func backToSchedule(_ id: String) {
+    private func returnToSchedule(_ id: String) {
         if let owner = holdOwner(id) { appState.holds[owner] = nil }
         lampsNow = [:]
         // Through the preview's return, for its quick fade rather than the usual 30 seconds.
@@ -1126,7 +1126,7 @@ private struct HoldRow: View {
             Spacer(minLength: 8)
             // There either way and only usable when held, so nothing moves as it starts.
             Button(action: back) {
-                Text("Back to schedule").foregroundStyle(.orange)
+                Text("Return to schedule").foregroundStyle(.orange)
             }
                 .controlSize(.small)
                 .hoverShade()
