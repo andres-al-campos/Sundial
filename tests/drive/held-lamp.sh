@@ -147,6 +147,18 @@ Task { @MainActor in
     expect("previewing an off keyframe", ["a": day, "b": day])
     if Bulbs.now["a"]?.on != true { failures.append("previewing an off keyframe: bulb a stayed off. Only someone switching it off keeps it off, and a preview isn't that.") }
 
+    // Switched off by hand, then a preview lights it: letting go puts it back off, not on.
+    Bulbs.now["a"]?.on = false
+    lamps.refresh()
+    await settle()
+    await slider()
+    if Bulbs.now["a"]?.on != false {
+        failures.append("a preview of a bulb switched off by hand: it was left on. restore in LampController sends the look from before the preview, off included.")
+    }
+    Bulbs.now["a"]?.on = true
+    lamps.refresh()
+    await settle()
+
     let until = Date().addingTimeInterval(3600)
     state.holds["a"] = .init(look: held, until: until)
     lamps.preview(["a": held, "b": held])
@@ -231,4 +243,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/held-lamp" "$work/main.swift" 
 fi
 mkdir -p "$work/held-home"
 CFFIXED_USER_HOME="$work/held-home" "$work/held-lamp"
-echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it and across a relaunch, and goes back to the day once it ends"
+echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it and across a relaunch, and goes back to the day once it ends; a bulb switched off by hand stays off after a preview"

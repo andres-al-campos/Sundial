@@ -30,6 +30,9 @@ final class LampController {
     /// Kept through `refresh`, unlike `sent`: it's how a lamp the day dimmed to off
     /// is told from one someone switched off.
     private var offByDay: Set<String> = []
+    /// Switched off by hand when a preview began. The preview lights them, and the tick after it
+    /// would read them as on and keep them so: "a lamp switched off by hand stays off".
+    private var offByHandBeforePreview: Set<String>?
     // One line per tick, because the status line keeps saying "Paired" through a
     // stall: on 2026-11-01 the lamps sat on Night for at least 50 minutes.
     private static let log = Logger(subsystem: "com.aurende.sundial", category: "lamps")
@@ -146,6 +149,9 @@ final class LampController {
             if state?.lampsFollow == false, beforePreview == nil {
                 do { beforePreview = try await bridge.lampStates() }
                 catch { state?.lampStatus = error.localizedDescription }
+            } else if state?.lampsFollow == true, offByHandBeforePreview == nil {
+                let lit = (try? await bridge.lampsOn()) ?? [:]
+                offByHandBeforePreview = Set(lit.filter { !$0.value }.keys).subtracting(offByDay)
             }
             while !pendingPreview.isEmpty {
                 let batch = pendingPreview
@@ -187,8 +193,24 @@ final class LampController {
             if let before = beforePreview {
                 await restore(before)
             } else {
+                await switchBackOff()
                 await tick()
             }
+        }
+    }
+
+    /// A hold made since is the user asking for the bulb now, so that one stays on.
+    private func switchBackOff() async {
+        guard let ids = offByHandBeforePreview else { return }
+        offByHandBeforePreview = nil
+        guard let bridge else { return }
+        let holds = state?.holds ?? [:], bulbs = state?.lights ?? []
+        let off = LightDay.State(on: false, brightness: 0, xy: .init(x: 0, y: 0))
+        for id in ids.intersection(previewed) where LightDay.holdOwner(of: id, in: bulbs, holds: holds) == nil {
+            offByDay.remove(id)
+            sent[id] = nil
+            do { try await bridge.set(lamp: id, to: off, fade: Self.returnFade) }
+            catch { state?.lampStatus = error.localizedDescription }
         }
     }
 
