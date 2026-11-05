@@ -233,7 +233,7 @@ final class LampController {
     }
 
     private func tick() async {
-        // A drop saves, which asks for a tick before the preview has handed back, and its last
+        // Letting go of a slider saves, which asks for a tick before the preview has handed back, and its last
         // send can still be on its way. Landing after this tick's it would stay: `sent` says the
         // bulb is on target, and under a hold the target never moves to correct it.
         if !previewing { await previewTask?.value }
@@ -261,7 +261,7 @@ final class LampController {
                 state.lampStatus = "Paired · paused"
                 return
             }
-            guard !previewing else { return }
+            guard !previewing, !state.movingKeyframe else { return }
             let moved = previewed
             previewed = []
             let now = Date()

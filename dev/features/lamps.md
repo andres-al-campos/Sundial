@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 22:30, at 1.1.0.
+Updated 2026-11-04 22:33, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -22,11 +22,11 @@ artificial light follows the natural light along with the screen.
   That's remembered until Sundial quits; a keyframe that's already a colour sits at its
   nearest temperature. Dragging the slider goes back to a white.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
-  drop. An off one stays off and keeps the look it remembers, and a lit one over an off stretch stays lit. A typed time keeps its look. Within 10 minutes of a mark it snaps and
+  drop. The bulbs stay as they are until the drop, then fade to the new day at the usual pace. An off one stays off and keeps the look it remembers, and a lit one over an off stretch stays lit. A typed time keeps its look. Within 10 minutes of a mark it snaps and
   follows that mark. Imported keyframes can follow one at an offset, such as 40
   minutes before sunset.
-- **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
-  with a badge in the top row saying what it lands on, such as 45% at 6:48 PM. On letting go the bulb fades back to where
+- **Previews.** Changing a keyframe's settings shows it on the bulb. A badge in the top row says
+  what it lands on, such as 45% at 6:48 PM, during a drag too. On letting go of a setting the bulb fades back to where
   the day has it, or to its hold, over half a second, and only the bulbs that moved are sent.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
@@ -93,8 +93,10 @@ temperature and colours don't.
 
 It also checks when a hold ends and whose hold a follower is under.
 
-`./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. After a drag a bulb goes back to its hold or the
-day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and an off keyframe's drag doesn't leave it off. A routine moving a bulb gets put back, held or on a flat stretch.
+`./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. A keyframe's drag sends nothing, even with a tick landing during it, and its drop arrives at the usual fade. After a preview a bulb goes back to its hold or the
+day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and previewing an off keyframe doesn't leave it off. A routine moving a bulb gets put back, held or on a flat stretch.
+
+The law `tests/drag-moves-time.sh` checks the window's half of that, that a drag's functions call nothing that sends to the bulbs.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
@@ -156,6 +158,10 @@ blend looks in the room.
 - 2026-11-04 20:47, 1.1.0. **A time looks the same everywhere.** "Why is there no line on the popup one?" and "theres more padding on the bottom than the top": the window, the
   popup and the Schedule share `TimeField`, so they can't drift apart. Its arrows are the system's stepper and step what's highlighted, as the picker's own
   did. Applies *Never a fight with the controls*.
+
+- 2026-11-04 22:33, 1.1.0. **A drag moves the time, not the room.** Dragging a keyframe used to show it on the bulb: "there's no need since dragging just means change the time not the colors". The band already
+  shows the colour under it, and scrubbing past noon at night would flood the room (*Motion spends attention*). *What you touch is what the monitor does* is about sliders: a time isn't something
+  the room can show. So the bulb waits for the drop and then fades at the usual pace, since nothing moved for it to come back from.
 
 - 2026-11-04 18:22, 1.1.0. **A drag leaves on and off alone.** Taking what's under it used to turn an off keyframe back on: "why does dragging a keyframe that is
   off turn it back on?" The switch is what says on or off. Applies *Never a fight with the controls*.

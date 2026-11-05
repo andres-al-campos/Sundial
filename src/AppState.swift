@@ -37,6 +37,8 @@ class AppState: ObservableObject {
     /// What the bulbs were doing at the last tick, for the room log. Not published: nothing on
     /// screen shows it, and it would redraw every window twice a minute.
     var lampsRead: [String: LightDay.State] = [:]
+    /// A keyframe is in the user's hand, so the day is half-edited and the lamps wait for the drop.
+    var movingKeyframe = false
     /// Each bulb's day. Nil until the scenes on the bridge have been imported.
     @Published var lights: [LightDay.Bulb]?
     /// The paired Hue Bridge's host name; its key is in the Keychain.

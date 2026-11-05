@@ -40,7 +40,7 @@ final class HueBridge {
     }
     func lampStates() async throws -> [String: LightDay.State] { await MainActor.run { Bulbs.now } }
     func set(lamp id: String, to state: LightDay.State, fade: TimeInterval, power: Bool = true) async throws {
-        // A preview's send is slow here so one is still on its way when a drop's send goes out,
+        // A preview's send is slow here so one is still on its way when the way back's send goes out,
         // which on the real bridge is down to chance: answers took 50 to 250 ms.
         try await Task.sleep(for: .milliseconds(power ? 150 : 20))
         await MainActor.run {
@@ -61,10 +61,10 @@ DispatchQueue.global().asyncAfter(deadline: .now() + 45, execute: hung)
 
 typealias Look = LightDay.State
 func look(_ b: Double, _ x: Double, _ y: Double) -> Look { .init(on: true, brightness: b, xy: .init(x: x, y: y)) }
-let day = look(40, 0.50, 0.41), held = look(80, 0.20, 0.30), apart = look(60, 0.30, 0.60), dragged = look(10, 0.60, 0.35)
+let day = look(40, 0.50, 0.41), held = look(80, 0.20, 0.30), apart = look(60, 0.30, 0.60), previewed = look(10, 0.60, 0.35), moved = look(25, 0.40, 0.40)
 func named(_ s: Look?) -> String {
     guard let s else { return "nothing" }
-    for (n, l) in [("the day", day), ("the hold", held), ("its own hold", apart), ("the dragged keyframe", dragged)]
+    for (n, l) in [("the day", day), ("the hold", held), ("its own hold", apart), ("the previewed keyframe", previewed), ("the day as moved", moved)]
     where abs(s.brightness - l.brightness) < 0.01 && abs(s.xy.x - l.xy.x) < 0.001 { return n }
     return "\(s)"
 }
@@ -82,7 +82,7 @@ Task { @MainActor in
     guard AppState.supportDirectory.path.contains("held-home") else {
         print("✗ held-lamp: the test would write to the real config at \(AppState.supportDirectory.path). Run it through this script, which gives it a home of its own."); exit(1)
     }
-    func key(_ m: Int) -> LightDay.Key { .init(minute: m, anchor: nil, on: true, brightness: day.brightness, x: day.xy.x, y: day.xy.y) }
+    func key(_ m: Int, _ l: Look = day) -> LightDay.Key { .init(minute: m, anchor: nil, on: true, brightness: l.brightness, x: l.xy.x, y: l.xy.y) }
     var lead = LightDay.Bulb(id: "a", deviceID: "da", name: "A", keys: [key(0), key(720)])
     var follow = LightDay.Bulb(id: "b", deviceID: "db", name: "B", keys: [])
     follow.parent = lead.id
@@ -96,11 +96,11 @@ Task { @MainActor in
     await settle()
     expect("at first", ["a": day, "b": day])
 
-    // Each is what LightsView calls. A drop saves, which refreshes, and then ends the preview.
-    @MainActor func drag(show: Look = dragged) async {
+    // Each is what LightsView calls. Letting go of a slider saves, which refreshes, and then ends the preview.
+    @MainActor func slider(show: Look = previewed) async {
         lamps.preview(["a": show, "b": show])
         try? await Task.sleep(for: .milliseconds(450))
-        expect("during a drag", ["a": show, "b": show])
+        expect("during a slider's drag", ["a": show, "b": show])
         // Let go with the last move's send still on its way.
         lamps.preview(["a": show, "b": show])
         try? await Task.sleep(for: .milliseconds(120))
@@ -109,22 +109,43 @@ Task { @MainActor in
         await settle()
     }
 
-    await drag()
-    expect("a drag with no hold", ["a": day, "b": day])
+    await slider()
+    expect("a slider's drag with no hold", ["a": day, "b": day])
+
+    // A keyframe's drag leaves the bulb alone, even with a tick landing while the day is half-edited.
+    // Its save then takes the bulb to the new day like any other change, not the quick way back.
+    var movedLead = lead
+    movedLead.keys = [key(0, moved), key(720, moved)]
+    state.movingKeyframe = true
+    state.lights = [movedLead, follow]
+    lamps.refresh()
+    await settle()
+    expect("a tick during a keyframe's drag", ["a": day, "b": day])
+    state.movingKeyframe = false
+    state.onLampsChanged?()
+    await settle()
+    expect("dropping a keyframe", ["a": moved, "b": moved])
+    if Bulbs.fade["a"] != LampController.interval {
+        failures.append("dropping a keyframe: the bulb took \(Bulbs.fade["a"] ?? 0)s, not the usual \(LampController.interval)s. The day changing is meant to go unnoticed.")
+    }
+    state.lights = [lead, follow]
+    lamps.refresh()
+    await settle()
+    expect("the day put back", ["a": day, "b": day])
 
     // The harness's day is flat, so its target stands still just as a hold's does.
     lamps.endPreview()
     await settle()
-    Bulbs.now["a"] = dragged
+    Bulbs.now["a"] = previewed
     lamps.endPreview()
     await settle()
     expect("a routine moving a bulb on a flat stretch", ["a": day])
 
-    var off = dragged
+    var off = previewed
     off.on = false
-    await drag(show: off)
-    expect("a drag of an off keyframe", ["a": day, "b": day])
-    if Bulbs.now["a"]?.on != true { failures.append("a drag of an off keyframe: bulb a stayed off. Only someone switching it off keeps it off, and a preview isn't that.") }
+    await slider(show: off)
+    expect("previewing an off keyframe", ["a": day, "b": day])
+    if Bulbs.now["a"]?.on != true { failures.append("previewing an off keyframe: bulb a stayed off. Only someone switching it off keeps it off, and a preview isn't that.") }
 
     let until = Date().addingTimeInterval(3600)
     state.holds["a"] = .init(look: held, until: until)
@@ -138,26 +159,26 @@ Task { @MainActor in
     @MainActor func routineMoves(_ wanted: [String: Look], _ what: String) async {
         lamps.endPreview()
         await settle()
-        Bulbs.now["a"] = dragged
-        Bulbs.now["b"] = dragged
+        Bulbs.now["a"] = previewed
+        Bulbs.now["b"] = previewed
         lamps.endPreview()
         await settle()
         expect(what, wanted)
     }
     await routineMoves(["a": held, "b": held], "a routine moving a held bulb")
 
-    await drag()
-    expect("a drag while held", ["a": held, "b": held])
+    await slider()
+    expect("a slider's drag while held", ["a": held, "b": held])
     if Bulbs.fade["a"] != LampController.returnFade {
-        failures.append("a drag while held: the way back took \(Bulbs.fade["a"] ?? 0)s, not the quick \(LampController.returnFade)s. A preview left to the usual fade looks stuck.")
+        failures.append("a slider's drag while held: the way back took \(Bulbs.fade["a"] ?? 0)s, not the quick \(LampController.returnFade)s. A preview left to the usual fade looks stuck.")
     }
 
     state.holds["b"] = .init(look: apart, until: until)
     lamps.preview(["b": apart])
     lamps.endPreview()
     await settle()
-    await drag()
-    expect("a drag with the follower held apart", ["a": held, "b": apart])
+    await slider()
+    expect("a slider's drag with the follower held apart", ["a": held, "b": apart])
 
     state.holds = [:]
     lamps.endPreview()
@@ -169,8 +190,8 @@ Task { @MainActor in
     lamps.endPreview()
     await settle()
     state.lampsFollow = false
-    await drag()
-    expect("a drag while held and paused", ["a": held, "b": held])
+    await slider()
+    expect("a slider's drag while held and paused", ["a": held, "b": held])
 
     // Paused is when the Hue app may have them doing anything, and the room log still wants to know.
     // A look bulb a has had at no earlier read, so a stale read can't pass for this one.
@@ -199,4 +220,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/held-lamp" "$work/main.swift" 
 fi
 mkdir -p "$work/held-home"
 CFFIXED_USER_HOME="$work/held-home" "$work/held-lamp"
-echo "✓ held-lamp: a bulb under a hold goes back to the hold after a drag, quickly, followers too, stays there when a routine moves it, and goes back to the day once it ends"
+echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it, and goes back to the day once it ends"

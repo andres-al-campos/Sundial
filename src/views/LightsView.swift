@@ -131,6 +131,7 @@ struct LightsView: View {
         .onDisappear {
             playTask?.cancel()
             endPreviewNow()
+            appState.movingKeyframe = false
         }
     }
 
@@ -665,12 +666,14 @@ struct LightsView: View {
         selection = Selection(bulb: bulb.id, key: key.id)
     }
 
-    /// While dragged a lit keyframe shows what's under it, and on drop it takes that.
+    /// While dragged a lit keyframe shows what's under it, and on drop it takes that. Only the badge
+    /// says so: a drag picks a time, and scrubbing past noon at night would flood the room.
     private func moveKey(_ id: UUID, bulb: LightDay.Bulb, to x: CGFloat, width: CGFloat) {
         let at = minute(atX: x, width: width)
         let snapped = LightDay.snap(at, marks: marks)
         let minute = snapped.map { marks.minute(of: $0.mark) } ?? at
         dragging = id
+        appState.movingKeyframe = true
         edit { index in
             index.withKey(bulb.id, id) {
                 $0.minute = minute
@@ -680,7 +683,7 @@ struct LightsView: View {
         if let key = bulb.keys.first(where: { $0.id == id }) {
             let look = LightDay.dragged(key, among: bulb.keys, at: minute, marks: marks)
             dragLook = look
-            previewOn(bulb.id, look, at: minute)
+            previewing = Previewing(bulb: bulb.name, look: look, minute: minute)
         }
     }
 
@@ -696,8 +699,11 @@ struct LightsView: View {
         }
         dragging = nil
         dragLook = nil
+        previewing = nil
+        // Before the save, whose tick takes the bulb to the new day at the usual fade. Ending a
+        // preview here would rush it there in half a second, with nothing to come back from.
+        appState.movingKeyframe = false
         history.commit(undo, "Move Keyframe")
-        endPreviewNow()
     }
 
     private func pasteLook(onto id: UUID, bulb: LightDay.Bulb) {
