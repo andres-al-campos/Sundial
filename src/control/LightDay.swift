@@ -208,6 +208,16 @@ enum LightDay {
         )
     }
 
+    /// What a dragged keyframe shows and lands with. A lit one takes what's under it, so the day's
+    /// line doesn't change. On or off is the switch's to change and never a drag's, so an off one
+    /// keeps the look it remembers for being switched back on, and a lit one over an off stretch
+    /// has nothing to take.
+    static func dragged(_ key: Key, among keys: [Key], at minute: Int, marks: Marks) -> State {
+        let own = State(on: key.on, brightness: key.brightness, xy: key.xy)
+        guard key.on, let under = state(keys, at: Double(minute), marks: marks, without: key.id), under.on else { return own }
+        return under
+    }
+
     /// Each lamp's day from the scenes on the bridge, the once: from here on
     /// Sundial holds the settings. A scene that held turns into two matching
     /// keyframes, so the band shows the hold.

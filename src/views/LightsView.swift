@@ -190,7 +190,7 @@ struct LightsView: View {
         if show.key != nil { return "Keyframe" }
         guard let bulb = bulbs.first(where: { $0.id == show.bulbID }) else { return "" }
         if let parent = bulb.parent { return "Follows \(bulbs.first { $0.id == parent }?.name ?? "another bulb")" }
-        return bulb.keys.count == 1 ? "1 keyframe" : "\(bulb.keys.count) keyframes"
+        return bulb.keys.count == 1 ? "1 Keyframe" : "\(bulb.keys.count) Keyframes"
     }
 
     /// What a bulb's card starts from: its hold, or the lamp as last read, or where the
@@ -229,7 +229,7 @@ struct LightsView: View {
             }
         ) {
             if let key = show.key {
-                KeyTimeRow(key: key, marks: marks, delete: { deleteSelected() }, change: { change(key.id, $0) }, commit: {
+                KeyTimeRow(key: key, marks: marks, change: { change(key.id, $0) }, commit: {
                     history.commit(undo, "Change Keyframe")
                     endPreviewNow()
                 })
@@ -411,7 +411,7 @@ struct LightsView: View {
                 .contextMenu { rowMenu(bulb) }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Band(keys: keys, marks: marks, without: dragging)
+                    Band(keys: keys, marks: marks, without: dragLook?.on == true ? dragging : nil)
                         .frame(height: linked ? Layout.linkedHeight : Layout.bandHeight)
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                         .frame(maxHeight: .infinity)
@@ -667,7 +667,7 @@ struct LightsView: View {
         selection = Selection(bulb: bulb.id, key: key.id)
     }
 
-    /// While dragged a keyframe shows what's under it, and on drop it takes that.
+    /// While dragged a lit keyframe shows what's under it, and on drop it takes that.
     private func moveKey(_ id: UUID, bulb: LightDay.Bulb, to x: CGFloat, width: CGFloat) {
         let at = minute(atX: x, width: width)
         let snapped = LightDay.snap(at, marks: marks)
@@ -679,7 +679,8 @@ struct LightsView: View {
                 $0.anchor = snapped
             }
         }
-        if let look = LightDay.state(bulb.keys, at: Double(minute), marks: marks, without: id) {
+        if let key = bulb.keys.first(where: { $0.id == id }) {
+            let look = LightDay.dragged(key, among: bulb.keys, at: minute, marks: marks)
             dragLook = look
             previewOn(bulb.id, look, at: minute)
         }
@@ -1014,12 +1015,10 @@ private struct LookPanel<Identity: View>: View {
 }
 
 /// A keyframe's time, which is what tells it from the bulb's others, so it sits right under
-/// the name. Delete is spelled out at the end of the row, where a held bulb has Back to
-/// schedule, since a trash icon and the card's X are easy to mix up.
+/// the name.
 private struct KeyTimeRow: View {
     let key: LightDay.Key
     let marks: LightDay.Marks
-    let delete: () -> Void
     let change: ((inout LightDay.Key) -> Void) -> Void
     let commit: () -> Void
 
@@ -1038,11 +1037,7 @@ private struct KeyTimeRow: View {
                     .lineLimit(1)
                     .help(text)
             }
-            Spacer(minLength: 8)
-            Button("Delete keyframe", action: delete)
-                .controlSize(.small)
-                .hoverShade()
-                .fixedSize()
+            Spacer(minLength: 0)
         }
     }
 
@@ -1090,9 +1085,9 @@ private struct HoldRow: View {
             }
             Spacer(minLength: 8)
             // There either way and only usable when held, so nothing moves as it starts.
-            Button("Back to schedule", action: back)
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
+            Button(action: back) {
+                Text("Back to schedule").foregroundStyle(.orange)
+            }
                 .controlSize(.small)
                 .hoverShade()
                 .opacity(held ? 1 : 0)

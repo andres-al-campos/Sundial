@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 16:35, at 1.1.0.
+Updated 2026-11-04 18:22, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -14,14 +14,14 @@ artificial light follows the natural light along with the screen.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change). Click a dot for its time, on/off, brightness, temperature
-  (700 to 6500 K) and colour, or to delete it. A bulb the bridge has no scene for starts
+  (700 to 6500 K) and colour. Right-click a dot to delete it. A bulb the bridge has no scene for starts
   on three: sunrise, sunset and bedtime. Until they're changed its name says to click a dot.
 - **Temperature** only means something for the glowing-metal whites. For any other colour
   the slider dims, says "Color", and stays where it was before the wheel left the whites.
   That's remembered until Sundial quits; a keyframe that's already a colour sits at its
   nearest temperature. Dragging the slider goes back to a white.
 - **Moving.** A dragged keyframe shows the colour under it and takes that on
-  drop. A typed time keeps its look. Within 10 minutes of a mark it snaps and
+  drop. An off one stays off and keeps the look it remembers, and a lit one over an off stretch stays lit. A typed time keeps its look. Within 10 minutes of a mark it snaps and
   follows that mark. Imported keyframes can follow one at an offset, such as 40
   minutes before sunset.
 - **Previews.** Dragging a keyframe or changing its settings shows it on the bulb,
@@ -29,12 +29,12 @@ artificial light follows the natural light along with the screen.
   the day has it, over 1 second.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
-  and the card says "Held until sunrise" with an orange Back to schedule, which fades it back in 1 second.
+  and the card says "Held until sunrise" with Back to schedule in orange text, which fades it back in 1 second.
   A hold ends by itself at the next sunrise, covers only the bulb clicked and not those linked to
   it, and is forgotten on relaunch. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows, which stay put: a colour wheel, then the settings reading left to right and top
-  to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 keyframes" after it, the time with Delete keyframe at the end of its row,
+  to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 Keyframes" after it, the time,
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
   sliders, keeping their fill, and both say "Off". Every button shades on hover. The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
@@ -84,7 +84,7 @@ halfway value.
 
 It also checks that importing the scenes matches the old blend at every minute,
 the keyframe rules: straight lines, fading to off, leaving out a dragged
-keyframe, snapping, anchors, and reading whites back as a temperature, and that a
+keyframe, a drag leaving on and off alone, snapping, anchors, and reading whites back as a temperature, and that a
 lamp someone switched off is left alone.
 
 It also checks that a keyframe saved as disabled counts, a new bulb's three keyframes, what counts as new, and that whites have a
@@ -118,18 +118,21 @@ blend looks in the room.
   Time keeps its label even though the value explains itself, and off is a switch rather than the bottom of
   the slider, which only looks obvious to whoever built it. Applies *Never a fight with the controls*.
 
-- 2026-11-04 16:21, 1.1.0. **Delete is spelled out.** A trash icon and an X are too similar in meaning to sit side by side: "very easy to
-  mix up". So Delete keyframe is in words at the end of the time's row, where a held bulb has Back to schedule, and the X stays at
-  the top right. The time goes right under the name because "the time is basically their id".
+- 2026-11-04 18:22, 1.1.0. **Delete is on right-click only.** "There's no good place to put it" on the card: a trash icon beside the X was "very easy to
+  mix up", and in words it took the end of the time's row for something rarely used. The X stays at the top right, and the time goes
+  right under the name because "the time is basically their id".
 
-- 2026-11-04 16:35, 1.1.0. **A card says whether it's a light or a keyframe.** The two look alike: "its not immediately obvious". So the name is followed by
-  "Keyframe" or "6 keyframes", and only the light lights up its whole row. A keyframe shows on its dot.
+- 2026-11-04 18:22, 1.1.0. **A card says whether it's a light or a keyframe.** The two look alike: "its not immediately obvious". So the name is followed by
+  "Keyframe" or "6 Keyframes", in the same style, and only the light lights up its whole row. A keyframe shows on its dot.
 
-- 2026-11-04 16:35, 1.1.0. **Back to schedule is orange.** "It's the call to action", the same as Resume while paused.
+- 2026-11-04 18:22, 1.1.0. **Back to schedule is orange text.** "It's the call to action", on an ordinary button rather than a filled one.
 
 - 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
   take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *What you
   touch is what the monitor does*: it says "Off" and can't be dragged.
+
+- 2026-11-04 18:22, 1.1.0. **A drag leaves on and off alone.** Taking what's under it used to turn an off keyframe back on: "why does dragging a keyframe that is
+  off turn it back on?" The switch is what says on or off. Applies *Never a fight with the controls*.
 
 - 2026-11-02 05:18, 1.1.0. **A lamp switched off by hand stays off.** Sundial used to send on with every
   fade, so a lamp switched off from the phone came back on within a minute: "It
