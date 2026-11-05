@@ -906,7 +906,8 @@ private struct KeyDot: View {
             // Together, so the grey is one grey where the slash crosses the ring.
             ZStack {
                 Circle().inset(by: line / 2).stroke(.black, lineWidth: line)
-                if !look.on { Capsule().fill(.black).frame(width: line, height: size).rotationEffect(.degrees(45)) }
+                // Past the rim, or it reads as a crossed-out circle rather than ∅.
+                if !look.on { Capsule().fill(.black).frame(width: line, height: size * 1.3).rotationEffect(.degrees(45)) }
             }
             .compositingGroup()
             .opacity(0.5)

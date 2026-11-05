@@ -9,7 +9,7 @@ artificial light follows the natural light along with the screen.
 
 - **Lights window.** One row per bulb across the day, on a card, read from the bridge, the
   band showing the bulb's colour dimmed by its brightness, reaching 90% of the real colour at full brightness. A keyframe is its true colour in a ring whose white fills
-  with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash across it in the ring's grey. Above the bands are
+  with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash in the ring's grey running past the rim, as in ∅. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time.
 - **Keyframes.** Each bulb has its own, with a straight line between neighbours
@@ -125,7 +125,7 @@ blend looks in the room.
 - 2026-11-04 22:30, 1.1.0. **Brightness is a ring around the true colour.** "Make the brightness fill the white around the ring", from the top and clockwise, picked over pill bars, at 20 points with a thin
   line: 22 was "a bit" big, so it came back down keeping "the ratio of circle to ring". With the true colour and the brightness both here, the band's top can hold back: full brightness shows 90% of the real colour because it's "a bit too bright sometimes at night". The dim end stays
   dim, since lifting it looked "a bit too bright": "the real dimness from before". An off keyframe isn't pitch black: it's dimmed as the card's wheel
-  is, with a diagonal in the ring's grey "so it looks like that empty set symbol".
+  is, with a diagonal in the ring's grey that runs "a bit outside the circle so it looks like the ∅".
 
 - 2026-11-04 21:17, 1.1.0. **A follower follows a hold too.** "When a light is following another light the temp colors should also be followed." Its day is the other bulb's, and a held
   colour sits on top of that day. Applies *Never a fight with the controls*.
