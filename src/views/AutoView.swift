@@ -62,11 +62,7 @@ struct AutoView: View {
             Text("darkest at")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            // The Schedule cards' time picker, stepper and all, so it reads as
-            // a time you can change.
-            DatePicker("Bedtime", selection: bedtimeBinding, displayedComponents: .hourAndMinute)
-                .labelsHidden()
-                .controlSize(.small)
+            TimeField(label: "Bedtime", time: bedtimeBinding)
         }
         .frame(height: 20)
     }

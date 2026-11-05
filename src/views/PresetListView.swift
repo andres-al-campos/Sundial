@@ -382,9 +382,7 @@ private struct PresetEditorBody: View {
                 Text("Time")
                     .font(.caption)
                     .frame(width: 72, alignment: .leading)
-                DatePicker("", selection: $scheduleTime, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                    .controlSize(.small)
+                TimeField(label: "Time", time: $scheduleTime)
                     .onChange(of: scheduleTime) { _, newValue in
                         updateScheduleTime(newValue)
                     }

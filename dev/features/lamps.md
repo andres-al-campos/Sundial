@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 18:27, at 1.1.0.
+Updated 2026-11-04 20:47, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -92,6 +92,9 @@ temperature and colours don't.
 
 It also checks when a hold ends. What a held bulb is sent has no check yet.
 
+`./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
+what's highlighted and write to the keyframe showing now.
+
 By hand only: the window, how the card moves, pairing, that the bridge takes the fades, how the
 blend looks in the room.
 
@@ -131,6 +134,10 @@ blend looks in the room.
   take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *What you
   touch is what the monitor does*: it says "Off" and can't be dragged.
 
+- 2026-11-04 20:47, 1.1.0. **A time looks the same everywhere.** "Why is there no line on the popup one?" and "theres more padding on the bottom than the top": the window, the
+  popup and the Schedule share `TimeField`, so they can't drift apart. Its arrows are the system's stepper and step what's highlighted, as the picker's own
+  did. Applies *Never a fight with the controls*.
+
 - 2026-11-04 18:22, 1.1.0. **A drag leaves on and off alone.** Taking what's under it used to turn an off keyframe back on: "why does dragging a keyframe that is
   off turn it back on?" The switch is what says on or off. Applies *Never a fight with the controls*.
 
@@ -151,7 +158,7 @@ blend looks in the room.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
 - Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly. Below that the white curve is a table of Planck's law, ending at 700 K, where it reaches these bulbs' red corner (xy 0.692, 0.308).
-- The time picker's stepper draws the line between its arrows bright until the picker is focused or its time changes, then faint (macOS 27, in a test window). A vibrant appearance only looks like a fix because setting it redraws the picker; setting it on a parent or at creation does nothing, and moving the time by a second doesn't redraw it.
+- SwiftUI's time picker puts its text high in its field (3 points above, 6 below) and draws a bright line between its arrows until its shown time changes, then a faint one (macOS 27, measured off-screen). A vibrant appearance, a redraw or focus doesn't change the line, and overriding the cell's interior drawing doesn't move the text. So `TimeField` is a bare picker on its own ground with a separate stepper, whose line is always faint.
 - macOS asks for the Keychain again after every `./build.sh`, because the app is
   signed ad-hoc and each build is a new signature to it. Allow lasts one launch,
   Always Allow lasts until the next build. Until it's answered the lamps wait and

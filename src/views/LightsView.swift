@@ -1025,10 +1025,7 @@ private struct KeyTimeRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
-            DatePicker("Time", selection: timeBinding, displayedComponents: .hourAndMinute)
-                .labelsHidden()
-                .controlSize(.small)
-                .fixedSize()
+            TimeField(label: "Time", time: timeBinding)
             if let text = LightsView.anchorText(key.anchor) {
                 // Gives way first when the window is small, with the whole of it on hover.
                 Text(text)

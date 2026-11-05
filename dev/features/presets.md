@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-02 02:08, at 1.1.0.
+Updated 2026-11-04 20:47, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -38,6 +38,8 @@ because another screen is in HDR, not with no name set.
 
 Last driven: 2026-10-12, macOS. Passed; failed as expected against a copy with
 the headroom comparison loosened.
+
+`./build.sh drive time-field` (~6s): the arrows on the time field, which a preset's Time uses.
 
 By hand only: that the note replaces the slider and goes away again when HDR
 is toggled in System Settings → Displays, and everything else in this feature (editing, live apply,

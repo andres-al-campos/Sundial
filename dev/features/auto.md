@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-02 23:34, at 1.1.0.
+Updated 2026-11-04 20:47, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -96,6 +96,8 @@ followed the slider live; the level saved and survived a restart.
 
 By hand only: how the easing feels, the popup's look, wake, and the lid-closed
 row.
+
+`./build.sh drive time-field` (~6s): the arrows on the time field, which "darkest at" uses.
 
 ## Gotchas
 
