@@ -150,7 +150,11 @@ final class LampController {
                 pendingPreview = [:]
                 let started = Date()
                 do {
-                    for (id, s) in batch { try await bridge.set(lamp: id, to: s, fade: Self.previewPace) }
+                    for (id, s) in batch {
+                        // Not someone leaving the room: the way back has to be able to light it again.
+                        if !s.on { offByDay.insert(id) }
+                        try await bridge.set(lamp: id, to: s, fade: Self.previewPace)
+                    }
                 } catch {
                     state?.lampStatus = error.localizedDescription
                 }
