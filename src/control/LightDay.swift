@@ -207,12 +207,10 @@ enum LightDay {
         return keys.map(same) == start.map(same)
     }
 
-    /// Where a bulb should be at `minute`, leaving out one keyframe if asked:
-    /// while a keyframe is dragged it shows what's under it, so it can't be part
-    /// of what it's sampling. Nil for a bulb with no keyframes, which Sundial
+    /// Where a bulb should be at `minute`. Nil for a bulb with no keyframes, which Sundial
     /// leaves alone.
-    static func state(_ keys: [Key], at minute: Double, marks: Marks, without: UUID? = nil) -> State? {
-        let list = keys.filter { $0.id != without || keys.count == 1 }
+    static func state(_ keys: [Key], at minute: Double, marks: Marks) -> State? {
+        let list = keys
             .map { (key: $0, at: Double(Self.minute(of: $0, marks: marks))) }
             .sorted { $0.at < $1.at }
         guard let first = list.first else { return nil }
@@ -233,16 +231,6 @@ enum LightDay {
             brightness: fromLevel + (toLevel - fromLevel) * t,
             xy: .init(x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t)
         )
-    }
-
-    /// What a dragged keyframe shows and lands with. A lit one takes what's under it, so the day's
-    /// line doesn't change. On or off is the switch's to change and never a drag's, so an off one
-    /// keeps the look it remembers for being switched back on, and a lit one over an off stretch
-    /// has nothing to take.
-    static func dragged(_ key: Key, among keys: [Key], at minute: Int, marks: Marks) -> State {
-        let own = State(on: key.on, brightness: key.brightness, xy: key.xy)
-        guard key.on, let under = state(keys, at: Double(minute), marks: marks, without: key.id), under.on else { return own }
-        return under
     }
 
     /// Each lamp's day from the scenes on the bridge, the once: from here on

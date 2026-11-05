@@ -80,15 +80,6 @@ let m0 = LightDay.Marks(sunrise: 420, sunset: 1080, darkest: 0)
 check("a keyframe's line runs straight to the next", near(LightDay.state(k, at: 660, marks: m0)!.brightness, 75, 0.01), LightDay.state(k, at: 660, marks: m0) as Any)
 check("fading to an off keyframe goes through dimming", near(LightDay.state(k, at: 780, marks: m0)!.brightness, 50, 0.01) && LightDay.state(k, at: 780, marks: m0)!.on, LightDay.state(k, at: 780, marks: m0) as Any)
 check("the bulb is off on and after an off keyframe with nothing lit ahead", !LightDay.state(k, at: 840, marks: m0)!.on, LightDay.state(k, at: 840, marks: m0) as Any)
-check("a dragged keyframe is left out of what it samples", near(LightDay.state(k, at: 720, marks: m0, without: k[1].id)!.brightness, 25, 0.01), LightDay.state(k, at: 720, marks: m0, without: k[1].id) as Any)
-let offKey = key(720, 60, on: false), offDay = [key(600, 50), offKey, key(840, 100)]
-let draggedOff = LightDay.dragged(offKey, among: offDay, at: 700, marks: m0)
-check("a dragged keyframe that's off stays off, keeping the look it remembers", !draggedOff.on && near(draggedOff.brightness, 60, 0.01), draggedOff)
-let draggedLit = LightDay.dragged(k[1], among: k, at: 720, marks: m0)
-check("a dragged keyframe that's lit takes what's under it", draggedLit.on && near(draggedLit.brightness, 25, 0.01), draggedLit)
-let litKey = key(720, 80), offStretch = [key(600, 0, on: false), litKey, key(840, 0, on: false)]
-let draggedOver = LightDay.dragged(litKey, among: offStretch, at: 720, marks: m0)
-check("a dragged keyframe that's lit stays lit over an off stretch", draggedOver.on && near(draggedOver.brightness, 80, 0.01), draggedOver)
 check("no keyframes, no state: Sundial leaves the bulb alone", LightDay.state([], at: 0, marks: m0) == nil, "state")
 check("within 10 minutes snaps to a mark, across midnight too", LightDay.snap(1435, marks: m0)?.mark == .darkest && LightDay.snap(1000, marks: m0) == nil, "snap")
 check("an anchored keyframe follows its mark", LightDay.minute(of: key(0, 1, .init(mark: .sunset, offset: -40)), marks: m0) == 1040, "anchor")
@@ -226,7 +217,7 @@ check("nor one with a keyframe removed", !LightDay.isUntouchedDefault(Array(star
 for k in stride(from: 700.0, through: 6500, by: 7) {
     check("\(k) K has a temperature", LightDay.hasTemperature(LampBlend.xy(mirek: 1_000_000 / k)), k)
 }
-// Dropping a dragged keyframe takes the blend between two whites, a little off the line.
+// A new keyframe takes the blend between two whites, a little off the line.
 let blendA = LampBlend.xy(mirek: 500), blendB = LampBlend.xy(mirek: 250)
 check("a blend of two nearby whites still has one", LightDay.hasTemperature(.init(x: (blendA.x + blendB.x) / 2, y: (blendA.y + blendB.y) / 2)), "blend")
 for (name, hue) in [("green", 0.33), ("cyan", 0.5), ("blue", 0.66), ("magenta", 0.83)] {

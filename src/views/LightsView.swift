@@ -61,8 +61,6 @@ struct LightsView: View {
     @StateObject private var history = LightsHistory()
 
     @State private var selection: Selection?
-    @State private var dragging: UUID?
-    @State private var dragLook: LightDay.State?
     @State private var clip: Clip = .init()
     @State private var renaming: String?
     @State private var playMinute: Double?
@@ -125,7 +123,7 @@ struct LightsView: View {
         }
         .onChange(of: appState.lights) { _, new in
             // The bridge's own reads arrive while nothing's being edited.
-            if selection == nil, dragging == nil { history.seen(new) }
+            if selection == nil, !appState.movingKeyframe { history.seen(new) }
         }
         .onChange(of: shown) { _, new in if let new { lastShown = new } }
         .onChange(of: selection != nil) { _, selected in cardOpen = selected }
@@ -411,7 +409,7 @@ struct LightsView: View {
                 .contextMenu { rowMenu(bulb) }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Band(keys: keys, marks: marks, without: dragLook?.on == true ? dragging : nil)
+                    Band(keys: keys, marks: marks)
                         .frame(height: linked ? Layout.linkedHeight : Layout.bandHeight)
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                         .frame(maxHeight: .infinity)
@@ -505,15 +503,14 @@ struct LightsView: View {
 
     private func dot(_ key: LightDay.Key, bulb: LightDay.Bulb, width: CGFloat) -> some View {
         let at = LightDay.minute(of: key, marks: marks)
-        let look = dragging == key.id ? (dragLook ?? Self.state(key)) : Self.state(key)
         let selected = selection?.key == key.id
-        return KeyDot(look: look, selected: selected)
+        return KeyDot(look: Self.state(key), selected: selected)
             .contentShape(Circle().inset(by: -1))
             .position(x: width * Layout.position(at), y: Layout.rowHeight / 2)
             .gesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .local)
                     .onChanged { moveKey(key.id, bulb: bulb, to: $0.location.x, width: width) }
-                    .onEnded { _ in dropKey(key.id, bulb: bulb) }
+                    .onEnded { _ in dropKey() }
             )
             .onTapGesture { toggle(Selection(bulb: bulb.id, key: key.id)) }
             .contextMenu { keyMenu(key, bulb: bulb) }
@@ -668,13 +665,12 @@ struct LightsView: View {
         selection = Selection(bulb: bulb.id, key: key.id)
     }
 
-    /// While dragged a lit keyframe shows what's under it, and on drop it takes that. Only the badge
-    /// says so: a drag picks a time, and scrubbing past noon at night would flood the room.
+    /// Only the time moves, so the band reshapes around the keyframe. A colour between two keyframes is
+    /// what a new one is for. The bulbs wait for the drop, as scrubbing past noon at night would flood the room.
     private func moveKey(_ id: UUID, bulb: LightDay.Bulb, to x: CGFloat, width: CGFloat) {
         let at = minute(atX: x, width: width)
         let snapped = LightDay.snap(at, marks: marks)
         let minute = snapped.map { marks.minute(of: $0.mark) } ?? at
-        dragging = id
         appState.movingKeyframe = true
         edit { index in
             index.withKey(bulb.id, id) {
@@ -683,24 +679,11 @@ struct LightsView: View {
             }
         }
         if let key = bulb.keys.first(where: { $0.id == id }) {
-            let look = LightDay.dragged(key, among: bulb.keys, at: minute, marks: marks)
-            dragLook = look
-            previewing = Previewing(bulb: bulb.name, look: look, minute: minute)
+            previewing = Previewing(bulb: bulb.name, look: Self.state(key), minute: minute)
         }
     }
 
-    private func dropKey(_ id: UUID, bulb: LightDay.Bulb) {
-        if let look = dragLook {
-            edit { index in
-                index.withKey(bulb.id, id) {
-                    $0.on = look.on
-                    $0.brightness = look.brightness
-                    $0.xy = look.xy
-                }
-            }
-        }
-        dragging = nil
-        dragLook = nil
+    private func dropKey() {
         previewing = nil
         // Before the save, whose tick takes the bulb to the new day at the usual fade. Ending a
         // preview here would rush it there in half a second, with nothing to come back from.
@@ -939,7 +922,6 @@ private struct KeyDot: View {
 private struct Band: View {
     let keys: [LightDay.Key]
     let marks: LightDay.Marks
-    let without: UUID?
 
     var body: some View {
         Canvas { context, size in
@@ -949,7 +931,7 @@ private struct Band: View {
             for x in 0..<columns {
                 let minute = (Double(Layout.start) + Double(x) / Double(columns) * Double(LightDay.day))
                     .truncatingRemainder(dividingBy: Double(LightDay.day))
-                guard let s = LightDay.state(keys, at: minute, marks: marks, without: without), s.on else { continue }
+                guard let s = LightDay.state(keys, at: minute, marks: marks), s.on else { continue }
                 context.fill(Path(CGRect(x: CGFloat(x), y: 0, width: 1.5, height: size.height)), with: .color(LightsView.color(s)))
             }
         }
@@ -1085,7 +1067,6 @@ private struct KeyTimeRow: View {
         }
     }
 
-    /// A typed time keeps the keyframe's look. Only a drag takes what's under it.
     private var timeBinding: Binding<Date> {
         Binding(
             get: { LightDay.clockTime(LightDay.minute(of: key, marks: marks), on: Date()) },
