@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 18:22, at 1.1.0.
+Updated 2026-11-04 18:27, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -151,6 +151,7 @@ blend looks in the room.
 - After a relaunch, a lamp that a keyframe had turned off counts as switched off by hand, since that memory isn't saved, and stays off until it's switched on.
 - Above about 5 calls a second the bridge still answers 200 but takes seconds to (measured 2026-11-01: 0.3s at 5/s, 2.3s at 10/s, 3.8s at 20/s), so previews send only the newest state, about 2 per bulb per second, and a slower one would look like lag, not failure.
 - Color temperature stops at 2000 K on these bulbs and a higher mirek silently gives 2000 K, so Sundial always sends xy, which holds 1700 K exactly. Below that the white curve is a table of Planck's law, ending at 700 K, where it reaches these bulbs' red corner (xy 0.692, 0.308).
+- The time picker's stepper draws the line between its arrows bright until the picker is focused or its time changes, then faint (macOS 27, in a test window). A vibrant appearance only looks like a fix because setting it redraws the picker; setting it on a parent or at creation does nothing, and moving the time by a second doesn't redraw it.
 - macOS asks for the Keychain again after every `./build.sh`, because the app is
   signed ad-hoc and each build is a new signature to it. Allow lasts one launch,
   Always Allow lasts until the next build. Until it's answered the lamps wait and
