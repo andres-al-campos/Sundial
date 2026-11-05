@@ -162,13 +162,15 @@ struct LightsView: View {
     }
 
     private var rows: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Layout.rowGap) {
             marksHeader
             ForEach(bulbs) { row($0) }
             hoursAxis
         }
+        .padding(Layout.cardPadding)
+        .cardGround()
         .padding(.horizontal, Layout.edge)
-        .padding(.vertical, Layout.rowsPadding)
+        .padding(.top, Layout.rowsPadding)
         .contentShape(Rectangle())
         .onTapGesture { deselect() }
     }
@@ -240,11 +242,7 @@ struct LightsView: View {
         .padding(Layout.cardPadding)
         .frame(height: Layout.cardHeight)
         .frame(maxWidth: .infinity)
-        .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: Layout.cardCorner))
-        .overlay {
-            RoundedRectangle(cornerRadius: Layout.cardCorner)
-                .strokeBorder(.primary.opacity(0.12))
-        }
+        .cardGround()
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) {
                 Image(systemName: "xmark")
@@ -406,7 +404,7 @@ struct LightsView: View {
         let selected = selection == Selection(bulb: bulb.id, key: nil)
         return HStack(spacing: Layout.gap) {
             name(bulb)
-                .frame(width: Layout.name, height: Layout.bandHeight + 8, alignment: .leading)
+                .frame(width: Layout.name, height: Layout.rowHeight, alignment: .leading)
                 .contentShape(Rectangle())
                 .contextMenu { rowMenu(bulb) }
             GeometryReader { geo in
@@ -428,7 +426,7 @@ struct LightsView: View {
                         .overlay(alignment: .leading) {
                             Rectangle()
                                 .fill(.primary.opacity(0.85))
-                                .frame(width: 1.5, height: Layout.bandHeight + 16)
+                                .frame(width: 1.5, height: Layout.rowHeight + Layout.rowGap)
                                 .offset(x: geo.size.width * Layout.position(lineMinute) - 0.75)
                         }
                         .overlay(alignment: .leading) {
@@ -436,7 +434,7 @@ struct LightsView: View {
                                 Circle()
                                     .fill(.primary)
                                     .frame(width: 9, height: 9)
-                                    .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (Layout.bandHeight + 16) / 2)
+                                    .offset(x: geo.size.width * Layout.position(lineMinute) - 4.5, y: (Layout.rowHeight + Layout.rowGap) / 2)
                             }
                         }
                         .allowsHitTesting(false)
@@ -447,14 +445,14 @@ struct LightsView: View {
                     }
                 }
             }
-            .frame(height: Layout.bandHeight + 8)
+            .frame(height: Layout.rowHeight)
         }
         // The whole row for the light, while a keyframe of it shows only on its dot. Past the
         // band's end by as much as it shows above and below the band.
         .background {
             RoundedRectangle(cornerRadius: 5)
                 .fill(.primary.opacity(selected ? 0.08 : 0))
-                .padding(.trailing, -4)
+                .padding(.trailing, -Layout.bandMargin)
                 .animation(.easeOut(duration: 0.15), value: selected)
         }
     }
@@ -516,7 +514,7 @@ struct LightsView: View {
             .background(Circle().stroke(.black.opacity(selected ? 0.6 : 0), lineWidth: 1))
             .frame(width: size, height: size)
             .contentShape(Circle().inset(by: -4))
-            .position(x: width * Layout.position(at), y: (Layout.bandHeight + 8) / 2)
+            .position(x: width * Layout.position(at), y: Layout.rowHeight / 2)
             .gesture(
                 DragGesture(minimumDistance: 2, coordinateSpace: .local)
                     .onChanged { moveKey(key.id, bulb: bulb, to: $0.location.x, width: width) }
@@ -815,8 +813,12 @@ enum Layout {
     static let edge: CGFloat = 28
     static let name: CGFloat = 130
     static let gap: CGFloat = 12
-    static let bandHeight: CGFloat = 22
-    static let linkedHeight: CGFloat = 10
+    static let bandHeight: CGFloat = 28
+    static let linkedHeight: CGFloat = 12
+    /// What shows of a row above and below its band.
+    static let bandMargin: CGFloat = 5
+    static let rowHeight: CGFloat = bandHeight + 2 * bandMargin
+    static let rowGap: CGFloat = 8
     static let rowsPadding: CGFloat = 16
 
     static let cardCorner: CGFloat = 12
@@ -827,13 +829,14 @@ enum Layout {
     static let iconButton: CGFloat = 22
     /// The colour wheel's height plus its padding.
     static let cardHeight: CGFloat = 144
-    static let cardRoom: CGFloat = cardHeight + rowsPadding
+    /// With the gap above it, so it comes out from behind the rows' own card.
+    static let cardRoom: CGFloat = cardHeight + 2 * rowsPadding
     static let slide = 0.28
 
-    /// Whether the rows fit in `height`: the marks and hours, the padding, and a row and
-    /// a gap per bulb.
+    /// Whether the rows fit in `height`: their card's padding, the marks and hours, and a row
+    /// and a gap per bulb.
     static func rowsFit(_ rows: Int, in height: CGFloat) -> Bool {
-        rowsPadding * 2 + 22 + 14 + 8 * CGFloat(rows + 1) + (bandHeight + 8) * CGFloat(rows) <= height
+        rowsPadding + cardPadding * 2 + 22 + 14 + rowGap * CGFloat(rows + 1) + rowHeight * CGFloat(rows) <= height
     }
 
     /// The axis starts at 5 AM, so the day reads left to right and the night
@@ -1056,6 +1059,15 @@ private struct KeyTimeRow: View {
 }
 
 private extension View {
+    /// The one ground for the rows and the card under them.
+    func cardGround() -> some View {
+        background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: Layout.cardCorner))
+            .overlay {
+                RoundedRectangle(cornerRadius: Layout.cardCorner)
+                    .strokeBorder(.primary.opacity(0.12))
+            }
+    }
+
     /// How a card's control looks when it isn't in use, the same whatever the reason.
     func dimmed(_ active: Bool) -> some View {
         tint(active ? nil : .gray)

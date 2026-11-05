@@ -7,7 +7,7 @@ artificial light follows the natural light along with the screen.
 
 ## Sub-features
 
-- **Lights window.** One row per bulb across the day, read from the bridge, the
+- **Lights window.** One row per bulb across the day, on a card, read from the bridge, the
   band showing the bulb's colour dimmed by its brightness. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time.
@@ -33,7 +33,7 @@ artificial light follows the natural light along with the screen.
   A hold ends by itself at the next sunrise, covers only the bulb clicked and not those linked to
   it, and is forgotten on relaunch. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
-  rows, which stay put: a colour wheel, then the settings reading left to right and top
+  rows' card, which stays put: a colour wheel, then the settings reading left to right and top
   to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 Keyframes" after it, the time,
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
   sliders, keeping their fill, and both say "Off". Every button shades on hover. The rows scroll only if the
@@ -106,9 +106,10 @@ blend looks in the room.
   one": the dots are "the most obvious thing to explore". It comes down from under the timeline
   and never covers it, "always below the timeline".
 
-- 2026-11-04 12:11, 1.1.0. **Rows keep their height.** Rows stretched to fill the window looked "horrendous", and
+- 2026-11-04 20:47, 1.1.0. **Rows keep their height.** Rows stretched to fill the window looked "horrendous", and
   the space below them isn't the problem *Empty space is spread out* is about: that was the
-  writing on the card.
+  writing on the card. They grew once, to a 28-point band, so a keyframe has room
+  around it: "you can barely see the bg around it when its near the bright spots".
 
 - 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
   schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
@@ -129,6 +130,8 @@ blend looks in the room.
   "Keyframe" or "6 Keyframes", in the same style, and only the light lights up its whole row. A keyframe shows on its dot.
 
 - 2026-11-04 18:22, 1.1.0. **Back to schedule is orange text.** "It's the call to action", on an ordinary button rather than a filled one.
+
+- 2026-11-04 20:47, 1.1.0. **The rows are on a card too.** "Yeah the light can go in a card too." Both cards share one ground, and a keyframe's comes out from behind the rows'.
 
 - 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
   take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *What you
