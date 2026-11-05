@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 23:22, at 1.1.0.
+Updated 2026-11-05 12:13, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -95,6 +95,8 @@ It also checks when a hold ends and whose hold a follower is under.
 day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and previewing an off keyframe doesn't leave it off. A routine moving a bulb gets put back, held or on a flat stretch.
 
 The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band. `tests/card-stays-open.sh` checks that only `deselect` closes the card and the menus don't call it.
+
+`./build.sh drive window` (~20s): builds the real window from the code as it is and renders Lights off-screen to PNGs, dark and light, taking no focus. `WINDOW_OUT=dir` keeps them and `WINDOW_REAL=1` starts from a throwaway copy of the real config. It shows the window at rest; showing a card takes a scratch copy of `src/` calling the view's private functions.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.

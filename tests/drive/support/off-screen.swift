@@ -33,3 +33,11 @@ import ObjectiveC
     }
     method_setImplementation(class_getInstanceMethod(NSWindow.self, #selector(NSWindow.makeKeyAndOrderFront(_:)))!, imp_implementationWithBlock(offScreen))
 }
+
+/// Saves one window to a PNG. A window of this process needs no Screen Recording permission.
+@MainActor func capture(_ w: NSWindow, to path: String) -> Bool {
+    guard let n = CGWindowID(exactly: w.windowNumber),
+          let i = CGWindowListCreateImage(.null, .optionIncludingWindow, n, [.boundsIgnoreFraming, .bestResolution]),
+          let d = NSBitmapImageRep(cgImage: i).representation(using: .png, properties: [:]) else { return false }
+    return (try? d.write(to: URL(fileURLWithPath: path))) != nil
+}
