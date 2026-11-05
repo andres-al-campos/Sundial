@@ -198,7 +198,7 @@ struct LightsView: View {
     /// What a bulb's card starts from: its hold, or the lamp as last read, or where the
     /// day has it until that read comes back.
     private func rightNow(_ id: String) -> LightDay.State {
-        if let held = appState.holds[id]?.look { return held }
+        if let owner = holdOwner(id), let held = appState.holds[owner]?.look { return held }
         if let read = lampsNow[id] { return read }
         let bulb = bulbs.first { $0.id == id }
         return bulb.flatMap { LightDay.state(LightDay.keys(of: $0, in: bulbs), at: nowMinute, marks: marks) }
@@ -236,7 +236,7 @@ struct LightsView: View {
                     endPreviewNow()
                 })
             } else {
-                HoldRow(held: appState.holds[show.bulbID] != nil, paused: !appState.lampsFollow, back: { backToSchedule(show.bulbID) })
+                HoldRow(held: holdOwner(show.bulbID) != nil, paused: !appState.lampsFollow, back: { backToSchedule(show.bulbID) })
             }
         }
         .padding(Layout.cardPadding)
@@ -477,7 +477,7 @@ struct LightsView: View {
                         .font(.subheadline)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .foregroundStyle(appState.holds[bulb.id] != nil ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
+                        .foregroundStyle(holdOwner(bulb.id) != nil ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
                     if bulb.parent == nil, LightDay.isUntouchedDefault(bulb.keys) {
                         Text("Click a dot to edit")
                             .font(.caption2)
@@ -610,17 +610,25 @@ struct LightsView: View {
         Task { if let read = try? await appState.onReadLamps?() { lampsNow = read } }
     }
 
-    /// Changes the bulb and no keyframes. The first change is what starts the hold.
+    private func holdOwner(_ id: String) -> String? {
+        LightDay.holdOwner(of: id, in: bulbs, holds: appState.holds)
+    }
+
+    /// Changes the bulb and no keyframes. The first change is what starts the hold. Whichever
+    /// follow it show it too, unless they're held themselves.
     private func hold(_ id: String, _ apply: (inout LightDay.State) -> Void) {
         var look = rightNow(id)
         apply(&look)
         appState.holds[id] = LightDay.Hold(look: look, until: LightDay.holdEnd(from: now, sunrise: marks.sunrise))
-        appState.onPreviewLamps?([id: look])
+        var states = [id: look]
+        for follower in bulbs where follower.parent == id && appState.holds[follower.id] == nil { states[follower.id] = look }
+        appState.onPreviewLamps?(states)
     }
 
+    /// From a follower too, whose button would otherwise do nothing while the hold it's under is another bulb's.
     private func backToSchedule(_ id: String) {
-        appState.holds[id] = nil
-        lampsNow[id] = nil
+        if let owner = holdOwner(id) { appState.holds[owner] = nil }
+        lampsNow = [:]
         // Through the preview's return, for its quick fade rather than the usual 30 seconds.
         endPreviewNow()
     }

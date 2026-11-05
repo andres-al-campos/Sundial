@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-04 20:47, at 1.1.0.
+Updated 2026-11-04 21:17, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -30,8 +30,8 @@ artificial light follows the natural light along with the screen.
 - **Holding.** Click a bulb's name and its whole row lights up, and the same card changes that bulb right now,
   from what the lamp is doing, without touching a keyframe. The first change holds it: its name turns orange
   and the card says "Held until sunrise" with Back to schedule in orange text, which fades it back in half a second.
-  A hold ends by itself at the next sunrise, covers only the bulb clicked and not those linked to
-  it, and is forgotten on relaunch. Rename is on the right-click menu.
+  A hold ends by itself at the next sunrise and is forgotten on relaunch. Bulbs following the one clicked take the hold too, unless they're held themselves:
+  a follower's own card can hold it apart, and its Back to schedule ends whichever hold it's under. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows' card, which stays put: a colour wheel, then the settings reading left to right and top
   to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 Keyframes" after it, the time,
@@ -90,7 +90,7 @@ lamp someone switched off is left alone.
 It also checks that a keyframe saved as disabled counts, a new bulb's three keyframes, what counts as new, and that whites have a
 temperature and colours don't.
 
-It also checks when a hold ends. What a held bulb is sent has no check yet.
+It also checks when a hold ends and whose hold a follower is under. What a held bulb is sent has no check yet.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
@@ -113,6 +113,9 @@ blend looks in the room.
 
 - 2026-11-04 14:51, 1.1.0. **Holding is a small extra.** "Sometimes I just need to get more light or something", then back to the
   schedule. It isn't a reason to open Sundial, so the seed stays as it is and holding shouldn't grow into a mode.
+
+- 2026-11-04 21:17, 1.1.0. **A follower follows a hold too.** "When a light is following another light the temp colors should also be followed." Its day is the other bulb's, and a held
+  colour sits on top of that day. Applies *Never a fight with the controls*.
 
 - 2026-11-04 14:17, 1.1.0. **No Disable.** It only existed to hold a colour for a while, and two on/off controls side by side were
   the cost: a new person can't tell them apart. Holding does that job, so a keyframe is either in the day or

@@ -103,6 +103,14 @@ enum LightDay {
         var until: Date
     }
 
+    /// Whose hold a bulb is under: its own, or else that of the bulb it follows, as it follows
+    /// that bulb's day.
+    static func holdOwner(of id: String, in bulbs: [Bulb], holds: [String: Hold]) -> String? {
+        if holds[id] != nil { return id }
+        guard let parent = bulbs.first(where: { $0.id == id })?.parent, holds[parent] != nil else { return nil }
+        return parent
+    }
+
     /// When a hold made at `date` ends: the next sunrise, so a forgotten one can't
     /// outlast the night the way a forgotten Pause does.
     static func holdEnd(from date: Date, sunrise: Int, in calendar: Calendar = .current) -> Date {

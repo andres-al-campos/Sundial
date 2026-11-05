@@ -188,12 +188,13 @@ final class LampController {
         beforePreview = nil
         returning = false
         guard let bridge else { return }
-        let holds = state?.holds ?? [:]
+        let holds = state?.holds ?? [:], bulbs = state?.lights ?? []
         let ids = previewed.union(holds.keys)
         previewed = []
         do {
             for id in ids {
-                if let s = holds[id]?.look ?? before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
+                let held = LightDay.holdOwner(of: id, in: bulbs, holds: holds).flatMap { holds[$0]?.look }
+                if let s = held ?? before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
             }
         } catch {
             state?.lampStatus = error.localizedDescription
@@ -258,7 +259,7 @@ final class LampController {
             let backFirst = bulbs.filter { moved.contains($0.id) } + bulbs.filter { !moved.contains($0.id) }
             var sends = 0, leftOff = 0
             for bulb in backFirst {
-                let hold = state.holds[bulb.id]?.look
+                let hold = LightDay.holdOwner(of: bulb.id, in: bulbs, holds: state.holds).flatMap { state.holds[$0]?.look }
                 guard let target = hold ?? LightDay.state(LightDay.keys(of: bulb, in: bulbs), at: Double(minute), marks: marks),
                       let isOn = lit[bulb.id] else { continue }
                 if isOn { offByDay.remove(bulb.id) }

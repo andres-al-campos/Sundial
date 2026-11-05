@@ -161,6 +161,19 @@ check("a hold before sunrise ends that morning", LightDay.holdEnd(from: holdDay,
 let afternoon = holdDay.addingTimeInterval(12 * 3600)
 check("a hold after sunrise ends the next morning", LightDay.holdEnd(from: afternoon, sunrise: 360, in: holdCalendar) == holdDay.addingTimeInterval(27 * 3600), "after")
 
+// A follower is under the hold of the bulb it follows, unless it has its own.
+var leader = LightDay.Bulb(id: "lead", deviceID: "d1", name: "Lead", keys: [])
+var follower = LightDay.Bulb(id: "follow", deviceID: "d2", name: "Follow", keys: [])
+follower.parent = leader.id
+let linked = [leader, follower]
+let held = LightDay.Hold(look: .init(on: true, brightness: 80, xy: .init(x: 0.4, y: 0.4)), until: afternoon)
+func owner(_ id: String, _ holds: [String: LightDay.Hold]) -> String? { LightDay.holdOwner(of: id, in: linked, holds: holds) }
+check("no hold, no owner", owner(follower.id, [:]) == nil, owner(follower.id, [:]) as Any)
+check("a held bulb is under its own hold", owner(leader.id, [leader.id: held]) == leader.id, owner(leader.id, [leader.id: held]) as Any)
+check("a follower takes the hold of the bulb it follows", owner(follower.id, [leader.id: held]) == leader.id, owner(follower.id, [leader.id: held]) as Any)
+check("a follower's own hold comes first", owner(follower.id, [leader.id: held, follower.id: held]) == follower.id, owner(follower.id, [leader.id: held, follower.id: held]) as Any)
+check("a hold doesn't climb from a follower to the bulb it follows", owner(leader.id, [follower.id: held]) == nil, owner(leader.id, [follower.id: held]) as Any)
+
 // A time picker reads the clock, on the 25-hour and 23-hour days too.
 var chicago = Calendar(identifier: .gregorian)
 chicago.timeZone = TimeZone(identifier: "America/Chicago")!
