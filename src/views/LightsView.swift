@@ -306,19 +306,17 @@ struct LightsView: View {
                 .hoverShade()
                 .transition(.opacity)
             }
-            Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
+            // Orange text while the lights are off the day, as Return to schedule and the menu bar's
+            // sun are: one color for one state, and a filled button shouted over the rest.
+            Button(action: togglePlay) {
+                Text(playMinute == nil ? "Play the day" : "Stop")
+                    .orange(playMinute != nil)
+            }
                 .disabled(bulbs.isEmpty)
                 .hoverShade()
-            // Filled while paused, because the lamps have stopped following the day and
-            // nothing else would say so once you look away from the status line.
-            Group {
-                if isPaused {
-                    Button("Resume", action: togglePause)
-                        .buttonStyle(.borderedProminent)
-                        .tint(.orange)
-                } else {
-                    Button(appState.lampsFollow ? "Pause" : "Resume", action: togglePause)
-                }
+            Button(action: togglePause) {
+                Text(appState.lampsFollow ? "Pause" : "Resume")
+                    .orange(isPaused)
             }
             .disabled(appState.hueHost == nil)
             .hoverShade()
@@ -644,8 +642,12 @@ struct LightsView: View {
     /// Changes the bulb and no keyframes. The first change is what starts the hold. Whichever
     /// follow it show it too, unless they're held themselves.
     private func hold(_ id: String, _ apply: (inout LightDay.State) -> Void) {
-        var look = rightNow(id)
+        let was = rightNow(id)
+        var look = was
         apply(&look)
+        // A click on a slider's knob sends its own value back, and a hold from that put Return to
+        // schedule up for a change nobody made.
+        if appState.holds[id] == nil, !LightDay.differs(look, from: was) { return }
         appState.holds[id] = LightDay.Hold(look: look, until: LightDay.holdEnd(from: now, sunrise: marks.sunrise))
         var states = [id: look]
         for follower in bulbs where follower.parent == id && appState.holds[follower.id] == nil { states[follower.id] = look }
@@ -1132,6 +1134,11 @@ private extension View {
                                            bottomTrailingRadius: bottom, topTrailingRadius: top)
         return background(.primary.opacity(0.06), in: shape)
             .overlay { shape.strokeBorder(.primary.opacity(0.12)) }
+    }
+
+    /// Only when on: a set color otherwise would keep a disabled button from greying.
+    @ViewBuilder func orange(_ on: Bool) -> some View {
+        if on { foregroundStyle(.orange) } else { self }
     }
 
     /// How a card's control looks when it isn't in use, the same whatever the reason.

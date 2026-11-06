@@ -122,6 +122,13 @@ enum LightDay {
             || abs(read.xy.x - target.xy.x) > 0.01 || abs(read.xy.y - target.xy.y) > 0.01
     }
 
+    /// Whether two looks differ by more than a slider's rounding: on or off, a percent of
+    /// brightness, or a step of xy too small to see.
+    static func differs(_ a: State, from b: State) -> Bool {
+        a.on != b.on || abs(a.brightness - b.brightness) >= 0.5
+            || abs(a.xy.x - b.xy.x) > 0.001 || abs(a.xy.y - b.xy.y) > 0.001
+    }
+
     /// Whose hold a bulb is under: its own, or else that of the bulb it follows, as it follows
     /// that bulb's day.
     static func holdOwner(of id: String, in bulbs: [Bulb], holds: [String: Hold]) -> String? {
