@@ -2,7 +2,7 @@
 
 A macOS menu bar app that sets your monitor's brightness, contrast, and Night Shift from the room's light, or by a schedule of presets, so your screen matches the room from morning to night without you touching a slider.
 
-Sundial drives your monitor's **hardware** brightness and contrast over DDC (via the [BetterDisplay](https://github.com/waydabber/BetterDisplay) CLI), not a software dimming overlay — so it's the real backlight changing, the same as the buttons on the monitor itself. Night Shift warmth is driven through macOS's built-in Night Shift.
+Sundial drives your monitor's **hardware** brightness and contrast over DDC, not a software dimming overlay — so it's the real backlight changing, the same as the buttons on the monitor itself. Night Shift warmth is driven through macOS's built-in Night Shift.
 
 ## What it does
 
@@ -18,17 +18,17 @@ Presets and schedule live in `config.json` under `~/Library/Application Support/
 ## Requirements
 
 - macOS 14 (Sonoma) or later
-- [BetterDisplay](https://github.com/waydabber/BetterDisplay) installed (provides the CLI Sundial uses to set hardware brightness/contrast). Hardware brightness and contrast control are free features.
+- A Mac with Apple silicon
 - A monitor that supports DDC/CI (most external displays do)
 - For building: [`xcodegen`](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) and Xcode
 
 ## Monitor compatibility
 
-I've only tested Sundial on my own monitor — a Gigabyte M27Q. It controls brightness and contrast over DDC/CI (a VESA standard) via the BetterDisplay CLI, so it should work on most external monitors that support DDC, but I can't promise it works on yours.
+I've only tested Sundial on my own monitor — a Gigabyte M27Q. It controls brightness and contrast over DDC/CI (a VESA standard), so it should work on most external monitors that support DDC, but I can't promise it works on yours.
 
-If it doesn't, the usual suspects are: DDC/CI is switched off in the monitor's on-screen menu (often the default), the monitor doesn't properly honor the standard brightness/contrast controls, or it's connected over HDMI to an Apple Silicon Mac (hit or miss — DisplayPort/USB-C is more reliable). Built-in laptop and most Apple displays don't use DDC at all.
+If it doesn't, the usual suspects are: DDC/CI is switched off in the monitor's on-screen menu (often the default), the monitor doesn't properly honor the standard brightness/contrast controls, or an adapter or dock in between doesn't pass DDC through. The Mac's own HDMI port works: Sundial talks to its converter chip the way [m1ddc](https://github.com/waydabber/m1ddc) does. Built-in laptop and most Apple displays don't use DDC at all.
 
-To keep this from being a mystery, Sundial won't let you create presets until it's confirmed it can actually read your monitor: on first launch you enter your BetterDisplay path and display name, hit **Connect Monitor**, and presets unlock only if that succeeds. If it works on a monitor not listed here, a note or PR is welcome.
+To keep this from being a mystery, Sundial won't let you create presets until it's found your monitor: on first launch it fills in the connected monitor's name, you hit **Connect Monitor**, and presets unlock only if a monitor by that name is there. If it works on a monitor not listed here, a note or PR is welcome.
 
 ## Build & install
 
@@ -51,16 +51,16 @@ Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Release
 ## First run
 
 1. Click the sun icon in the menu bar — Sundial opens to a **setup screen**.
-2. Confirm the **BetterDisplay path** (default: `/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay`) and enter your **display name** — any partial match of the monitor name shown in BetterDisplay.
-3. Hit **Connect Monitor**. If Sundial can read your monitor over DDC, presets unlock; otherwise the error tells you what to check (see [Monitor compatibility](#monitor-compatibility)).
-4. Edit the presets and schedule to taste. Sundial takes over from there. You can revisit the path and name later in Open Sundial → Settings.
+2. Check the **monitor name**, filled in from the connected monitor (any part of the name matches).
+3. Hit **Connect Monitor**. If a monitor by that name is connected, presets unlock; otherwise the error tells you what to check (see [Monitor compatibility](#monitor-compatibility)).
+4. Edit the presets and schedule to taste. Sundial takes over from there. You can change the name later in Open Sundial → Settings.
 
 ## How it works
 
 | Setting     | Driven by                                                        |
 | ----------- | --------------------------------------------------------------- |
-| Brightness  | BetterDisplay CLI → DDC VCP `0x10` (real backlight)             |
-| Contrast    | BetterDisplay CLI → DDC VCP `0x12`                              |
+| Brightness  | DDC VCP `0x10` (real backlight)                                 |
+| Contrast    | DDC VCP `0x12`                                                  |
 | Night Shift | macOS Night Shift (CoreBrightness)                              |
 
 The scheduler picks the active preset for the current time and interpolates between presets for smooth transitions. On wake, it forces a full re-apply so the display state always matches the schedule.

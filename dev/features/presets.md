@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-05 20:24, at 1.1.0.
+Updated 2026-11-05 23:18, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -50,8 +50,8 @@ preview, add, delete).
 - A Gigabyte M27Q in HDR accepts a contrast write over DDC and reads it back
   (48, 64 and 19 all round-tripped on 2026-10-12) while the picture doesn't
   change. The scheduler's drift check therefore sees a match in HDR.
-- HDR is read from macOS (the screen's potential EDR headroom), because
-  BetterDisplay's `-hdr` query answers "Pro required". It read 4.18 on the M27Q with
+- HDR is read from macOS (the screen's potential EDR headroom), because DDC
+  has no standard code for it. It read 4.18 on the M27Q with
   HDR on, and the lock comes and goes as HDR is toggled (seen 2026-10-12).
 - The lock applies to any display in HDR, on the assumption that monitors
   generally lock contrast there. Only the M27Q was observed.

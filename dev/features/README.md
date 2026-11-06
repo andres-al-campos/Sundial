@@ -1,6 +1,6 @@
 # Sundial features
 
-Updated 2026-11-02 02:08, at 1.1.0.
+Updated 2026-11-05 23:18, at 1.1.0.
 
 What a user can do with Sundial, how to reach it, and how to drive it. Read
 this before adding anything: if it's already here, extend it instead of
@@ -44,7 +44,7 @@ A feature's check is `tests/drive/<name>.sh`. `./build.sh drive` runs them all a
 `./build.sh drive <name>` runs one; a name with no script is an error. There
 is no test target.
 
-Sundial's features act on a real monitor over DDC through BetterDisplay, and
+Sundial's features act on a real monitor over DDC, and
 its UI lives in a menu bar popover, so a drive covers a decision the app makes
 (compiled out of the app's source with a harness) and the rest is checked by
 hand.
