@@ -23,12 +23,12 @@ struct LightingPanel: View {
                     .padding(14)
             } else {
                 TimelineView(.everyMinute) { _ in
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 14) {
                         ForEach(bulbs) { row($0) }
-                        footer
+                        footer.padding(.top, 4)
                     }
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 14)
                 }
             }
         }
@@ -120,15 +120,21 @@ struct LightingPanel: View {
             .lineLimit(1)
             Spacer(minLength: 0)
             if !appState.holds.isEmpty {
-                HoverButton("Return to schedule", rest: .orange) {
-                    read = [:]
-                    appState.returnLampsToSchedule()
+                Button {
+                    appState.returnLampsToSchedule { read = [:] }
+                } label: {
+                    Text("Return to schedule").foregroundStyle(.orange)
                 }
+                .buttonStyle(.outlined)
                 .transition(.opacity)
             }
-            HoverButton(appState.lampsFollow ? "Pause" : "Resume", rest: appState.lampsPaused ? .orange : .secondary) {
+            Button {
                 appState.toggleLampsFollow()
+            } label: {
+                Text(appState.lampsFollow ? "Pause" : "Resume")
+                    .foregroundStyle(appState.lampsPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
             }
+            .buttonStyle(.outlined)
         }
         .font(.caption)
         .frame(height: 20)

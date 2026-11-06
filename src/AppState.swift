@@ -353,11 +353,15 @@ extension AppState {
     }
 
     /// Through the preview's return, for its quick fade rather than the usual 30 seconds.
-    func returnLampsToSchedule(_ id: String? = nil) {
-        if let id {
-            if let owner = lampHoldOwner(id) { holds[owner] = nil }
-        } else {
-            holds = [:]
+    /// The sliders glide back with the bulbs, over the same half second.
+    func returnLampsToSchedule(_ id: String? = nil, also: () -> Void = {}) {
+        withAnimation(.easeOut(duration: 0.5)) {
+            if let id {
+                if let owner = lampHoldOwner(id) { holds[owner] = nil }
+            } else {
+                holds = [:]
+            }
+            also()
         }
         onEndLampPreview?()
     }

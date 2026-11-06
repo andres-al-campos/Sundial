@@ -145,6 +145,36 @@ struct Segments<Value: Hashable>: View {
     }
 }
 
+// MARK: - Outlined button
+
+/// A button inside a popup panel: an outline, so it reads as something to press among the
+/// panel's labels, which plain text didn't. The footer's links stay plain.
+struct OutlinedButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Outlined(configuration: configuration)
+    }
+
+    private struct Outlined: View {
+        let configuration: Configuration
+        @State private var hovered = false
+
+        var body: some View {
+            configuration.label
+                .padding(.horizontal, 8)
+                .frame(height: 20)
+                .background(.primary.opacity(configuration.isPressed ? 0.14 : hovered ? 0.07 : 0), in: RoundedRectangle(cornerRadius: 6))
+                .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.2)) }
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+                .onHover { hovered = $0 }
+                .animation(.easeOut(duration: 0.1), value: hovered)
+        }
+    }
+}
+
+extension ButtonStyle where Self == OutlinedButtonStyle {
+    static var outlined: OutlinedButtonStyle { .init() }
+}
+
 // MARK: - Header Button
 
 /// A footer action: dimmed text that turns primary under the pointer.

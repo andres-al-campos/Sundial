@@ -649,9 +649,8 @@ struct LightsView: View {
 
     /// From a follower too, whose button would otherwise do nothing while the hold it's under is another bulb's.
     private func returnToSchedule(_ id: String) {
-        lampsNow = [:]
         previewing = nil
-        appState.returnLampsToSchedule(id)
+        appState.returnLampsToSchedule(id) { lampsNow = [:] }
     }
 
     /// The rows' corners square as the drawer comes out and round as it goes in, in the same
@@ -669,9 +668,8 @@ struct LightsView: View {
     }
 
     private func returnAllToSchedule() {
-        lampsNow = [:]
         previewing = nil
-        appState.returnLampsToSchedule()
+        appState.returnLampsToSchedule { lampsNow = [:] }
     }
 
     private func deselect() {
