@@ -88,7 +88,7 @@ Task { @MainActor in
         failures.append("the Lighting tab's label isn't orange while a bulb is held (\(a) orange pixels without a hold, \(b) with). Segments in src/views/MenuBarView.swift colours the item MenuBarView passes as orange, from AppState.lampsOffTheDay.")
     }
     if sizes["lighting"] != sizes["lighting-held"] {
-        failures.append("the Lighting tab changed size when a bulb was held (\(sizes["lighting"]!) to \(sizes["lighting-held"]!)). Its footer line has to keep one height whatever it says; see LightingPanel.footer.")
+        failures.append("the Lighting tab changed size when a bulb was held (\(sizes["lighting"]!) to \(sizes["lighting-held"]!)). Its status line and button row have to keep one height whatever they show; see LightingPanel.status and .buttons.")
     }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")

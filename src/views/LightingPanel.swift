@@ -24,8 +24,9 @@ struct LightingPanel: View {
             } else {
                 TimelineView(.everyMinute) { _ in
                     VStack(alignment: .leading, spacing: 14) {
+                        status
                         ForEach(bulbs) { row($0) }
-                        footer.padding(.top, 4)
+                        buttons.padding(.top, 4)
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 14)
@@ -104,20 +105,26 @@ struct LightingPanel: View {
 
     // MARK: - The day
 
-    /// One line whatever the state, so a hold starting or ending doesn't resize the popup.
-    private var footer: some View {
-        HStack(spacing: 10) {
-            Group {
-                // A hold says itself in its bulb's orange name and in Return to schedule beside this.
-                if appState.lampsPaused {
-                    Text("Paused").foregroundStyle(.orange)
-                } else if let next = nextKey {
-                    Text("Next color key at \(LightsView.time(next))").foregroundStyle(.secondary)
-                } else {
-                    Text(appState.lampStatus).foregroundStyle(.secondary)
-                }
+    /// What the list as a whole is doing, over it as the window's "Now" line is. One line whatever
+    /// the state. A hold says itself in its bulb's orange name and in Return to schedule.
+    private var status: some View {
+        Group {
+            if appState.lampsPaused {
+                Text("Paused").foregroundStyle(.orange)
+            } else if let next = nextKey {
+                Text("Next color key at \(LightsView.time(next))").foregroundStyle(.secondary)
+            } else {
+                Text(appState.lampStatus).foregroundStyle(.secondary)
             }
-            .lineLimit(1)
+        }
+        .font(.caption)
+        .lineLimit(1)
+        .frame(height: 14)
+    }
+
+    /// A row of their own, so a hold's button coming in has the room it needs and moves nothing.
+    private var buttons: some View {
+        HStack(spacing: 8) {
             Spacer(minLength: 0)
             if !appState.holds.isEmpty {
                 Button {
