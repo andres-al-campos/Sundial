@@ -176,7 +176,7 @@ struct LightsView: View {
             hoursAxis
         }
         .padding(Layout.cardPadding)
-        .cardGround(bottom: cardOpen ? 0 : Layout.cardCorner, opaque: true)
+        .cardGround(bottom: cardOpen ? 0 : Layout.cardCorner)
         .padding(.horizontal, Layout.edge)
         .padding(.top, Layout.rowsPadding)
         .contentShape(Rectangle())
@@ -253,7 +253,7 @@ struct LightsView: View {
         // Its ground reaches a corner's height up behind the rows, so whatever their corners are
         // doing as it slides, there's drawer behind them rather than a gap.
         .padding(.top, Layout.cardCorner)
-        .cardGround(top: 0, opaque: true)
+        .cardGround(top: 0)
         .padding(.top, -Layout.cardCorner)
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) {
@@ -869,6 +869,7 @@ enum Layout {
     static let scrubberHead: CGFloat = 9.5
 
     static let cardCorner: CGFloat = 12
+    static let cardTint: Double = 0.09
     static let cardPadding: CGFloat = 14
     /// The card's close button sits over the end of its first line.
     static let cardCloseRoom: CGFloat = 24
@@ -1140,14 +1141,14 @@ private struct KeyTimeRow: View {
 
 private extension View {
     /// The one ground for the rows and the card under them.
-    /// `opaque` puts the window's own ground under the tint and hides what's behind: the drawer
-    /// tucked under the rows showed through as a lighter band. It isn't quite the window's real
-    /// ground, which lets the desktop through, so the cards that meet both take it.
-    func cardGround(top: CGFloat = Layout.cardCorner, bottom: CGFloat = Layout.cardCorner, opaque: Bool = false) -> some View {
+    /// On the window's own ground, so the drawer tucked under the rows can't show through as a
+    /// lighter band. That ground is darker than the window's real one, which lets the desktop
+    /// through, so the tint is stronger than a see-through card's to stand out as much.
+    func cardGround(top: CGFloat = Layout.cardCorner, bottom: CGFloat = Layout.cardCorner) -> some View {
         let shape = UnevenRoundedRectangle(topLeadingRadius: top, bottomLeadingRadius: bottom,
                                            bottomTrailingRadius: bottom, topTrailingRadius: top)
-        return background(.primary.opacity(0.06), in: shape)
-            .background(opaque ? Color(nsColor: .windowBackgroundColor) : .clear, in: shape)
+        return background(.primary.opacity(Layout.cardTint), in: shape)
+            .background(Color(nsColor: .windowBackgroundColor), in: shape)
             .overlay { shape.strokeBorder(.primary.opacity(0.12)) }
     }
 
@@ -1158,9 +1159,10 @@ private extension View {
 
     /// How a card's control looks when it isn't in use, the same whatever the reason.
     func dimmed(_ active: Bool) -> some View {
+        // The animation is kept to the opacity: one on the whole view carried every other change
+        // made with it, so a card opening on a lit color key after an off one slid its sliders.
         tint(active ? nil : .gray)
-            .opacity(active ? 1 : 0.5)
-            .animation(.easeOut(duration: 0.15), value: active)
+            .animation(.easeOut(duration: 0.15)) { $0.opacity(active ? 1 : 0.5) }
     }
 }
 
