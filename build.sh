@@ -2,7 +2,7 @@
 # Build Sundial.app, install to /Applications, and relaunch.
 #
 # Usage:
-#   ./build.sh                 # build, install to /Applications, relaunch (default)
+#   ./build.sh                 # build, install to /Applications, relaunch (default; leaves no copy in ./build)
 #                              # (set INSTALL_DIR in build.local.env to install elsewhere)
 #   ./build.sh --no-install    # build only, stage into ./build/Sundial.app
 #   ./build.sh -n              # short form of --no-install
@@ -198,7 +198,9 @@ if [ "$INSTALL" = "1" ]; then
 
     echo "→ Installing to $INSTALL_DIR/$APP_NAME.app"
     rm -rf "${INSTALL_DIR:?}/$APP_NAME.app"
-    cp -R "$OUT_DIR/$APP_NAME.app" "$INSTALL_DIR/"
+    # Moved, not copied: a second copy in ./build shows up in Spotlight as a second Sundial,
+    # and Launch Services can bind the app (and its login item) to it.
+    mv "$OUT_DIR/$APP_NAME.app" "$INSTALL_DIR/"
 
     echo "→ Launching..."
     open "$INSTALL_DIR/$APP_NAME.app"
