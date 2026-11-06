@@ -129,8 +129,8 @@ blend looks in the room.
   the cost: a new person can't tell them apart. Holding does that job, so a keyframe is either in the day or
   deleted. Keyframes saved as disabled count again.
 
-- 2026-11-04 18:22, 1.1.0. **Delete is on right-click only.** "There's no good place to put it" on the card: a trash icon beside the X was "very easy to
-  mix up", and in words it took the end of the time's row for something rarely used. The X stays at the top right, and the time goes
+- 2026-11-05 18:30, 1.1.0. **Delete is on right-click only.** "There's no good place to put it" on the card: a trash icon beside the X was "very easy to
+  mix up", and in words it took the end of the time's row for something rarely used. The close chevron stays at the top right, and the time goes
   right under the name because "the time is basically their id".
 
 - 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
