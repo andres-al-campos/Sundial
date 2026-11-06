@@ -253,7 +253,7 @@ struct LightsView: View {
         // Its ground reaches a corner's height up behind the rows, so whatever their corners are
         // doing as it slides, there's drawer behind them rather than a gap.
         .padding(.top, Layout.cardCorner)
-        .cardGround(top: 0)
+        .cardGround(top: 0, opaque: true)
         .padding(.top, -Layout.cardCorner)
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) {
@@ -660,9 +660,17 @@ struct LightsView: View {
     }
 
     /// The rows' corners square as the drawer comes out and round as it goes in, in the same
-    /// animation, so both end together.
+    /// animation, so both end together. Opening waits a frame, so the card's values land before
+    /// the slide rather than sliding with it.
     private func slideCard(open: Bool) {
-        withAnimation(.easeOut(duration: Layout.slide)) { cardOpen = open }
+        guard open else {
+            withAnimation(.easeOut(duration: Layout.slide)) { cardOpen = false }
+            return
+        }
+        DispatchQueue.main.async {
+            guard selection != nil else { return }
+            withAnimation(.easeOut(duration: Layout.slide)) { cardOpen = true }
+        }
     }
 
     private func returnAllToSchedule() {
@@ -1132,8 +1140,9 @@ private struct KeyTimeRow: View {
 
 private extension View {
     /// The one ground for the rows and the card under them.
-    /// `opaque` puts the window's own ground under the tint, which looks the same and hides
-    /// what's behind: the drawer tucked under the rows showed through as a lighter band.
+    /// `opaque` puts the window's own ground under the tint and hides what's behind: the drawer
+    /// tucked under the rows showed through as a lighter band. It isn't quite the window's real
+    /// ground, which lets the desktop through, so the cards that meet both take it.
     func cardGround(top: CGFloat = Layout.cardCorner, bottom: CGFloat = Layout.cardCorner, opaque: Bool = false) -> some View {
         let shape = UnevenRoundedRectangle(topLeadingRadius: top, bottomLeadingRadius: bottom,
                                            bottomTrailingRadius: bottom, topTrailingRadius: top)
