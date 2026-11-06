@@ -129,12 +129,7 @@ struct LightsView: View {
             if selection == nil, !appState.movingKeyframe { history.seen(new) }
         }
         .onChange(of: shown) { _, new in if let new { lastShown = new } }
-        .onChange(of: selection != nil) { _, selected in cardOpen = selected }
-        .onChange(of: cardOpen) { _, open in
-            if open { drawerOut = true } else {
-                withAnimation(.easeOut(duration: 0.15).delay(Layout.slide)) { drawerOut = false }
-            }
-        }
+        .onChange(of: selection != nil) { _, selected in slideCard(open: selected) }
         // A delete from the right-click menu, Paste Day or an undo. A right-click leaves the card
         // open, and the row is what's left of where that keyframe was.
         .onChange(of: keyframeGone) { _, gone in
@@ -170,7 +165,6 @@ struct LightsView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { deselect() }
             }
-            .animation(.easeOut(duration: Layout.slide), value: cardOpen)
         }
     }
 
@@ -660,6 +654,25 @@ struct LightsView: View {
         lampsNow = [:]
         // Through the preview's return, for its quick fade rather than the usual 30 seconds.
         endPreviewNow()
+    }
+
+    /// The corners square before the drawer comes out and round only once it's all the way back
+    /// in: a timed delay, or an animation shared with the slide, left them round with the drawer
+    /// still showing, a gap at each corner (seen frame by frame).
+    private func slideCard(open: Bool) {
+        if open {
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { drawerOut = true }
+            withAnimation(.easeOut(duration: Layout.slide)) { cardOpen = true }
+        } else {
+            withAnimation(.easeOut(duration: Layout.slide), completionCriteria: .removed) {
+                cardOpen = false
+            } completion: {
+                guard !cardOpen else { return }
+                withAnimation(.easeOut(duration: 0.15)) { drawerOut = false }
+            }
+        }
     }
 
     private func returnAllToSchedule() {
