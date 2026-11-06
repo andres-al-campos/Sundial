@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- macOS icon grid: an 824pt body centered on the 1024pt canvas. Drawn in a 170pt box. -->
+  <g transform="translate(100 100) scale(4.847)">
+    <rect width="170" height="170" rx="38" fill="#4A78E0"/>
+    <ellipse cx="85" cy="109" rx="64" ry="40" fill="#DDB06E"/>
+    <ellipse cx="85" cy="102" rx="64" ry="40" fill="#F0D97E"/>
+    <!-- Shadow from the gnomon's foot (1:30) to the 3 o'clock line. -->
+    <path d="M85 102 L130.25 73.72 A64 40 0 0 1 149 102 Z" fill="#D7A93E"/>
+    <!-- Gnomon at 37°, the latitude of the Bay Area: a real one's angle is its dial's latitude. -->
+    <path d="M85 102 L130.25 73.72 L140.15 21.68 Z" fill="#E8CB78"/>
+    <path d="M85 102 L140.15 21.68 L135.91 19.03 L80.76 99.35 Z" fill="#DDB06E"/>
+  </g>
+</svg>
