@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 18:47, at 1.1.0.
+Updated 2026-11-05 18:55, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -49,7 +49,7 @@ artificial light follows the natural light along with the screen.
 - **Play the day** runs the day on the bulbs in 10 seconds and returns to now.
 - **Pause** stops Sundial changing the bulbs until Resume, so the Hue app can use them.
   A preview while paused still shows on the bulb, then fades back to what the bulb was.
-  While paused the status line is orange and Resume is filled orange.
+  While paused the status line, Resume and the menu bar sun are orange; Stop is orange while the day plays, and Return to schedule shows in the header while a bulb is held.
 - **Import.** The first run makes each bulb's day from the seven named scenes on
   the bridge, keeping what the lamps did at every minute. After that Sundial holds the
   settings, and scene edits in the Hue app aren't read.
@@ -134,8 +134,8 @@ blend looks in the room.
   right under the name because "the time is basically their id".
 
 - 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
-  take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *What you
-  touch is what the monitor does*: it says "Off" and can't be dragged.
+  take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *The room shows
+  what you're changing*: it says "Off" and can't be dragged.
 
 - 2026-11-05 12:13, 1.1.0. **The way back is quick.** 1 second "still feels a bit slow", and the wait before it counted too: the moved bulb took its turn behind the rest. Gradually is for
   the day (*Just right for the room*); this answers your hand. Half a second, the moved bulbs first, with the preview's pacing cut short. A deleted keyframe's bulb goes the same way: half a second.
