@@ -78,6 +78,9 @@ struct LightsView: View {
     /// starts to move. In one step the slide also caught its text and sliders, which
     /// travelled from the last keyframe's places, overlapping on the way.
     @State private var cardOpen = false
+    /// The rows' bottom corners square off while the card hangs from them as a drawer, and round
+    /// again only once it's back in: rounding as it starts closing showed a gap at the corners.
+    @State private var drawerOut = false
 
     /// With no keyframe, it's the bulb itself, right now.
     struct Selection: Equatable { var bulb: String; var key: UUID? }
@@ -127,6 +130,11 @@ struct LightsView: View {
         }
         .onChange(of: shown) { _, new in if let new { lastShown = new } }
         .onChange(of: selection != nil) { _, selected in cardOpen = selected }
+        .onChange(of: cardOpen) { _, open in
+            if open { drawerOut = true } else {
+                withAnimation(.easeOut(duration: 0.15).delay(Layout.slide)) { drawerOut = false }
+            }
+        }
         // A delete from the right-click menu, Paste Day or an undo. A right-click leaves the card
         // open, and the row is what's left of where that keyframe was.
         .onChange(of: keyframeGone) { _, gone in
@@ -173,7 +181,7 @@ struct LightsView: View {
             hoursAxis
         }
         .padding(Layout.cardPadding)
-        .cardGround()
+        .cardGround(bottom: drawerOut ? 0 : Layout.cardCorner)
         .padding(.horizontal, Layout.edge)
         .padding(.top, Layout.rowsPadding)
         .contentShape(Rectangle())
@@ -247,7 +255,9 @@ struct LightsView: View {
         .padding(Layout.cardPadding)
         .frame(height: Layout.cardHeight)
         .frame(maxWidth: .infinity)
-        .cardGround()
+        // Its top edge under the rows' bottom one, so the two make a single line between them.
+        .cardGround(top: 0)
+        .padding(.top, -1)
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) {
                 Image(systemName: "chevron.up")
@@ -288,6 +298,14 @@ struct LightsView: View {
             .frame(height: 28)
             .transition(.opacity)
             Spacer()
+            // Here as well as on the card, since a hold is easy to forget once the card is shut.
+            if !appState.holds.isEmpty {
+                Button(action: returnAllToSchedule) {
+                    Text("Return to schedule").foregroundStyle(.orange)
+                }
+                .hoverShade()
+                .transition(.opacity)
+            }
             Button(playMinute == nil ? "Play the day" : "Stop", action: togglePlay)
                 .disabled(bulbs.isEmpty)
                 .hoverShade()
@@ -308,6 +326,7 @@ struct LightsView: View {
         .padding(.horizontal, Layout.edge)
         .padding(.vertical, 10)
         .animation(.easeOut(duration: 0.15), value: previewing == nil)
+        .animation(.easeOut(duration: 0.15), value: appState.holds.isEmpty)
     }
 
     private func previewBadge(_ p: Previewing) -> some View {
@@ -641,6 +660,12 @@ struct LightsView: View {
         endPreviewNow()
     }
 
+    private func returnAllToSchedule() {
+        appState.holds = [:]
+        lampsNow = [:]
+        endPreviewNow()
+    }
+
     private func deselect() {
         guard selection != nil else { return }
         history.commit(undo, "Change Keyframe")
@@ -838,8 +863,8 @@ enum Layout {
     static let iconButton: CGFloat = 22
     /// The colour wheel's height plus its padding.
     static let cardHeight: CGFloat = 144
-    /// With the gap above it, so it comes out from behind the rows' own card.
-    static let cardRoom: CGFloat = cardHeight + 2 * rowsPadding
+    /// Hung from the rows' card as a drawer, with room below it.
+    static let cardRoom: CGFloat = cardHeight + rowsPadding
     static let slide = 0.28
 
     /// Whether the rows fit in `height`: their card's padding, the marks and hours, and a row
@@ -1102,12 +1127,11 @@ private struct KeyTimeRow: View {
 
 private extension View {
     /// The one ground for the rows and the card under them.
-    func cardGround() -> some View {
-        background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: Layout.cardCorner))
-            .overlay {
-                RoundedRectangle(cornerRadius: Layout.cardCorner)
-                    .strokeBorder(.primary.opacity(0.12))
-            }
+    func cardGround(top: CGFloat = Layout.cardCorner, bottom: CGFloat = Layout.cardCorner) -> some View {
+        let shape = UnevenRoundedRectangle(topLeadingRadius: top, bottomLeadingRadius: bottom,
+                                           bottomTrailingRadius: bottom, topTrailingRadius: top)
+        return background(.primary.opacity(0.06), in: shape)
+            .overlay { shape.strokeBorder(.primary.opacity(0.12)) }
     }
 
     /// How a card's control looks when it isn't in use, the same whatever the reason.

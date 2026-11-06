@@ -35,7 +35,10 @@ struct TimeField: View {
 /// window the card's ground. A capsule of glass of its own read as "too rounded".
 private struct FieldGround: ViewModifier {
     func body(content: Content) -> some View {
-        content.overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.15)) }
+        content
+            // A little darker than what's behind, "10 or 20%".
+            .background(.black.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
+            .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.15)) }
     }
 }
 
