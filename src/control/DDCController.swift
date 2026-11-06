@@ -2,11 +2,9 @@ import Foundation
 
 @MainActor
 class DDCController {
-    var cliPath: String
     var displayName: String
 
-    init(cliPath: String, displayName: String) {
-        self.cliPath = cliPath
+    init(displayName: String) {
         self.displayName = displayName
     }
 
@@ -19,7 +17,7 @@ class DDCController {
     }
 
     /// Apply only a single parameter — used during live slider drag to avoid
-    /// re-sending unchanged params and triggering BetterDisplay's poll/snap.
+    /// re-sending unchanged params.
     func applySingle(_ param: String, value: Int) async {
         if param == "nightShift" {
             NightShiftController.setStrength(value)
@@ -57,8 +55,7 @@ class DDCController {
     }
 
     /// Compare the display's actual DDC brightness and contrast against a preset.
-    /// Uses raw DDC reads (VCP codes) to bypass BetterDisplay's cache. Returns
-    /// `.unknown` if either read fails — see `DisplayState`.
+    /// Returns `.unknown` if either read fails — see `DisplayState`.
     func state(of preset: Preset) async -> DisplayState {
         guard let brightness = await readDDC(vcp: 0x10),
               let contrast   = await readDDC(vcp: 0x12) else { return .unknown }
@@ -67,160 +64,73 @@ class DDCController {
         return ok ? .matches : .drifted
     }
 
-    /// Probe whether the configured display is reachable over DDC by attempting
-    /// a raw brightness read (VCP 0x10). Used by setup validation to confirm the
-    /// CLI path + display name resolve to a real, controllable monitor before
-    /// unlocking presets. Returns true if the read returns a value.
+    /// Whether a connected monitor goes by the configured name. Setup asks this
+    /// rather than for a read, since some monitors take DDC writes but never
+    /// answer reads.
     func probe() async -> Bool {
-        await readDDC(vcp: 0x10) != nil
+        let name = displayName
+        return await Self.monitors().contains { $0.localizedCaseInsensitiveContains(name) }
     }
 
     // MARK: - Private
 
-    /// Read a raw DDC value from the monitor via VCP code. Returns the integer
-    /// value directly from the display hardware, bypassing BetterDisplay's cache.
-    /// VCP 0x10 = brightness, 0x12 = contrast.
-    private func readDDC(vcp: Int) async -> Int? {
-        let hex = String(format: "0x%02X", vcp)
-        let result = await Self.capture([cliPath, "get", "-nameLike=\(displayName)", "-ddc", "-vcp=\(hex)"])
-        let trimmed = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let value = Int(trimmed) { return value }
-
-        // Read failed. Say why — the caller only sees nil, so this is the one
-        // place the actual reason is available.
-        let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-        switch result.outcome {
-        case .timedOut:
-            print("[Sundial] DDC read of \(hex) timed out after \(Self.commandTimeout)s. BetterDisplay may be busy or wedged — quit and reopen BetterDisplay if this persists.")
-        case .launchFailed(let message):
-            print("[Sundial] Could not launch BetterDisplay: \(message) — verify the path in Settings points to /Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay and that BetterDisplay.app is installed.")
-        case .exited(let status):
-            var detail = "[Sundial] DDC read of \(hex) from \"\(displayName)\" failed"
-            if status != 0 { detail += " (exit \(status))" }
-            if !trimmed.isEmpty { detail += ": \(trimmed)" }
-            if !stderr.isEmpty { detail += " / \(stderr)" }
-            print(detail)
-            print("[Sundial] The monitor may not support DDC reads, may have DDC/CI disabled in its on-screen menu, or the display name in Settings may not match a connected monitor.")
+    private func readDDC(vcp: UInt8) async -> Int? {
+        let name = displayName
+        let value = await Self.onQueue { Self.link.read(display: name, vcp: vcp) }
+        guard let value else {
+            // Once per monitor: the drift check reads every minute, and a monitor that never
+            // answers would fill the log.
+            guard Self.unanswered.insert(name).inserted else { return nil }
+            print(String(format: "[Sundial] The monitor \"%@\" didn't answer a DDC read of 0x%02X. Check that DDC/CI is on in its on-screen menu; some monitors never answer reads, and Sundial then can't tell when the screen was changed by hand.", name, vcp))
+            return nil
         }
-        return nil
+        return value.max > 0 ? Int((Double(value.current) / Double(value.max) * 100).rounded()) : value.current
     }
 
     private func setPercent(_ param: String, value: Int) async {
-        await Self.send([cliPath, "set", "-namelike=\(displayName)", "-\(param)=\(value)%"])
+        guard let vcp = Self.codes[param] else { return }
+        let name = displayName
+        let took = await Self.onQueue { () -> Bool in
+            let raw = UInt16(max(0, min(100, value)) * Self.maximum(display: name, vcp: vcp) / 100)
+            return Self.link.write(display: name, vcp: vcp, value: raw)
+        }
+        if !took {
+            print("[Sundial] Couldn't set \(param) to \(value)% on \"\(name)\": no connected monitor by that name took it. Check the monitor name in Settings against the connected ones (\(await Self.monitors().joined(separator: ", "))), and that DDC/CI is on in the monitor's on-screen menu.")
+        }
         try? await Task.sleep(nanoseconds: 25_000_000)
     }
 
-    /// Seconds to wait for a CLI invocation before giving up. BetterDisplay can
-    /// hang indefinitely (observed on `version` and on DDC reads to a wedged
-    /// monitor); `waitUntilExit()` would block the caller forever if it does.
-    static let commandTimeout: TimeInterval = 5
-    /// A set gets longer: with BetterDisplay closed, the copy each command starts took about 16
-    /// seconds, and cutting it off would drop a value that was on its way.
-    static let setTimeout: TimeInterval = 20
+    private static var unanswered: Set<String> = []
 
-    private struct CaptureResult {
-        enum Outcome {
-            case exited(Int32)
-            case timedOut
-            case launchFailed(String)
-        }
-        var outcome: Outcome
-        var stdout: String
-        var stderr: String
+    private static let codes: [String: UInt8] = ["hardwareBrightness": 0x10, "hardwareContrast": 0x12]
+
+    /// The transport. A test swaps in its own before anything is sent.
+    nonisolated(unsafe) static var link: any DDCLink = IOAVLink()
+
+    /// The names of the external monitors connected now, for setup to offer.
+    static func monitors() async -> [String] { await onQueue { link.monitors() } }
+
+    /// Each monitor's top value per control, read once. Most monitors say 100; one that doesn't
+    /// answer reads is taken to mean 100 too.
+    nonisolated(unsafe) private static var maxima: [String: Int] = [:]
+
+    private nonisolated static func maximum(display: String, vcp: UInt8) -> Int {
+        let key = "\(display)/\(vcp)"
+        if let known = maxima[key] { return known }
+        let found = link.read(display: display, vcp: vcp)?.max ?? 0
+        let top = found > 0 ? found : 100
+        maxima[key] = top
+        return top
     }
 
     /// Every call goes through one queue, in the order they were made, so a drag's values land in
-    /// the order they were dragged. Off the main thread: a BetterDisplay that isn't running takes
-    /// about 16 seconds a call, and waited for on the main thread that froze the app.
-    private static let queue = DispatchQueue(label: "com.aurende.sundial.betterdisplay")
+    /// the order they were dragged. Off the main thread: a monitor slow to answer over I2C would
+    /// otherwise freeze the app, as a slow BetterDisplay once did.
+    private nonisolated static let queue = DispatchQueue(label: "com.aurende.sundial.ddc")
 
-    private nonisolated static func capture(_ args: [String], timeout: TimeInterval = commandTimeout) async -> CaptureResult {
+    private nonisolated static func onQueue<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
         await withCheckedContinuation { done in
-            queue.async { done.resume(returning: runCapture(args, timeout: timeout)) }
-        }
-    }
-
-    private nonisolated static func runCapture(_ args: [String], timeout: TimeInterval) -> CaptureResult {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: args[0])
-        process.arguments = Array(args.dropFirst())
-
-        let outPipe = Pipe()
-        let errPipe = Pipe()
-        process.standardOutput = outPipe
-        process.standardError = errPipe
-
-        do {
-            try process.run()
-        } catch {
-            return CaptureResult(outcome: .launchFailed(error.localizedDescription), stdout: "", stderr: "")
-        }
-
-        // Drain both pipes on background queues. A process that fills a pipe
-        // buffer blocks until it is read, so reading only after waiting would
-        // deadlock on verbose output.
-        var outData = Data()
-        var errData = Data()
-        let group = DispatchGroup()
-        group.enter()
-        DispatchQueue.global().async {
-            outData = outPipe.fileHandleForReading.readDataToEndOfFile()
-            group.leave()
-        }
-        group.enter()
-        DispatchQueue.global().async {
-            errData = errPipe.fileHandleForReading.readDataToEndOfFile()
-            group.leave()
-        }
-
-        let deadline = Date().addingTimeInterval(timeout)
-        var timedOut = false
-        while process.isRunning {
-            if Date() >= deadline {
-                process.terminate()
-                // SIGTERM may not land; give it a moment, then SIGKILL so the
-                // pipe readers get EOF and the group can complete.
-                if group.wait(timeout: .now() + 0.5) == .timedOut {
-                    kill(process.processIdentifier, SIGKILL)
-                }
-                timedOut = true
-                break
-            }
-            usleep(20_000)
-        }
-
-        _ = group.wait(timeout: .now() + 1.0)
-        process.waitUntilExit()
-
-        let stdout = String(data: outData, encoding: .utf8) ?? ""
-        let stderr = String(data: errData, encoding: .utf8) ?? ""
-        let outcome: CaptureResult.Outcome = timedOut ? .timedOut : .exited(process.terminationStatus)
-        return CaptureResult(outcome: outcome, stdout: stdout, stderr: stderr)
-    }
-
-    @discardableResult
-    private nonisolated static func send(_ args: [String]) async -> Int32 {
-        let result = await capture(args, timeout: setTimeout)
-        let cmd = args.joined(separator: " ")
-        switch result.outcome {
-        case .launchFailed(let message):
-            print("[Sundial] Could not launch BetterDisplay: \(message) — verify the path in Settings points to /Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay and that BetterDisplay.app is installed.")
-            return -1
-        case .timedOut:
-            print("[Sundial] BetterDisplay took over \(setTimeout)s for: \(cmd). Open BetterDisplay if it isn't running: without it each command starts a copy of the app that takes about 16 seconds.")
-            return -1
-        case .exited(let status):
-            if status != 0 {
-                let out = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
-                let err = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                print("[Sundial] CLI exited \(status) for: \(cmd)")
-                if !out.isEmpty { print("[Sundial] stdout: \(out)") }
-                if !err.isEmpty { print("[Sundial] stderr: \(err)") }
-                if out.contains("Failed") || err.contains("Failed") {
-                    print("[Sundial] BetterDisplay reported 'Failed' — the display name in Settings may not match any connected monitor. Check Settings → Display name and confirm it matches (partial match) the monitor name shown in BetterDisplay.")
-                }
-            }
-            return status
+            queue.async { done.resume(returning: work()) }
         }
     }
 }

@@ -10,15 +10,11 @@ struct SundialApp: App {
     private let scheduler: Scheduler
     private let auto: AutoController
     private let lamps: LampController
-    private let betterDisplay: BetterDisplayWatch
 
     init() {
         let state = AppState()
         SundialAppDelegate.state = state
-        let ctrl = DDCController(
-            cliPath: state.cliPath,
-            displayName: state.displayName
-        )
+        let ctrl = DDCController(displayName: state.displayName)
         let sched = Scheduler()
         let autoCtrl = AutoController()
         let lampCtrl = LampController()
@@ -33,10 +29,6 @@ struct SundialApp: App {
         sched.start(state: state, controller: ctrl)
         autoCtrl.start(state: state, controller: ctrl)
         lampCtrl.start(state: state)
-        let watch = BetterDisplayWatch()
-        watch.start(state: state) { [weak state] in
-            if state?.autoDrivesMonitor == true { autoCtrl.forceApply() } else { sched.reapplyForCurrentTime() }
-        }
 
         // Reconcile the login item with the persisted preference. Registration can be
         // lost out from under us — e.g. the bundle moves, or a stale DerivedData
@@ -55,7 +47,6 @@ struct SundialApp: App {
         scheduler  = sched
         auto       = autoCtrl
         lamps      = lampCtrl
-        betterDisplay = watch
     }
 
     /// The callbacks views use to reach the scheduler and Auto. Whichever owns
@@ -87,7 +78,6 @@ struct SundialApp: App {
                 .environmentObject(appState)
                 .onAppear {
                     // Keep controller in sync with any settings changes made since launch.
-                    controller.cliPath   = appState.cliPath
                     controller.displayName = appState.displayName
                     // start() is guarded — no-op on every open after the first.
                     scheduler.start(state: appState, controller: controller)

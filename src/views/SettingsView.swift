@@ -20,16 +20,6 @@ struct SettingsView: View {
                         .textFieldStyle(.roundedBorder)
                         .onChange(of: appState.displayName) { _, _ in appState.save() }
                 }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("BetterDisplay path")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    TextField("/Applications/BetterDisplay.app/...", text: $appState.cliPath)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.caption, design: .monospaced))
-                        .onChange(of: appState.cliPath) { _, _ in appState.save() }
-                }
             }
 
             Divider()

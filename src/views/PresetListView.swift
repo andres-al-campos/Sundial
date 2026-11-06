@@ -562,7 +562,7 @@ private struct PresetEditorBody: View {
 
     private func applyNow() {
         let snapshot = draft
-        let controller = DDCController(cliPath: appState.cliPath, displayName: appState.displayName)
+        let controller = DDCController(displayName: appState.displayName)
         sliderApplyTask?.cancel()
         sliderApplyTask = Task { await controller.apply(snapshot) }
     }
@@ -623,12 +623,11 @@ private struct PresetEditorBody: View {
     /// movement only sends the final value, without touching other params.
     private func scheduleApply(_ param: String, value: Int) {
         sliderApplyTask?.cancel()
-        let cliPath = appState.cliPath
         let displayName = appState.displayName
         sliderApplyTask = Task {
             try? await Task.sleep(nanoseconds: 25_000_000)
             guard !Task.isCancelled else { return }
-            let controller = DDCController(cliPath: cliPath, displayName: displayName)
+            let controller = DDCController(displayName: displayName)
             await controller.applySingle(param, value: value)
         }
     }

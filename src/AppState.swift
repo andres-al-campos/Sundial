@@ -7,7 +7,6 @@ class AppState: ObservableObject {
     @Published var schedule: [ScheduleEntry] = []
     @Published var activePresetID: UUID?
     @Published var displayName: String = ""
-    @Published var cliPath: String = "/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay"
     @Published var applyOnWake: Bool = true
     @Published var launchAtLogin: Bool = false
 
@@ -100,8 +99,7 @@ class AppState: ObservableObject {
     /// Set by the app at startup: open the desktop window.
     var onOpenWindow: (() -> Void)?
 
-    /// True once the BetterDisplay path + display name have been verified against
-    /// real hardware (a DDC read succeeded). Until then, the menu bar shows the
+    /// True once the display name has been found among the connected monitors. Until then, the menu bar shows the
     /// setup screen instead of presets — Sundial can't control a monitor it can't
     /// reach, and silently-failing sliders are a worse first-run than an honest gate.
     /// Persisted so a returning user with a known-good setup skips onboarding.
@@ -125,10 +123,6 @@ class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(windowSection.rawValue, forKey: "windowSection") }
     }
 
-    /// BetterDisplay's own app, which the monitor's commands need. The popup says when it's closed.
-    @Published var betterDisplayOpen = true
-    /// Looks again, as the popup opens: a launch can be announced before it counts as open.
-    var onCheckBetterDisplay: (() -> Void)?
 
     enum PopupTab: String { case display, lighting }
     /// The popup's tab, and the one it opens on next time.
@@ -170,7 +164,6 @@ class AppState: ObservableObject {
         var presets: [Preset]
         var schedule: [ScheduleEntry]
         var displayName: String
-        var cliPath: String
         var applyOnWake: Bool
         var launchAtLogin: Bool
         var isSetUp: Bool?
@@ -193,7 +186,6 @@ class AppState: ObservableObject {
             presets: presets,
             schedule: schedule,
             displayName: displayName,
-            cliPath: cliPath,
             applyOnWake: applyOnWake,
             launchAtLogin: launchAtLogin,
             isSetUp: isSetUp,
@@ -225,7 +217,6 @@ class AppState: ObservableObject {
         presets = config.presets
         schedule = config.schedule.sorted { $0.minutesSinceMidnight < $1.minutesSinceMidnight }
         displayName = config.displayName
-        cliPath = config.cliPath
         applyOnWake = config.applyOnWake
         launchAtLogin = config.launchAtLogin
         isSetUp = config.isSetUp ?? false
@@ -243,22 +234,19 @@ class AppState: ObservableObject {
 
     // MARK: - Setup validation
 
-    /// Verify the current BetterDisplay path + display name actually reach a
-    /// monitor by attempting a DDC brightness read. On success, flips `isSetUp`
-    /// to true (unlocking presets) and persists. Returns nil on success, or a
-    /// user-facing failure reason on error.
+    /// Verify the display name matches a connected monitor. On success, flips
+    /// `isSetUp` to true (unlocking presets) and persists. Returns nil on success,
+    /// or a user-facing failure reason on error.
     func validateSetup() async -> String? {
         let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            return "Enter your monitor's display name (a partial match of the name shown in BetterDisplay)."
+            return "Enter your monitor's name, or any part of it."
         }
-        guard FileManager.default.isExecutableFile(atPath: cliPath) else {
-            return "No BetterDisplay program found at that path. Make sure BetterDisplay is installed, then point this at the BetterDisplay binary inside it (the default path is usually correct)."
-        }
-        let controller = DDCController(cliPath: cliPath, displayName: trimmedName)
-        let reachable = await controller.probe()
-        guard reachable else {
-            return "Couldn't read brightness from \"\(trimmedName)\". Make sure the name matches the one in BetterDisplay and that the monitor has DDC/CI enabled in its on-screen menu."
+        guard await DDCController(displayName: trimmedName).probe() else {
+            let connected = await DDCController.monitors()
+            return connected.isEmpty
+                ? "No external monitor found. Connect it, check that DDC/CI is on in its on-screen menu, then try again."
+                : "No connected monitor is named \"\(trimmedName)\". Connected: \(connected.joined(separator: ", ")). Use any part of one of those names."
         }
         isSetUp = true
         save()

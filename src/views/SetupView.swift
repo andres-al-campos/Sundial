@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// First-run onboarding shown until the BetterDisplay path + display name are
-/// verified against real hardware. Presets stay locked behind this so a new user
+/// First-run onboarding shown until the display name is found among the
+/// connected monitors. Presets stay locked behind this so a new user
 /// on a different monitor doesn't drag sliders that silently do nothing.
 struct SetupView: View {
     @EnvironmentObject var appState: AppState
@@ -16,33 +16,20 @@ struct SetupView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Set up your monitor")
                     .font(.headline)
-                Text("Sundial controls your monitor's hardware brightness and contrast through BetterDisplay.")
+                Text("Sundial sets your monitor's own brightness and contrast over DDC.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("1. BetterDisplay path")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
-                TextField("/Applications/BetterDisplay.app/...", text: $appState.cliPath)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.caption, design: .monospaced))
-                    .onChange(of: appState.cliPath) { _, _ in appState.save() }
-                Text("Install BetterDisplay if you haven't — the default path is usually correct.")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("2. Display name (partial match)")
+                Text("Monitor name (any part of it)")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                 TextField("e.g. GIGABYTE", text: $appState.displayName)
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: appState.displayName) { _, _ in appState.save() }
-                Text("Any part of the monitor name shown in BetterDisplay. Make sure DDC/CI is enabled in the monitor's on-screen menu.")
+                Text("Filled in from the connected monitor when there's one. Make sure DDC/CI is on in the monitor's on-screen menu.")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -72,6 +59,11 @@ struct SetupView: View {
             .hoverShade()
         }
         .padding(14)
+        .task {
+            // Most people have one external monitor, so its name is the answer.
+            guard appState.displayName.isEmpty, let first = await DDCController.monitors().first else { return }
+            appState.displayName = first
+        }
     }
 
     private func runTest() {

@@ -11,7 +11,7 @@ class Scheduler {
 
     private weak var state: AppState?
     private var controller: DDCController?
-    /// A drift read takes seconds when BetterDisplay is slow, longer than a tick apart.
+    /// A drift read can outlast a tick when the monitor is slow to answer.
     private var checkingDrift = false
 
     func start(state: AppState, controller: DDCController) {
@@ -119,7 +119,6 @@ class Scheduler {
         guard state.previewingPresetID == nil else { return }
         guard !state.autoDrivesMonitor else { return }
 
-        controller.cliPath = state.cliPath
         controller.displayName = state.displayName
 
         guard let entry = activeEntry(in: state.schedule, presets: state.presets) else { return }
@@ -150,7 +149,6 @@ class Scheduler {
             return
         }
 
-        controller.cliPath = state.cliPath
         controller.displayName = state.displayName
 
         guard let entry = activeEntry(in: state.schedule, presets: state.presets) else { return }
@@ -181,7 +179,7 @@ class Scheduler {
                 switch found {
                 case .drifted:
                     // Same entry, but the display genuinely drifted (wake from sleep,
-                    // reboot, BetterDisplay restart, manual override) — re-apply.
+                    // reboot, manual override) — re-apply.
                     transitionTask?.cancel()
                     transitionTask = Task {
                         await controller.apply(preset)

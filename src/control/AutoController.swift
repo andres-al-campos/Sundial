@@ -161,7 +161,6 @@ final class AutoController {
 
     private func tick() {
         guard let state, let controller, state.isSetUp else { return }
-        controller.cliPath = state.cliPath
         controller.displayName = state.displayName
 
         let now = Date()

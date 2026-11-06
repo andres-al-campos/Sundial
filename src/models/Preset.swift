@@ -5,11 +5,11 @@ struct Preset: Identifiable, Codable, Equatable {
     var name: String
 
     /// Brightness (0–100). Controls the monitor's actual backlight via DDC.
-    /// Driven via BetterDisplay CLI (`-hardwareBrightness`).
+    /// The monitor's own brightness, over DDC (VCP 0x10).
     var hardwareBrightness: Int
 
     /// Hardware contrast (0–100). Controls monitor contrast via DDC (free feature).
-    /// Driven via BetterDisplay CLI (`-hardwareContrast`).
+    /// The monitor's own contrast, over DDC (VCP 0x12).
     var hardwareContrast: Int
 
     /// Night Shift strength (0–100). 0 = off, 100 = maximum warmth.

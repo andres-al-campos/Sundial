@@ -2,8 +2,7 @@ import AppKit
 
 /// Whether a display is currently in HDR mode.
 ///
-/// Read from macOS rather than BetterDisplay: the CLI's `-hdr` query is a Pro
-/// feature, and everything else Sundial uses is free.
+/// Read from macOS: DDC has no standard code for HDR.
 enum HDRState {
     /// A screen reduced to what the decision reads, so it can be checked
     /// without a display attached.
@@ -15,8 +14,8 @@ enum HDRState {
     }
 
     /// True when a screen matching `displayName` has HDR headroom. The match is
-    /// a case-insensitive partial one, the same as BetterDisplay's `-nameLike`,
-    /// so one setting names the display for both.
+    /// a case-insensitive partial one, the same as DDCController's, so one
+    /// setting names the display for both.
     static func isOn(displayName: String, screens: [Screen]) -> Bool {
         let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return false }

@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-05 22:57, at 1.1.0.
+Updated 2026-11-05 23:18, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -99,20 +99,21 @@ row.
 
 `./build.sh drive time-field` (~6s): the arrows on the time field, which "darkest at" uses.
 
-`./build.sh drive slow-betterdisplay` (~10s): the monitor's commands against a stand-in
-BetterDisplay that takes 2 seconds a call. The main thread keeps answering, and the values land
-in the order a drag sent them. Fails as expected with the call on the main actor and with the
-calls on a concurrent queue.
+`./build.sh drive slow-monitor` (~10s): the monitor's commands against a stand-in monitor that
+takes 2 seconds a write. The main thread keeps answering, and the values land in the order a drag
+sent them. Fails as expected with the write on the main thread.
+
+`./build.sh check` runs `tests/ddc-packets.sh`, the DDC/CI bytes against hand-worked packets and a
+real reply from the M27Q.
 
 ## Gotchas
 
-- With BetterDisplay's app closed, each command Sundial sends starts a copy of it that takes
-  about 16 seconds to exit. Waited for on the main thread, a switch from Schedule back to Auto
-  froze the app with the spinner for as long as its steps took (2026-11-05). The commands run
-  off the main thread now, in order, and while BetterDisplay's app is closed the popup's Display tab
-  has a banner with Open BetterDisplay, as ReSign's has for a problem that blocks everything. Opening
-  it brings the monitor back to where it should be at once. The copies the commands start are
-  BetterDisplay too, so only one Sundial didn't start counts as open.
+- Sundial sets the monitor itself over IOAVService, Apple silicon's private DDC path, since
+  2026-11-05; before, it went through BetterDisplay's command line, which took about 16 seconds a
+  command with BetterDisplay's app closed. On the Mac's own HDMI port the I2C chip address is
+  0xB7, not 0x37: at 0x37 the M27Q took every write without acting on it and answered reads
+  empty (`6e 80 be`), while the call itself reported success. A write that "worked" is only
+  shown by reading the value back. See `IOAVLink` in `src/control/DDC.swift`.
 
 - The sensor sits beside the camera. A camera cover over it reads a flat 0
   lux, which counts as a pitch-dark room; turned round to cover only the lens,
