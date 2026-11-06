@@ -71,12 +71,12 @@ enum LightDay {
                 guard parent != bulb.id, let p = bulbs.first(where: { $0.id == parent }) else {
                     return "\(bulb.name) follows a bulb that isn't in the file. Fix its parent, or remove it."
                 }
-                if p.parent != nil { return "\(bulb.name) follows \(p.name), which follows another bulb. Point it at the bulb that has the keyframes." }
+                if p.parent != nil { return "\(bulb.name) follows \(p.name), which follows another bulb. Point it at the bulb that has the color keys." }
             }
             for key in bulb.keys {
-                guard (0..<day).contains(key.minute) else { return "\(bulb.name) has a keyframe at minute \(key.minute). Use 0 to \(day - 1)." }
-                guard (0...100).contains(key.brightness) else { return "\(bulb.name) has a keyframe at brightness \(key.brightness). Use 0 to 100." }
-                guard (0...1).contains(key.x), (0...1).contains(key.y) else { return "\(bulb.name) has a keyframe at xy \(key.x), \(key.y). Use 0 to 1 for both." }
+                guard (0..<day).contains(key.minute) else { return "\(bulb.name) has a color key at minute \(key.minute). Use 0 to \(day - 1)." }
+                guard (0...100).contains(key.brightness) else { return "\(bulb.name) has a color key at brightness \(key.brightness). Use 0 to 100." }
+                guard (0...1).contains(key.x), (0...1).contains(key.y) else { return "\(bulb.name) has a color key at xy \(key.x), \(key.y). Use 0 to 1 for both." }
             }
         }
         return nil

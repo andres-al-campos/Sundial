@@ -202,10 +202,10 @@ struct LightsView: View {
 
     /// Said beside the name, since the two cards look alike and a light isn't one of its keyframes.
     private func kind(of show: Shown) -> String {
-        if show.key != nil { return "Keyframe" }
+        if show.key != nil { return "Color Key" }
         guard let bulb = bulbs.first(where: { $0.id == show.bulbID }) else { return "" }
         if let parent = bulb.parent { return "Follows \(bulbs.first { $0.id == parent }?.name ?? "another bulb")" }
-        return bulb.keys.count == 1 ? "1 Keyframe" : "\(bulb.keys.count) Keyframes"
+        return bulb.keys.count == 1 ? "1 Color Key" : "\(bulb.keys.count) Color Keys"
     }
 
     /// What a bulb's card starts from: its hold, or the lamp as last read, or where the
@@ -239,13 +239,13 @@ struct LightsView: View {
                 }
             },
             commit: {
-                if show.key != nil { history.commit(undo, "Change Keyframe") }
+                if show.key != nil { history.commit(undo, "Change Color Key") }
                 endPreviewNow()
             }
         ) {
             if let key = show.key {
                 KeyTimeRow(key: key, marks: marks, change: { change(key.id, $0) }, commit: {
-                    history.commit(undo, "Change Keyframe")
+                    history.commit(undo, "Change Color Key")
                     endPreviewNow()
                 })
             } else {
@@ -543,22 +543,22 @@ struct LightsView: View {
 
     @ViewBuilder
     private func keyMenu(_ key: LightDay.Key, bulb: LightDay.Bulb) -> some View {
-        Button("Copy Keyframe") { clip.key = key }
+        Button("Copy Color Key") { clip.key = key }
         Button("Paste Color and Brightness") { pasteLook(onto: key.id, bulb: bulb) }
             .disabled(clip.key == nil)
         Divider()
-        Button("Delete Keyframe") { deleteKey(key.id, of: bulb.id) }
+        Button("Delete Color Key") { deleteKey(key.id, of: bulb.id) }
     }
 
     @ViewBuilder
     private func bandMenu(_ bulb: LightDay.Bulb, width: CGFloat) -> some View {
-        Button("Paste Keyframe at \(Self.time(minute(atX: hoverX, width: width)))") {
+        Button("Paste Color Key at \(Self.time(minute(atX: hoverX, width: width)))") {
             guard var key = clip.key else { return }
             key.id = UUID()
             key.minute = minute(atX: hoverX, width: width)
             key.anchor = LightDay.snap(key.minute, marks: marks)
             edit { $0[bulb.id]?.keys.append(key) }
-            history.commit(undo, "Paste Keyframe")
+            history.commit(undo, "Paste Color Key")
         }
         .disabled(clip.key == nil || bulb.parent != nil)
         Divider()
@@ -608,7 +608,7 @@ struct LightsView: View {
 
     private func toggle(_ s: Selection) {
         if selection == s { deselect() } else {
-            history.commit(undo, "Change Keyframe")
+            history.commit(undo, "Change Color Key")
             show(s)
         }
     }
@@ -668,7 +668,7 @@ struct LightsView: View {
 
     private func deselect() {
         guard selection != nil else { return }
-        history.commit(undo, "Change Keyframe")
+        history.commit(undo, "Change Color Key")
         selection = nil
         endPreviewNow()
     }
@@ -702,7 +702,7 @@ struct LightsView: View {
         let key = LightDay.Key(minute: at, anchor: LightDay.snap(at, marks: marks), on: look?.on ?? true,
                                brightness: look?.brightness ?? 50, x: look?.xy.x ?? warm.x, y: look?.xy.y ?? warm.y)
         edit { $0[bulb.id]?.keys.append(key) }
-        history.commit(undo, "Add Keyframe")
+        history.commit(undo, "Add Color Key")
         selection = Selection(bulb: bulb.id, key: key.id)
     }
 
@@ -729,7 +729,7 @@ struct LightsView: View {
         // Before the save, whose tick takes the bulb to the new day at the usual fade. Ending a
         // preview here would rush it there in half a second, with nothing to come back from.
         appState.movingKeyframe = false
-        history.commit(undo, "Move Keyframe")
+        history.commit(undo, "Move Color Key")
     }
 
     private func pasteLook(onto id: UUID, bulb: LightDay.Bulb) {
@@ -747,7 +747,7 @@ struct LightsView: View {
 
     private func deleteKey(_ id: UUID, of bulb: String) {
         edit { $0[bulb]?.keys.removeAll { $0.id == id } }
-        history.commit(undo, "Delete Keyframe")
+        history.commit(undo, "Delete Color Key")
         endPreviewNow()
     }
 

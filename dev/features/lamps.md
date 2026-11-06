@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 14:06, at 1.1.0.
+Updated 2026-11-05 18:47, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -12,7 +12,7 @@ artificial light follows the natural light along with the screen.
   with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash in the ring's grey running past the rim, as in ∅. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time. A line marks the time now, ending in a solid head under the last row.
-- **Keyframes.** Each bulb has its own, with a straight line between neighbours
+- **Keyframes** ("color keys" on screen). Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change, since it takes the colour in between). Click a dot for its time, on/off, brightness, temperature
   (700 to 6500 K) and colour. Right-click a dot to delete it. A bulb the bridge has no scene for starts
@@ -34,7 +34,7 @@ artificial light follows the natural light along with the screen.
   a follower's own card can hold it apart, and its Return to schedule ends whichever hold it's under. Rename is on the right-click menu.
 - **Card.** Click a keyframe and its settings come down on a card from behind the
   rows' card, which stays put: a colour wheel, then the settings reading left to right and top
-  to bottom: the bulb with its on/off switch to the left of its name and "Keyframe" or "6 Keyframes" after it, the time,
+  to bottom: the bulb with its on/off switch to the left of its name and "Color Key" or "6 Color Keys" after it, the time,
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
   sliders, keeping their fill, and both say "Off". Every button shades on hover. The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
