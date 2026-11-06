@@ -17,6 +17,11 @@ struct MenuBarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
 
+            if appState.isSetUp, !appState.betterDisplayOpen {
+                Divider()
+                BetterDisplayBanner()
+                Divider().padding(.bottom, 8)
+            }
             Segments(items: [(.display, "Display"), (.lighting, lightsLabel)], picked: appState.popupTab,
                      orange: appState.lampsOffTheDay ? .lighting : nil, onPick: setTab)
                 .padding(.horizontal, 14)
@@ -145,6 +150,36 @@ struct Segments<Value: Hashable>: View {
         // Only the pill animates; the panel below swaps in its own transaction.
         .animation(.easeOut(duration: 0.22), value: picked)
         .animation(.easeOut(duration: 0.15), value: orange)
+    }
+}
+
+// MARK: - BetterDisplay closed
+
+/// Laid out as ReSign's banner for a problem that blocks everything. No close button: it goes
+/// away when BetterDisplay opens.
+private struct BetterDisplayBanner: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 13))
+                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("BetterDisplay isn't open")
+                    .font(.subheadline.weight(.semibold))
+                Text("Sundial sets the monitor through it, so the screen won't follow the light until it's open.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Open BetterDisplay") { BetterDisplayWatch.open() }
+                    .buttonStyle(.outlined)
+                    .font(.caption)
+                    .padding(.top, 4)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.12))
     }
 }
 

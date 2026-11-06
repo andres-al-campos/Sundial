@@ -59,13 +59,15 @@ Task { @MainActor in
 
     var sizes: [String: CGSize] = [:], seen: [String: (colours: Int, orange: Int)] = [:]
     var failures: [String] = []
-    let shots: [(String, AppState.PopupTab, [String: LightDay.Hold])] = [
-        ("display", .display, [:]), ("display-held", .display, held),
-        ("lighting", .lighting, [:]), ("lighting-held", .lighting, held),
+    let shots: [(String, AppState.PopupTab, [String: LightDay.Hold], Bool)] = [
+        ("display", .display, [:], true), ("display-held", .display, held, true),
+        ("lighting", .lighting, [:], true), ("lighting-held", .lighting, held, true),
+        ("betterdisplay-closed", .display, [:], false),
     ]
-    for (name, tab, holds) in shots {
+    for (name, tab, holds, open) in shots {
         state.popupTab = tab
         state.holds = holds
+        state.betterDisplayOpen = open
         let host = NSHostingView(rootView: MenuBarView().environmentObject(state))
         let w = NSWindow(contentRect: NSRect(x: -8000, y: 100, width: 320, height: 600), styleMask: [.borderless], backing: .buffered, defer: false)
         w.contentView = host
@@ -86,6 +88,9 @@ Task { @MainActor in
     state.holds = [:]
     if let a = seen["display"]?.orange, let b = seen["display-held"]?.orange, b <= a + 20 {
         failures.append("the Lights tab's label isn't orange while a bulb is held (\(a) orange pixels without a hold, \(b) with). Segments in src/views/MenuBarView.swift colours the item MenuBarView passes as orange, from AppState.lampsOffTheDay.")
+    }
+    if let a = seen["display"]?.orange, let b = seen["betterdisplay-closed"]?.orange, b <= a + 20 {
+        failures.append("no banner while BetterDisplay is closed (\(a) orange pixels open, \(b) closed). MenuBarView shows BetterDisplayBanner when AppState.betterDisplayOpen is false.")
     }
     if sizes["lighting"] != sizes["lighting-held"] {
         failures.append("the Lights tab changed size when a bulb was held (\(sizes["lighting"]!) to \(sizes["lighting-held"]!)). Its status line and button row have to keep one height whatever they show; see LightingPanel.status and .buttons.")
@@ -110,4 +115,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/popup" "$work/main.swift" test
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/popup" "$out"
-echo "✓ popup: both tabs render off-screen, the Lights label turns orange while a bulb is held, and a hold doesn't resize the popup${POPUP_OUT:+, PNGs in $POPUP_OUT}"
+echo "✓ popup: both tabs render off-screen, the Lights label turns orange while a bulb is held, a hold doesn't resize the popup, and a banner says when BetterDisplay is closed${POPUP_OUT:+, PNGs in $POPUP_OUT}"

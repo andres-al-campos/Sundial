@@ -10,6 +10,7 @@ struct SundialApp: App {
     private let scheduler: Scheduler
     private let auto: AutoController
     private let lamps: LampController
+    private let betterDisplay: BetterDisplayWatch
 
     init() {
         let state = AppState()
@@ -32,6 +33,10 @@ struct SundialApp: App {
         sched.start(state: state, controller: ctrl)
         autoCtrl.start(state: state, controller: ctrl)
         lampCtrl.start(state: state)
+        let watch = BetterDisplayWatch()
+        watch.start(state: state) { [weak state] in
+            if state?.autoDrivesMonitor == true { autoCtrl.forceApply() } else { sched.reapplyForCurrentTime() }
+        }
 
         // Reconcile the login item with the persisted preference. Registration can be
         // lost out from under us — e.g. the bundle moves, or a stale DerivedData
@@ -50,6 +55,7 @@ struct SundialApp: App {
         scheduler  = sched
         auto       = autoCtrl
         lamps      = lampCtrl
+        betterDisplay = watch
     }
 
     /// The callbacks views use to reach the scheduler and Auto. Whichever owns

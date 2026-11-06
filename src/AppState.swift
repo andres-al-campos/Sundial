@@ -125,6 +125,9 @@ class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(windowSection.rawValue, forKey: "windowSection") }
     }
 
+    /// BetterDisplay's own app, which the monitor's commands need. The popup says when it's closed.
+    @Published var betterDisplayOpen = true
+
     enum PopupTab: String { case display, lighting }
     /// The popup's tab, and the one it opens on next time.
     @Published var popupTab = UserDefaults.standard.string(forKey: "popupTab").flatMap(PopupTab.init) ?? .display {
