@@ -14,13 +14,9 @@ struct TimeField: View {
             BarePicker(label: label, time: $time, handle: picker)
                 .fixedSize()
                 .offset(y: Self.textDrop)
-                .padding(.horizontal, 5)
+                .padding(.horizontal, Self.inset)
                 .frame(height: Self.height)
-                .background {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(nsColor: .textBackgroundColor))
-                        .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.1)) }
-                }
+                .modifier(FieldGround())
             Stepper(label, onIncrement: { picker.step(up: true) }, onDecrement: { picker.step(up: false) })
                 .labelsHidden()
                 .controlSize(.mini)
@@ -30,8 +26,25 @@ struct TimeField: View {
     }
 
     private static let height: CGFloat = 20
+    /// Wider in a capsule, whose round ends would otherwise crowd the digits.
+    private static var inset: CGFloat { if #available(macOS 26, *) { 8 } else { 5 } }
     /// Measured on the pixels, for the same room above and below the digits.
     private static let textDrop: CGFloat = 1.5
+}
+
+/// Glass where the system has it, as the window's buttons are, so the field sits with them.
+private struct FieldGround: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 26, *) {
+            content.glassEffect(.regular, in: Capsule())
+        } else {
+            content.background {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(nsColor: .textBackgroundColor))
+                    .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.1)) }
+            }
+        }
+    }
 }
 
 /// The picker the arrows act on. The arrows send it an arrow key, the one public way in, so they
