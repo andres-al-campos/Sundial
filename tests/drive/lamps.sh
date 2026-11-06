@@ -258,8 +258,8 @@ if grep -q 'ViewThatFits(' src/views/LightsView.swift || ! grep -q 'rowsFit(bulb
     echo "✗ lamps: LightsView has to settle whether the rows scroll from the room they'd have with the card out, with no ViewThatFits. A ViewThatFits made the card jump open instead of sliding, and a scroll view resized by the slide shows a scroll bar from each frame's rounding. Pass Layout.rowsFit the height minus Layout.cardRoom, in lightsAndCard."
     exit 1
 fi
-if ! grep -q 'let show = shown ?? lastShown' src/views/LightsView.swift || ! grep -q 'value: cardOpen' src/views/LightsView.swift; then
-    echo "✗ lamps: the card has to show its keyframe before it moves, and have contents before its first open. Created on that open they jump open or fade in, and changed in the same step as the slide its text and sliders travel across each other. Keep KeyPanel in the card from the start showing shown ?? lastShown, and animate on cardOpen, which follows the selection a step behind, in LightsView."
+if ! grep -q 'let show = shown ?? lastShown' src/views/LightsView.swift || ! grep -q '{ cardOpen = true }' src/views/LightsView.swift; then
+    echo "✗ lamps: the card has to show its keyframe before it moves, and have contents before its first open. Created on that open they jump open or fade in, and changed in the same step as the slide its text and sliders travel across each other. Keep LookPanel in the card from the start showing shown ?? lastShown, and open it by animating cardOpen a frame after the selection, in LightsView.slideCard."
     exit 1
 fi
 if ! grep -q 'days\[l.id\] ?? LightDay.defaultKeys' src/control/LampController.swift; then
