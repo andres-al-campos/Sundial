@@ -250,7 +250,7 @@ struct LightsView: View {
         .cardGround()
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) {
-                Image(systemName: "xmark")
+                Image(systemName: "chevron.up")
                     .frame(width: Layout.iconButton, height: Layout.iconButton)
                     .contentShape(Rectangle())
             }
