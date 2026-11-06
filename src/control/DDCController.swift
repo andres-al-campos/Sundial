@@ -59,9 +59,9 @@ class DDCController {
     /// Compare the display's actual DDC brightness and contrast against a preset.
     /// Uses raw DDC reads (VCP codes) to bypass BetterDisplay's cache. Returns
     /// `.unknown` if either read fails — see `DisplayState`.
-    func state(of preset: Preset) -> DisplayState {
-        guard let brightness = readDDC(vcp: 0x10),
-              let contrast   = readDDC(vcp: 0x12) else { return .unknown }
+    func state(of preset: Preset) async -> DisplayState {
+        guard let brightness = await readDDC(vcp: 0x10),
+              let contrast   = await readDDC(vcp: 0x12) else { return .unknown }
         let ok = abs(brightness - preset.hardwareBrightness) <= 1
               && abs(contrast   - preset.hardwareContrast)   <= 1
         return ok ? .matches : .drifted
@@ -72,7 +72,7 @@ class DDCController {
     /// CLI path + display name resolve to a real, controllable monitor before
     /// unlocking presets. Returns true if the read returns a value.
     func probe() async -> Bool {
-        readDDC(vcp: 0x10) != nil
+        await readDDC(vcp: 0x10) != nil
     }
 
     // MARK: - Private
@@ -80,9 +80,9 @@ class DDCController {
     /// Read a raw DDC value from the monitor via VCP code. Returns the integer
     /// value directly from the display hardware, bypassing BetterDisplay's cache.
     /// VCP 0x10 = brightness, 0x12 = contrast.
-    private func readDDC(vcp: Int) -> Int? {
+    private func readDDC(vcp: Int) async -> Int? {
         let hex = String(format: "0x%02X", vcp)
-        let result = runCapture([cliPath, "get", "-nameLike=\(displayName)", "-ddc", "-vcp=\(hex)"])
+        let result = await Self.capture([cliPath, "get", "-nameLike=\(displayName)", "-ddc", "-vcp=\(hex)"])
         let trimmed = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
         if let value = Int(trimmed) { return value }
 
@@ -106,7 +106,7 @@ class DDCController {
     }
 
     private func setPercent(_ param: String, value: Int) async {
-        run([cliPath, "set", "-namelike=\(displayName)", "-\(param)=\(value)%"])
+        await Self.send([cliPath, "set", "-namelike=\(displayName)", "-\(param)=\(value)%"])
         try? await Task.sleep(nanoseconds: 25_000_000)
     }
 
@@ -114,6 +114,9 @@ class DDCController {
     /// hang indefinitely (observed on `version` and on DDC reads to a wedged
     /// monitor); `waitUntilExit()` would block the caller forever if it does.
     static let commandTimeout: TimeInterval = 5
+    /// A set gets longer: with BetterDisplay closed, the copy each command starts took about 16
+    /// seconds, and cutting it off would drop a value that was on its way.
+    static let setTimeout: TimeInterval = 20
 
     private struct CaptureResult {
         enum Outcome {
@@ -126,7 +129,18 @@ class DDCController {
         var stderr: String
     }
 
-    private func runCapture(_ args: [String]) -> CaptureResult {
+    /// Every call goes through one queue, in the order they were made, so a drag's values land in
+    /// the order they were dragged. Off the main thread: a BetterDisplay that isn't running takes
+    /// about 16 seconds a call, and waited for on the main thread that froze the app.
+    private static let queue = DispatchQueue(label: "com.aurende.sundial.betterdisplay")
+
+    private nonisolated static func capture(_ args: [String], timeout: TimeInterval = commandTimeout) async -> CaptureResult {
+        await withCheckedContinuation { done in
+            queue.async { done.resume(returning: runCapture(args, timeout: timeout)) }
+        }
+    }
+
+    private nonisolated static func runCapture(_ args: [String], timeout: TimeInterval) -> CaptureResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: args[0])
         process.arguments = Array(args.dropFirst())
@@ -159,7 +173,7 @@ class DDCController {
             group.leave()
         }
 
-        let deadline = Date().addingTimeInterval(Self.commandTimeout)
+        let deadline = Date().addingTimeInterval(timeout)
         var timedOut = false
         while process.isRunning {
             if Date() >= deadline {
@@ -185,36 +199,28 @@ class DDCController {
     }
 
     @discardableResult
-    private func run(_ args: [String]) -> Int32 {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: args[0])
-        process.arguments = Array(args.dropFirst())
-
-        let outPipe = Pipe()
-        let errPipe = Pipe()
-        process.standardOutput = outPipe
-        process.standardError = errPipe
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-
-            let status = process.terminationStatus
+    private nonisolated static func send(_ args: [String]) async -> Int32 {
+        let result = await capture(args, timeout: setTimeout)
+        let cmd = args.joined(separator: " ")
+        switch result.outcome {
+        case .launchFailed(let message):
+            print("[Sundial] Could not launch BetterDisplay: \(message) — verify the path in Settings points to /Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay and that BetterDisplay.app is installed.")
+            return -1
+        case .timedOut:
+            print("[Sundial] BetterDisplay took over \(setTimeout)s for: \(cmd). Open BetterDisplay if it isn't running: without it each command starts a copy of the app that takes about 16 seconds.")
+            return -1
+        case .exited(let status):
             if status != 0 {
-                let out = String(data: outPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                let err = String(data: errPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                let cmd = args.joined(separator: " ")
+                let out = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+                let err = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
                 print("[Sundial] CLI exited \(status) for: \(cmd)")
-                if !out.isEmpty { print("[Sundial] stdout: \(out.trimmingCharacters(in: .whitespacesAndNewlines))") }
-                if !err.isEmpty { print("[Sundial] stderr: \(err.trimmingCharacters(in: .whitespacesAndNewlines))") }
+                if !out.isEmpty { print("[Sundial] stdout: \(out)") }
+                if !err.isEmpty { print("[Sundial] stderr: \(err)") }
                 if out.contains("Failed") || err.contains("Failed") {
                     print("[Sundial] BetterDisplay reported 'Failed' — the display name in Settings may not match any connected monitor. Check Settings → Display name and confirm it matches (partial match) the monitor name shown in BetterDisplay.")
                 }
             }
             return status
-        } catch {
-            print("[Sundial] Could not launch BetterDisplay: \(error.localizedDescription) — verify the path in Settings points to /Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay and that BetterDisplay.app is installed.")
-            return -1
         }
     }
 }

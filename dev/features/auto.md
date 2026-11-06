@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-04 21:46, at 1.1.0.
+Updated 2026-11-05 22:30, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -99,7 +99,17 @@ row.
 
 `./build.sh drive time-field` (~6s): the arrows on the time field, which "darkest at" uses.
 
+`./build.sh drive slow-betterdisplay` (~10s): the monitor's commands against a stand-in
+BetterDisplay that takes 2 seconds a call. The main thread keeps answering, and the values land
+in the order a drag sent them. Fails as expected with the call on the main actor and with the
+calls on a concurrent queue.
+
 ## Gotchas
+
+- With BetterDisplay's app closed, each command Sundial sends starts a copy of it that takes
+  about 16 seconds to exit. Waited for on the main thread, a switch from Schedule back to Auto
+  froze the app with the spinner for as long as its steps took (2026-11-05). The commands run
+  off the main thread now, in order; the monitor still lags until BetterDisplay is open.
 
 - The sensor sits beside the camera. A camera cover over it reads a flat 0
   lux, which counts as a pitch-dark room; turned round to cover only the lens,
