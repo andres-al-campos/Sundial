@@ -108,9 +108,8 @@ struct LightingPanel: View {
     private var footer: some View {
         HStack(spacing: 10) {
             Group {
-                if !appState.holds.isEmpty {
-                    Text("Held until sunrise").foregroundStyle(.orange)
-                } else if appState.lampsPaused {
+                // A hold says itself in its bulb's orange name and in Return to schedule beside this.
+                if appState.lampsPaused {
                     Text("Paused").foregroundStyle(.orange)
                 } else if let next = nextKey {
                     Text("Next color key at \(LightsView.time(next))").foregroundStyle(.secondary)

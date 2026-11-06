@@ -15,8 +15,9 @@ artificial light follows the natural light along with the screen.
 - **Popup.** The popup's Lighting tab has a row per bulb: its true colour, its name, and a
   brightness slider with a sun before it, as Control Center's display slider has. A drag moves
   the bulb as it goes and holds it, as the window's card does, and turns on a bulb that was off.
-  A click on the name opens the window. Under the rows one line says "Held until sunrise" with
-  Return to schedule, or Paused, or when the next color key comes, beside Pause. While the
+  A click on the name opens the window. Under the rows one line says Paused, or when the next
+  color key comes, beside Pause, with Return to schedule while a bulb is held: its orange name
+  says it's held, and a third orange "Held until sunrise" was "too much orange". While the
   lights are off the day the tab's label is orange, on either tab, so the orange sun leads to
   it. Unpaired, the tab offers to pair the bridge.
 - **Keyframes** ("color keys" on screen). Each bulb has its own, with a straight line between neighbours
