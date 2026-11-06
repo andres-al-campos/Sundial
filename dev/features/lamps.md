@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 20:56, at 1.1.0.
+Updated 2026-11-05 21:05, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -12,9 +12,11 @@ artificial light follows the natural light along with the screen.
   with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash in the ring's grey running past the rim, as in ∅. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time. A line marks the time now, ending in a solid head under the last row.
-- **Popup.** The popup's Lighting tab has a row per bulb: its true colour, its name, and a
+- **Popup.** The popup's Lights tab (Light, with one bulb, the window's name for them) has a row per bulb: its true colour, its name, and a
   brightness slider with a sun before it, as Control Center's display slider has. A drag moves
   the bulb as it goes and holds it, as the window's card does, and turns on a bulb that was off.
+  While paused there's no hold: the drag just sets the bulb, and pausing ends every hold, from
+  the button or the command line, so Resume takes every bulb back to the day.
   A click on the name opens the window. Over the rows one line says Paused or when the next
   color key comes; under them, outlined, Pause on the left and, while a bulb is held, Return to schedule beside it,
   which glides the sliders back as the bulbs fade. The orange name says a bulb is held: a third
@@ -105,7 +107,7 @@ The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's fu
 
 `./build.sh drive window` (~20s): builds the real window from the code as it is and renders Lights off-screen to PNGs, dark and light, taking no focus. `WINDOW_OUT=dir` keeps them and `WINDOW_REAL=1` starts from a throwaway copy of the real config. It shows the window at rest; showing a card takes a scratch copy of `src/` calling the view's private functions.
 
-`./build.sh drive popup` (~20s): builds the real popup and renders both tabs off-screen, taking no focus. It checks the Lighting label turns orange while a bulb is held and that a hold doesn't resize the popup. `POPUP_OUT=dir` keeps the PNGs. A slider's drag isn't driven: the hold it makes is `AppState.holdLamp`, the window card's too.
+`./build.sh drive popup` (~20s): builds the real popup and renders both tabs off-screen, taking no focus. It checks the Lights label turns orange while a bulb is held and that a hold doesn't resize the popup. `POPUP_OUT=dir` keeps the PNGs. A slider's drag isn't driven: the hold it makes is `AppState.holdLamp`, the window card's too.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.

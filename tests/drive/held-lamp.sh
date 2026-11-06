@@ -208,13 +208,28 @@ Task { @MainActor in
     await settle()
     expect("return to schedule", ["a": day, "b": day])
 
+    // Pause lets go of every bulb, held ones too, and a drag while paused sets the bulb without a
+    // hold: there's no day for one to come back to.
     state.holds["a"] = .init(look: held, until: until)
     lamps.preview(["a": held, "b": held])
     lamps.endPreview()
     await settle()
-    state.lampsFollow = false
-    await slider()
-    expect("a slider's drag while held and paused", ["a": held, "b": held])
+    state.onPreviewLamps = { lamps.preview($0) }
+    state.onEndLampPreview = { lamps.endPreview() }
+    state.onKeepLamps = { lamps.keep($0) }
+    state.toggleLampsFollow()
+    if !state.holds.isEmpty {
+        failures.append("pausing left a hold on \(state.holds.keys.sorted()). lampsFollow's didSet in AppState clears them, so Resume takes every bulb back to the day.")
+    }
+    await settle()
+    state.holdLamp("a", from: held) { $0 = previewed }
+    try? await Task.sleep(for: .milliseconds(450))
+    state.onEndLampPreview?()
+    await settle()
+    expect("a slider's drag while paused", ["a": previewed, "b": previewed])
+    if !state.holds.isEmpty {
+        failures.append("a slider's drag while paused made a hold. AppState.holdLamp only sets the bulb while paused, through LampController.keep.")
+    }
 
     // Paused is when the Hue app may have them doing anything, and the room log still wants to know.
     // A look bulb a has had at no earlier read, so a stale read can't pass for this one.
@@ -243,4 +258,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/held-lamp" "$work/main.swift" 
 fi
 mkdir -p "$work/held-home"
 CFFIXED_USER_HOME="$work/held-home" "$work/held-lamp"
-echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it and across a relaunch, and goes back to the day once it ends; a bulb switched off by hand stays off after a preview"
+echo "✓ held-lamp: a keyframe's drag leaves the bulb alone and its drop arrives at the usual fade; a bulb under a hold goes back to the hold after a preview, quickly, followers too, stays there when a routine moves it and across a relaunch, and goes back to the day once it ends; a bulb switched off by hand stays off after a preview; pausing ends every hold, and a drag while paused stays on the bulb without one"

@@ -85,11 +85,13 @@ struct LightingPanel: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Slider(value: Binding(get: { look.on ? look.brightness : 0 }, set: { b in
-                appState.holdLamp(bulb.id, from: look) {
+                let set = appState.holdLamp(bulb.id, from: look) {
                     // Dragging a bulb switched off brings it on: more light is what the drag asks for.
                     $0.on = true
                     $0.brightness = max(1, b)
                 }
+                // Paused, nothing holds it, so this is where the slider learns where the bulb is.
+                if !appState.lampsFollow { read[bulb.id] = set }
             }), in: 0...100, onEditingChanged: { editing in
                 dragging = editing
                 if !editing { appState.onEndLampPreview?() }

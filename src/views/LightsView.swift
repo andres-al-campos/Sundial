@@ -644,7 +644,9 @@ struct LightsView: View {
     private func holdOwner(_ id: String) -> String? { appState.lampHoldOwner(id) }
 
     private func hold(_ id: String, _ apply: (inout LightDay.State) -> Void) {
-        appState.holdLamp(id, from: rightNow(id), apply)
+        let set = appState.holdLamp(id, from: rightNow(id), apply)
+        // Paused, nothing holds it, so this is where the card learns where the bulb is.
+        if !appState.lampsFollow { lampsNow[id] = set }
     }
 
     /// From a follower too, whose button would otherwise do nothing while the hold it's under is another bulb's.

@@ -26,6 +26,8 @@ final class LampController {
     /// While paused a preview returns to what the lamps were, since the day isn't
     /// theirs to follow: Pause is there so the Hue app can use them.
     private var beforePreview: [String: LightDay.State]?
+    /// Set by hand while paused: where the way back leaves these, instead of `beforePreview`.
+    private var kept: [String: LightDay.State] = [:]
     private var previewed: Set<String> = []
     /// Kept through `refresh`, unlike `sent`: it's how a lamp the day dimmed to off
     /// is told from one someone switched off.
@@ -177,6 +179,12 @@ final class LampController {
         }
     }
 
+    /// While paused, the preview's way back leaves these bulbs here: a drag then is someone setting
+    /// the bulb, with no day to go back to.
+    func keep(_ states: [String: LightDay.State]) {
+        kept.merge(states) { _, new in new }
+    }
+
     /// Back to the day quickly, once what a preview already sent has landed: left to
     /// the usual 30-second fade, a preview looks like it stuck.
     func endPreview() {
@@ -219,12 +227,14 @@ final class LampController {
         returning = false
         guard let bridge else { return }
         let holds = state?.holds ?? [:], bulbs = state?.lights ?? []
-        let ids = previewed.union(holds.keys)
+        let ids = previewed.union(holds.keys).union(kept.keys)
+        let kept = self.kept
         previewed = []
+        self.kept = [:]
         do {
             for id in ids {
                 let held = LightDay.holdOwner(of: id, in: bulbs, holds: holds).flatMap { holds[$0]?.look }
-                if let s = held ?? before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
+                if let s = held ?? kept[id] ?? before[id] { try await bridge.set(lamp: id, to: s, fade: Self.returnFade) }
             }
         } catch {
             state?.lampStatus = error.localizedDescription

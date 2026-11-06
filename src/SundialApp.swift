@@ -66,6 +66,7 @@ struct SundialApp: App {
         state.onLampsChanged = { lamps.refresh() }
         state.onPreviewLamps = { lamps.preview($0) }
         state.onEndLampPreview = { lamps.endPreview() }
+        state.onKeepLamps = { lamps.keep($0) }
         state.onRenameBulb = { lamps.rename(device: $0, to: $1) }
         state.onReadHue = { try await lamps.scenesAsStored() }
         state.onReadLamps = { try await lamps.lampsNow() }

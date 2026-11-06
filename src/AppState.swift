@@ -31,7 +31,11 @@ class AppState: ObservableObject {
     /// Where the sun is worked out for, when picked on Settings' map.
     @Published var place: RoomLight.Place? { didSet { SunClock.picked = place } }
     /// The Hue lamps follow their days. False while paused from the Lights window.
-    @Published var lampsFollow: Bool = false
+    /// Pausing lets go of every bulb, held ones too, so Resume takes them all back to the day.
+    /// Here rather than on the Pause button, since the command line pauses too.
+    @Published var lampsFollow: Bool = false {
+        didSet { if oldValue, !lampsFollow { holds = [:] } }
+    }
     /// Bulbs set by hand until sunrise. A relaunch keeps them: a hold that vanished with an install
     /// would put the room back on the day while it was still wanted.
     @Published var holds: [String: LightDay.Hold] = [:] { didSet { saveHolds() } }
@@ -86,6 +90,8 @@ class AppState: ObservableObject {
     var onPreviewLamps: (([String: LightDay.State]) -> Void)?
     /// Set by the app at startup: hand the bulbs back to their days.
     var onEndLampPreview: (() -> Void)?
+    /// While paused: where a preview's way back leaves these bulbs.
+    var onKeepLamps: (([String: LightDay.State]) -> Void)?
     /// Set by the app at startup: rename a bulb on the bridge.
     var onRenameBulb: ((_ deviceID: String, _ name: String) -> Void)?
     /// Set by the app at startup: the bridge's scenes, as it holds them.
@@ -339,17 +345,27 @@ extension AppState {
     }
 
     /// Changes the bulb and no keyframes, and holds it there until sunrise. Whichever follow it
-    /// show it too, unless they're held themselves.
-    func holdLamp(_ id: String, from was: LightDay.State, _ apply: (inout LightDay.State) -> Void) {
+    /// show it too, unless they're held themselves. While paused it only sets the bulb: a hold
+    /// is a stop off the day, and paused there's no day to go back to.
+    @discardableResult
+    func holdLamp(_ id: String, from was: LightDay.State, _ apply: (inout LightDay.State) -> Void) -> LightDay.State {
         var look = was
         apply(&look)
+        if !lampsFollow {
+            var states = [id: look]
+            for follower in lights ?? [] where follower.parent == id { states[follower.id] = look }
+            onPreviewLamps?(states)
+            onKeepLamps?(states)
+            return look
+        }
         // A click on a slider's knob sends its own value back, and a hold from that put Return to
         // schedule up for a change nobody made.
-        if holds[id] == nil, !LightDay.differs(look, from: was) { return }
+        if holds[id] == nil, !LightDay.differs(look, from: was) { return look }
         holds[id] = LightDay.Hold(look: look, until: LightDay.holdEnd(from: Date(), sunrise: lampMarks.sunrise))
         var states = [id: look]
         for follower in lights ?? [] where follower.parent == id && holds[follower.id] == nil { states[follower.id] = look }
         onPreviewLamps?(states)
+        return look
     }
 
     /// Through the preview's return, for its quick fade rather than the usual 30 seconds.
