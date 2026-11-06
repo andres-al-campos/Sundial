@@ -78,9 +78,6 @@ struct LightsView: View {
     /// starts to move. In one step the slide also caught its text and sliders, which
     /// travelled from the last keyframe's places, overlapping on the way.
     @State private var cardOpen = false
-    /// The rows' bottom corners square off while the card hangs from them as a drawer, and round
-    /// again only once it's back in: rounding as it starts closing showed a gap at the corners.
-    @State private var drawerOut = false
 
     /// With no keyframe, it's the bulb itself, right now.
     struct Selection: Equatable { var bulb: String; var key: UUID? }
@@ -149,17 +146,21 @@ struct LightsView: View {
                 // that's the scroll view's height either way. A scroll view resized by the
                 // slide shows a scroll bar from each frame's rounding. A ViewThatFits here
                 // settles it without that, but the card then jumps open instead of sliding.
-                if Layout.rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom) {
-                    rows
-                } else {
-                    ScrollView { rows }
-                        .frame(height: geo.size.height - Layout.cardRoom)
+                Group {
+                    if Layout.rowsFit(bulbs.count, in: geo.size.height - Layout.cardRoom) {
+                        rows
+                    } else {
+                        ScrollView { rows }
+                            .frame(height: geo.size.height - Layout.cardRoom)
+                    }
                 }
+                .zIndex(1)
                 // Anchored at its bottom in a frame that grows, so it comes down from behind
-                // the rows and they never move.
+                // the rows and they never move. Shown a corner's height above that frame too, behind
+                // the rows, where it fills the rows' corners while they round.
                 card
                     .frame(height: cardOpen ? Layout.cardRoom : 0, alignment: .bottom)
-                    .clipped()
+                    .mask(alignment: .top) { Rectangle().padding(.top, -Layout.cardCorner) }
                     .allowsHitTesting(cardOpen)
                 Color.clear
                     .contentShape(Rectangle())
@@ -175,7 +176,7 @@ struct LightsView: View {
             hoursAxis
         }
         .padding(Layout.cardPadding)
-        .cardGround(bottom: drawerOut ? 0 : Layout.cardCorner)
+        .cardGround(bottom: cardOpen ? 0 : Layout.cardCorner, opaque: true)
         .padding(.horizontal, Layout.edge)
         .padding(.top, Layout.rowsPadding)
         .contentShape(Rectangle())
@@ -249,9 +250,11 @@ struct LightsView: View {
         .padding(Layout.cardPadding)
         .frame(height: Layout.cardHeight)
         .frame(maxWidth: .infinity)
-        // Its top edge under the rows' bottom one, so the two make a single line between them.
+        // Its ground reaches a corner's height up behind the rows, so whatever their corners are
+        // doing as it slides, there's drawer behind them rather than a gap.
+        .padding(.top, Layout.cardCorner)
         .cardGround(top: 0)
-        .padding(.top, -1)
+        .padding(.top, -Layout.cardCorner)
         .overlay(alignment: .topTrailing) {
             Button(action: deselect) {
                 Image(systemName: "chevron.up")
@@ -656,23 +659,10 @@ struct LightsView: View {
         endPreviewNow()
     }
 
-    /// The corners square before the drawer comes out and round only once it's all the way back
-    /// in: a timed delay, or an animation shared with the slide, left them round with the drawer
-    /// still showing, a gap at each corner (seen frame by frame).
+    /// The rows' corners square as the drawer comes out and round as it goes in, in the same
+    /// animation, so both end together.
     private func slideCard(open: Bool) {
-        if open {
-            var instant = Transaction()
-            instant.disablesAnimations = true
-            withTransaction(instant) { drawerOut = true }
-            withAnimation(.easeOut(duration: Layout.slide)) { cardOpen = true }
-        } else {
-            withAnimation(.easeOut(duration: Layout.slide), completionCriteria: .removed) {
-                cardOpen = false
-            } completion: {
-                guard !cardOpen else { return }
-                withAnimation(.easeOut(duration: 0.15)) { drawerOut = false }
-            }
-        }
+        withAnimation(.easeOut(duration: Layout.slide)) { cardOpen = open }
     }
 
     private func returnAllToSchedule() {
@@ -1142,10 +1132,13 @@ private struct KeyTimeRow: View {
 
 private extension View {
     /// The one ground for the rows and the card under them.
-    func cardGround(top: CGFloat = Layout.cardCorner, bottom: CGFloat = Layout.cardCorner) -> some View {
+    /// `opaque` puts the window's own ground under the tint, which looks the same and hides
+    /// what's behind: the drawer tucked under the rows showed through as a lighter band.
+    func cardGround(top: CGFloat = Layout.cardCorner, bottom: CGFloat = Layout.cardCorner, opaque: Bool = false) -> some View {
         let shape = UnevenRoundedRectangle(topLeadingRadius: top, bottomLeadingRadius: bottom,
                                            bottomTrailingRadius: bottom, topTrailingRadius: top)
         return background(.primary.opacity(0.06), in: shape)
+            .background(opaque ? Color(nsColor: .windowBackgroundColor) : .clear, in: shape)
             .overlay { shape.strokeBorder(.primary.opacity(0.12)) }
     }
 
