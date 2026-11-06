@@ -17,12 +17,17 @@ struct MenuBarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
 
-            if !appState.isSetUp {
-                Divider()
+            Segments(items: [(.display, "Display"), (.lighting, "Lighting")], picked: appState.popupTab,
+                     orange: appState.lampsOffTheDay ? .lighting : nil, onPick: setTab)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 8)
+            Divider()
+            if appState.popupTab == .lighting {
+                LightingPanel()
+            } else if !appState.isSetUp {
                 SetupView()
             } else {
-                modePicker
-                Divider()
+                screenRow
                 if appState.mode == .auto {
                     AutoView()
                 } else {
@@ -63,42 +68,52 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
-    /// Auto or Schedule: one or the other drives the monitor, so a segmented
-    /// control (pick one), not tabs (look at one) or a switch (one thing on or
-    /// off). Its halves are equal and span the popup, and it belongs to the
-    /// header, so there's no line between them.
-    private var modePicker: some View {
-        ModeSegments(mode: appState.mode, onPick: setMode)
-            .padding(.horizontal, 14)
-            .padding(.bottom, 8)
+    /// Auto or Schedule: one or the other drives the monitor, so a segmented control (pick one)
+    /// rather than a switch (one thing on or off). Labelled, since below the tabs it would
+    /// otherwise read as a choice for the whole app.
+    private var screenRow: some View {
+        HStack(spacing: 8) {
+            Text("Screen")
+                .font(.caption)
+                .frame(width: 72, alignment: .leading)
+            Segments(items: [(.auto, "Auto"), (.schedule, "Schedule")], picked: appState.mode, onPick: setMode)
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 10)
     }
 
     private func setMode(_ newMode: AppState.Mode) {
         // The popup resizes to the other mode's panel, eased, not in one jump.
         withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(newMode) }
     }
+
+    private func setTab(_ tab: AppState.PopupTab) {
+        withAnimation(.easeInOut(duration: 0.15)) { appState.popupTab = tab }
+    }
 }
 
-// MARK: - Mode Segments
+// MARK: - Segments
 
-/// A segmented control drawn in SwiftUI so it can move: the selected pill
-/// slides to the mode picked instead of jumping, and the other half glows
-/// faintly under the pointer. Halves are equal and fill the width.
-private struct ModeSegments: View {
-    let mode: AppState.Mode
-    let onPick: (AppState.Mode) -> Void
+/// A segmented control drawn in SwiftUI so it can move: the selected pill slides to the one
+/// picked instead of jumping, and the others glow faintly under the pointer. Equal parts that
+/// fill the width.
+struct Segments<Value: Hashable>: View {
+    let items: [(Value, String)]
+    let picked: Value
+    /// The one whose label is orange: the lights are off the day, as the menu bar's sun says, and
+    /// this is the way to them.
+    var orange: Value? = nil
+    let onPick: (Value) -> Void
     @Namespace private var pill
-    @State private var hovered: AppState.Mode?
-
-    private static let modes: [(AppState.Mode, String)] = [(.auto, "Auto"), (.schedule, "Schedule")]
+    @State private var hovered: Value?
 
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(Self.modes, id: \.0) { item, label in
-                let on = item == mode
+            ForEach(items, id: \.0) { item, label in
+                let on = item == picked
                 Text(label)
                     .font(.system(size: 11, weight: on ? .medium : .regular))
-                    .foregroundStyle(on ? .primary : .secondary)
+                    .foregroundStyle(item == orange ? AnyShapeStyle(.orange) : on ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
                     .frame(maxWidth: .infinity)
                     .frame(height: 20)
                     .background {
@@ -125,7 +140,8 @@ private struct ModeSegments: View {
         .padding(2)
         .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.07)))
         // Only the pill animates; the panel below swaps in its own transaction.
-        .animation(.easeOut(duration: 0.22), value: mode)
+        .animation(.easeOut(duration: 0.22), value: picked)
+        .animation(.easeOut(duration: 0.15), value: orange)
     }
 }
 

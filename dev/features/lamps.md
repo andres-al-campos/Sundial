@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 18:55, at 1.1.0.
+Updated 2026-11-05 20:24, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -12,6 +12,13 @@ artificial light follows the natural light along with the screen.
   with its brightness, clockwise from the top; an off one is its colour at half strength, as the card's wheel is when off, with a slash in the ring's grey running past the rim, as in ∅. Above the bands are
   today's Sunrise, Sunset and Bedtime times, worked out each day; a label too close
   to another moves aside, and a tick stays on the real time. A line marks the time now, ending in a solid head under the last row.
+- **Popup.** The popup's Lighting tab has a row per bulb: its true colour, its name, and a
+  brightness slider with a sun before it, as Control Center's display slider has. A drag moves
+  the bulb as it goes and holds it, as the window's card does, and turns on a bulb that was off.
+  A click on the name opens the window. Under the rows one line says "Held until sunrise" with
+  Return to schedule, or Paused, or when the next color key comes, beside Pause. While the
+  lights are off the day the tab's label is orange, on either tab, so the orange sun leads to
+  it. Unpaired, the tab offers to pair the bridge.
 - **Keyframes** ("color keys" on screen). Each bulb has its own, with a straight line between neighbours
   and no hidden holds: a hold is two matching keyframes. Click a band to add one
   (the band doesn't change, since it takes the colour in between). Click a dot for its time, on/off, brightness, temperature
@@ -94,6 +101,8 @@ day, quickly, followers too, paused or not, including letting go with a preview'
 The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band. `tests/card-stays-open.sh` checks that only `deselect` closes the card and the menus don't call it.
 
 `./build.sh drive window` (~20s): builds the real window from the code as it is and renders Lights off-screen to PNGs, dark and light, taking no focus. `WINDOW_OUT=dir` keeps them and `WINDOW_REAL=1` starts from a throwaway copy of the real config. It shows the window at rest; showing a card takes a scratch copy of `src/` calling the view's private functions.
+
+`./build.sh drive popup` (~20s): builds the real popup and renders both tabs off-screen, taking no focus. It checks the Lighting label turns orange while a bulb is held and that a hold doesn't resize the popup. `POPUP_OUT=dir` keeps the PNGs. A slider's drag isn't driven: the hold it makes is `AppState.holdLamp`, the window card's too.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.

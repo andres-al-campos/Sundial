@@ -119,6 +119,12 @@ class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(windowSection.rawValue, forKey: "windowSection") }
     }
 
+    enum PopupTab: String { case display, lighting }
+    /// The popup's tab, and the one it opens on next time.
+    @Published var popupTab = UserDefaults.standard.string(forKey: "popupTab").flatMap(PopupTab.init) ?? .display {
+        didSet { UserDefaults.standard.set(popupTab.rawValue, forKey: "popupTab") }
+    }
+
     nonisolated static let supportDirectory: URL = {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         let dir = support.appendingPathComponent("Sundial")
@@ -308,5 +314,57 @@ class AppState: ObservableObject {
     func preset(for id: UUID?) -> Preset? {
         guard let id else { return nil }
         return presets.first { $0.id == id }
+    }
+}
+
+// MARK: - Holding a lamp
+
+/// What the window's card and the popup's sliders both do to a bulb, so the two can't hold it differently.
+extension AppState {
+    var lampMarks: LightDay.Marks {
+        LightDay.Marks(warm: SunClock.schedule(on: Date(), bedtime: bedtime), sun: SunClock.sun(on: Date()))
+    }
+
+    func lampHoldOwner(_ id: String) -> String? {
+        LightDay.holdOwner(of: id, in: lights ?? [], holds: holds)
+    }
+
+    /// A bulb as it is now: its hold, or the lamp as last `read`, or where the day has it.
+    func lampNow(_ id: String, read: [String: LightDay.State], at minute: Double) -> LightDay.State {
+        if let owner = lampHoldOwner(id), let held = holds[owner]?.look { return held }
+        if let read = read[id] { return read }
+        let all = lights ?? []
+        return all.first { $0.id == id }.flatMap { LightDay.state(LightDay.keys(of: $0, in: all), at: minute, marks: lampMarks) }
+            ?? .init(on: true, brightness: 50, xy: LampBlend.xy(mirek: 370))
+    }
+
+    /// Changes the bulb and no keyframes, and holds it there until sunrise. Whichever follow it
+    /// show it too, unless they're held themselves.
+    func holdLamp(_ id: String, from was: LightDay.State, _ apply: (inout LightDay.State) -> Void) {
+        var look = was
+        apply(&look)
+        // A click on a slider's knob sends its own value back, and a hold from that put Return to
+        // schedule up for a change nobody made.
+        if holds[id] == nil, !LightDay.differs(look, from: was) { return }
+        holds[id] = LightDay.Hold(look: look, until: LightDay.holdEnd(from: Date(), sunrise: lampMarks.sunrise))
+        var states = [id: look]
+        for follower in lights ?? [] where follower.parent == id && holds[follower.id] == nil { states[follower.id] = look }
+        onPreviewLamps?(states)
+    }
+
+    /// Through the preview's return, for its quick fade rather than the usual 30 seconds.
+    func returnLampsToSchedule(_ id: String? = nil) {
+        if let id {
+            if let owner = lampHoldOwner(id) { holds[owner] = nil }
+        } else {
+            holds = [:]
+        }
+        onEndLampPreview?()
+    }
+
+    func toggleLampsFollow() {
+        lampsFollow.toggle()
+        save()
+        onLampsChanged?()
     }
 }

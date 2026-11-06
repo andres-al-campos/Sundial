@@ -151,15 +151,15 @@ row.
   with no offset, though the presets' line had one ("the preset is 1
   datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
-- 2026-10-26 18:36, 1.0.3. Auto | Schedule is a full-width segmented control under the header. A
+- 2026-11-05 20:24, 1.1.0. Auto | Schedule is a full-width segmented control under the header. A
   switch was wrong because it changed the whole popup ("what toggle does
   that?"), and tabs read as two pages you could both look at, not one choice
   of what drives the monitor. The first segmented control sized to its labels
-  and left the right side empty, so its halves now fill the width. It belongs to the header, with no line
-  between them; the selection slides between the halves ("nothing should
-  teleport") and the other half glows faintly on hover. The header's right side is
-  bare in both modes: the control says the mode, and Schedule opens on the
-  preset in force. Applies *Never a fight with the controls*.
+  and left the right side empty, so its halves now fill the width they have. The selection
+  slides between the halves ("nothing should teleport") and the other half glows faintly on
+  hover. Schedule opens on the preset in force. Since the header's control became Display |
+  Lighting, this one is the Display tab's first row, labelled Screen so it doesn't read as a
+  choice for the whole app. Applies *Never a fight with the controls*.
 - 2026-11-01 20:34, 1.1.0. Before sunset brightness follows the room, after sunset the clock, because
   once Sundial drives the lamps the sensor is reading its own light: "post sunset
   light lerps, so essentially the monitor would also just follow the post sunset

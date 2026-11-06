@@ -206,11 +206,7 @@ struct LightsView: View {
     /// What a bulb's card starts from: its hold, or the lamp as last read, or where the
     /// day has it until that read comes back.
     private func rightNow(_ id: String) -> LightDay.State {
-        if let owner = holdOwner(id), let held = appState.holds[owner]?.look { return held }
-        if let read = lampsNow[id] { return read }
-        let bulb = bulbs.first { $0.id == id }
-        return bulb.flatMap { LightDay.state(LightDay.keys(of: $0, in: bulbs), at: nowMinute, marks: marks) }
-            ?? .init(on: true, brightness: 50, xy: LampBlend.xy(mirek: 370))
+        appState.lampNow(id, read: lampsNow, at: nowMinute)
     }
 
     private var card: some View {
@@ -347,11 +343,7 @@ struct LightsView: View {
 
     private var isPaused: Bool { appState.lampsPaused }
 
-    private func togglePause() {
-        appState.lampsFollow.toggle()
-        appState.save()
-        appState.onLampsChanged?()
-    }
+    private func togglePause() { appState.toggleLampsFollow() }
 
     private var statusLine: String {
         if !appState.lampStatus.hasPrefix("Paired"), appState.hueHost != nil { return appState.lampStatus }
@@ -632,31 +624,17 @@ struct LightsView: View {
         readLampsNow()
     }
 
-    private func holdOwner(_ id: String) -> String? {
-        LightDay.holdOwner(of: id, in: bulbs, holds: appState.holds)
-    }
+    private func holdOwner(_ id: String) -> String? { appState.lampHoldOwner(id) }
 
-    /// Changes the bulb and no keyframes. The first change is what starts the hold. Whichever
-    /// follow it show it too, unless they're held themselves.
     private func hold(_ id: String, _ apply: (inout LightDay.State) -> Void) {
-        let was = rightNow(id)
-        var look = was
-        apply(&look)
-        // A click on a slider's knob sends its own value back, and a hold from that put Return to
-        // schedule up for a change nobody made.
-        if appState.holds[id] == nil, !LightDay.differs(look, from: was) { return }
-        appState.holds[id] = LightDay.Hold(look: look, until: LightDay.holdEnd(from: now, sunrise: marks.sunrise))
-        var states = [id: look]
-        for follower in bulbs where follower.parent == id && appState.holds[follower.id] == nil { states[follower.id] = look }
-        appState.onPreviewLamps?(states)
+        appState.holdLamp(id, from: rightNow(id), apply)
     }
 
     /// From a follower too, whose button would otherwise do nothing while the hold it's under is another bulb's.
     private func returnToSchedule(_ id: String) {
-        if let owner = holdOwner(id) { appState.holds[owner] = nil }
         lampsNow = [:]
-        // Through the preview's return, for its quick fade rather than the usual 30 seconds.
-        endPreviewNow()
+        previewing = nil
+        appState.returnLampsToSchedule(id)
     }
 
     /// The rows' corners square as the drawer comes out and round as it goes in, in the same
@@ -674,9 +652,9 @@ struct LightsView: View {
     }
 
     private func returnAllToSchedule() {
-        appState.holds = [:]
         lampsNow = [:]
-        endPreviewNow()
+        previewing = nil
+        appState.returnLampsToSchedule()
     }
 
     private func deselect() {
