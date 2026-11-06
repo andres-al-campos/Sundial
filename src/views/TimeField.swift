@@ -26,24 +26,16 @@ struct TimeField: View {
     }
 
     private static let height: CGFloat = 20
-    /// Wider in a capsule, whose round ends would otherwise crowd the digits.
-    private static var inset: CGFloat { if #available(macOS 26, *) { 8 } else { 5 } }
+    private static let inset: CGFloat = 5
     /// Measured on the pixels, for the same room above and below the digits.
     private static let textDrop: CGFloat = 1.5
 }
 
-/// Glass where the system has it, as the window's buttons are, so the field sits with them.
+/// Clear inside its outline, so on the popup the popup's own glass shows through it, and in the
+/// window the card's ground. A capsule of glass of its own read as "too rounded".
 private struct FieldGround: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(macOS 26, *) {
-            content.glassEffect(.regular, in: Capsule())
-        } else {
-            content.background {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(nsColor: .textBackgroundColor))
-                    .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.1)) }
-            }
-        }
+        content.overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.15)) }
     }
 }
 
