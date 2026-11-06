@@ -1,6 +1,7 @@
 #!/bin/bash
-# Render AppIcon.svg into the app's asset catalog. Run after editing the SVG.
+# Draw AppIcon.svg (draw.py) and render it into the app's asset catalog.
 set -e
+uv run -q python "$(dirname "$0")/draw.py"
 here="$(cd "$(dirname "$0")" && pwd)"
 out="$here/../../src/Assets.xcassets/AppIcon.appiconset"
 mkdir -p "$out"
