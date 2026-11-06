@@ -695,7 +695,9 @@ struct LightsView: View {
                                brightness: look?.brightness ?? 50, x: look?.xy.x ?? warm.x, y: look?.xy.y ?? warm.y)
         edit { $0[bulb.id]?.keys.append(key) }
         history.commit(undo, "Add Color Key")
-        selection = Selection(bulb: bulb.id, key: key.id)
+        // As clicking from one key to another does: with the card open its sliders glide to the
+        // new key's values, and a closed one opens already showing them.
+        show(Selection(bulb: bulb.id, key: key.id))
     }
 
     /// Only the time moves, so the band reshapes around the keyframe. A colour between two keyframes is
