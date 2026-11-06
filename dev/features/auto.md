@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-05 22:48, at 1.1.0.
+Updated 2026-11-05 22:57, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -109,8 +109,8 @@ calls on a concurrent queue.
 - With BetterDisplay's app closed, each command Sundial sends starts a copy of it that takes
   about 16 seconds to exit. Waited for on the main thread, a switch from Schedule back to Auto
   froze the app with the spinner for as long as its steps took (2026-11-05). The commands run
-  off the main thread now, in order, and while BetterDisplay's app is closed the popup has a
-  banner with Open BetterDisplay, as ReSign's has for a problem that blocks everything. Opening
+  off the main thread now, in order, and while BetterDisplay's app is closed the popup's Display tab
+  has a banner with Open BetterDisplay, as ReSign's has for a problem that blocks everything. Opening
   it brings the monitor back to where it should be at once. The copies the commands start are
   BetterDisplay too, so only one Sundial didn't start counts as open.
 

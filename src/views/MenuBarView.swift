@@ -17,11 +17,6 @@ struct MenuBarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
 
-            if appState.isSetUp, !appState.betterDisplayOpen {
-                Divider()
-                BetterDisplayBanner()
-                Divider().padding(.bottom, 8)
-            }
             Segments(items: [(.display, "Display"), (.lighting, lightsLabel)], picked: appState.popupTab,
                      orange: appState.lampsOffTheDay ? .lighting : nil, onPick: setTab)
                 .padding(.horizontal, 14)
@@ -32,6 +27,11 @@ struct MenuBarView: View {
             } else if !appState.isSetUp {
                 SetupView()
             } else {
+                // In the Display tab only: the lights don't go through BetterDisplay.
+                if !appState.betterDisplayOpen {
+                    BetterDisplayBanner()
+                    Divider()
+                }
                 screenRow
                 if appState.mode == .auto {
                     AutoView()
@@ -61,6 +61,7 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 320)
+        .onAppear { appState.onCheckBetterDisplay?() }
         .onDisappear {
             // Popup closed: end any preview, so the monitor goes back to the
             // scheduled preset.

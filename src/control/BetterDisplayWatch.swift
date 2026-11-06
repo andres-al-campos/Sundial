@@ -7,23 +7,35 @@ import AppKit
 final class BetterDisplayWatch {
     static let bundleID = "pro.betterdisplay.BetterDisplay"
     private var observers: [NSObjectProtocol] = []
+    private weak var state: AppState?
+    private var back: () -> Void = {}
 
     /// `back` runs when the app opens after being closed, so the monitor catches up at once.
     func start(state: AppState, back: @escaping () -> Void) {
+        self.state = state
+        self.back = back
         state.betterDisplayOpen = Self.isOpen()
+        state.onCheckBetterDisplay = { [weak self] in self?.check() }
         let center = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
-            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak state] note in
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
                 let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
                 guard app?.bundleIdentifier == Self.bundleID else { return }
                 MainActor.assumeIsolated {
-                    guard let state else { return }
-                    let was = state.betterDisplayOpen
-                    state.betterDisplayOpen = Self.isOpen()
-                    if !was, state.betterDisplayOpen { back() }
+                    self?.check()
+                    // Opening BetterDisplay left the banner up: checked as the launch was announced,
+                    // the app wasn't open yet by this count. A second later it is.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self?.check() }
                 }
             })
         }
+    }
+
+    func check() {
+        guard let state else { return }
+        let was = state.betterDisplayOpen
+        state.betterDisplayOpen = Self.isOpen()
+        if !was, state.betterDisplayOpen { back() }
     }
 
     /// The copies Sundial's own commands start are BetterDisplay too, so only one Sundial didn't
