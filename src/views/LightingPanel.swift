@@ -122,10 +122,17 @@ struct LightingPanel: View {
         .frame(height: 14)
     }
 
-    /// A row of their own, so a hold's button coming in has the room it needs and moves nothing.
+    /// A row of their own. Pause holds the left and a hold's button comes in to its right, into
+    /// empty space, so nothing moves when it does.
     private var buttons: some View {
         HStack(spacing: 8) {
-            Spacer(minLength: 0)
+            Button {
+                appState.toggleLampsFollow()
+            } label: {
+                Text(appState.lampsFollow ? "Pause" : "Resume")
+                    .foregroundStyle(appState.lampsPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
+            }
+            .buttonStyle(.outlined)
             if !appState.holds.isEmpty {
                 Button {
                     appState.returnLampsToSchedule { read = [:] }
@@ -135,13 +142,7 @@ struct LightingPanel: View {
                 .buttonStyle(.outlined)
                 .transition(.opacity)
             }
-            Button {
-                appState.toggleLampsFollow()
-            } label: {
-                Text(appState.lampsFollow ? "Pause" : "Resume")
-                    .foregroundStyle(appState.lampsPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
-            }
-            .buttonStyle(.outlined)
+            Spacer(minLength: 0)
         }
         .font(.caption)
         .frame(height: 20)

@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 20:42, at 1.1.0.
+Updated 2026-11-05 20:56, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -16,7 +16,7 @@ artificial light follows the natural light along with the screen.
   brightness slider with a sun before it, as Control Center's display slider has. A drag moves
   the bulb as it goes and holds it, as the window's card does, and turns on a bulb that was off.
   A click on the name opens the window. Over the rows one line says Paused or when the next
-  color key comes; under them, outlined, are Pause and, while a bulb is held, Return to schedule,
+  color key comes; under them, outlined, Pause on the left and, while a bulb is held, Return to schedule beside it,
   which glides the sliders back as the bulbs fade. The orange name says a bulb is held: a third
   orange "Held until sunrise" was "too much orange". While the
   lights are off the day the tab's label is orange, on either tab, so the orange sun leads to
