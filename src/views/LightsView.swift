@@ -427,22 +427,8 @@ struct LightsView: View {
                         .gesture(linked ? nil : SpatialTapGesture().onEnded { addKey(bulb, at: $0.location.x, width: geo.size.width) })
                         .contextMenu { bandMenu(bulb, width: geo.size.width) }
                         .onContinuousHover { phase in
-                            if case .active(let p) = phase {
-                                hoverX = p.x
-                                hoverBand = bulb.id
-                            } else if hoverBand == bulb.id {
-                                hoverBand = nil
-                            }
+                            if case .active(let p) = phase { hoverX = p.x }
                         }
-                    if !linked, hoverBand == bulb.id,
-                       !keys.contains(where: { abs(geo.size.width * Layout.position(LightDay.minute(of: $0, marks: marks)) - hoverX) < 14 }) {
-                        // Where a click would put a color key, so the band reads as somewhere to click.
-                        Circle()
-                            .strokeBorder(.primary.opacity(0.6), lineWidth: 1.5)
-                            .frame(width: 20, height: 20)
-                            .position(x: hoverX, y: Layout.rowHeight / 2)
-                            .allowsHitTesting(false)
-                    }
                     // A piece in each row rather than one line over them all, so it stays
                     // under the keyframes. Tall enough to meet the next row's piece, and an
                     // overlay so that doesn't change the row's height.
@@ -484,8 +470,6 @@ struct LightsView: View {
 
     /// Where the pointer last was over a band, for the band's right-click menu.
     @State private var hoverX: CGFloat = 0
-    /// The band under the pointer, which shows where a click would add a color key.
-    @State private var hoverBand: String?
 
     @ViewBuilder
     private func name(_ bulb: LightDay.Bulb) -> some View {
