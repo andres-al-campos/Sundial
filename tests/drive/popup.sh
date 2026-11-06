@@ -85,10 +85,10 @@ Task { @MainActor in
     }
     state.holds = [:]
     if let a = seen["display"]?.orange, let b = seen["display-held"]?.orange, b <= a + 20 {
-        failures.append("the Lighting tab's label isn't orange while a bulb is held (\(a) orange pixels without a hold, \(b) with). Segments in src/views/MenuBarView.swift colours the item MenuBarView passes as orange, from AppState.lampsOffTheDay.")
+        failures.append("the Lights tab's label isn't orange while a bulb is held (\(a) orange pixels without a hold, \(b) with). Segments in src/views/MenuBarView.swift colours the item MenuBarView passes as orange, from AppState.lampsOffTheDay.")
     }
     if sizes["lighting"] != sizes["lighting-held"] {
-        failures.append("the Lighting tab changed size when a bulb was held (\(sizes["lighting"]!) to \(sizes["lighting-held"]!)). Its status line and button row have to keep one height whatever they show; see LightingPanel.status and .buttons.")
+        failures.append("the Lights tab changed size when a bulb was held (\(sizes["lighting"]!) to \(sizes["lighting-held"]!)). Its status line and button row have to keep one height whatever they show; see LightingPanel.status and .buttons.")
     }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
@@ -110,4 +110,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/popup" "$work/main.swift" test
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/popup" "$out"
-echo "✓ popup: both tabs render off-screen, the Lighting label turns orange while a bulb is held, and a hold doesn't resize the popup${POPUP_OUT:+, PNGs in $POPUP_OUT}"
+echo "✓ popup: both tabs render off-screen, the Lights label turns orange while a bulb is held, and a hold doesn't resize the popup${POPUP_OUT:+, PNGs in $POPUP_OUT}"

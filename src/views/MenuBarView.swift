@@ -17,7 +17,7 @@ struct MenuBarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
 
-            Segments(items: [(.display, "Display"), (.lighting, "Lighting")], picked: appState.popupTab,
+            Segments(items: [(.display, "Display"), (.lighting, lightsLabel)], picked: appState.popupTab,
                      orange: appState.lampsOffTheDay ? .lighting : nil, onPick: setTab)
                 .padding(.horizontal, 14)
                 .padding(.bottom, 8)
@@ -81,6 +81,9 @@ extension MenuBarView {
         .padding(.horizontal, 14)
         .padding(.top, 10)
     }
+
+    /// The window's name for them, and singular for someone with one bulb.
+    private var lightsLabel: String { appState.lights?.count == 1 ? "Light" : "Lights" }
 
     private func setMode(_ newMode: AppState.Mode) {
         // The popup resizes to the other mode's panel, eased, not in one jump.
