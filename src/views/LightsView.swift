@@ -331,9 +331,7 @@ struct LightsView: View {
         return appState.lampsFollow ? "Now, \(Self.time(Int(nowMinute)))" : nil
     }
 
-    private var isPaused: Bool {
-        !appState.lampsFollow && appState.hueHost != nil && appState.lampStatus.hasPrefix("Paired")
-    }
+    private var isPaused: Bool { appState.lampsPaused }
 
     private func togglePause() {
         appState.lampsFollow.toggle()

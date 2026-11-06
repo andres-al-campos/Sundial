@@ -42,6 +42,10 @@ class AppState: ObservableObject {
     var movingKeyframe = false
     /// Each bulb's day. Nil until the scenes on the bridge have been imported.
     @Published var lights: [LightDay.Bulb]?
+    /// Paused from the Lights window, as opposed to never paired or the bridge unreachable.
+    var lampsPaused: Bool { !lampsFollow && hueHost != nil && lampStatus.hasPrefix("Paired") }
+    /// The lamps aren't on the day: a bulb is held, or they're paused.
+    var lampsOffTheDay: Bool { !holds.isEmpty || lampsPaused }
     /// The paired Hue Bridge's host name; its key is in the Keychain.
     @Published var hueHost: String?
     /// What the lamps are doing, or why they aren't, for Settings.

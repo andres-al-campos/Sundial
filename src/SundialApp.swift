@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import ServiceManagement
 
 @main
@@ -86,8 +87,29 @@ struct SundialApp: App {
                     auto.start(state: appState, controller: controller)
                 }
         } label: {
-            Label("Sundial", systemImage: "sun.max")
+            MenuBarIcon(offTheDay: appState.lampsOffTheDay)
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+/// Orange, Back to schedule's colour, while the lamps aren't on the day. Both states come from the
+/// same NSImage so the sun keeps its size: a menu bar Label drops colour, and an NSImage sized
+/// differently from it would jump when it changed.
+private struct MenuBarIcon: View {
+    let offTheDay: Bool
+
+    var body: some View {
+        Image(nsImage: Self.sun(offTheDay))
+            .accessibilityLabel(offTheDay ? "Sundial, lights held or paused" : "Sundial")
+    }
+
+    static func sun(_ orange: Bool) -> NSImage {
+        var config = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        if orange { config = config.applying(.init(paletteColors: [.systemOrange])) }
+        let image = NSImage(systemSymbolName: "sun.max", accessibilityDescription: nil)?
+            .withSymbolConfiguration(config) ?? NSImage()
+        image.isTemplate = !orange
+        return image
     }
 }
