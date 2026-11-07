@@ -8,8 +8,6 @@ struct MenuBarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
-                Image(systemName: "sun.max.fill")
-                    .foregroundStyle(.orange)
                 Text("Sundial")
                     .font(.system(size: 15, weight: .semibold))
                 Spacer()
