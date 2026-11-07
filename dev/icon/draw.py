@@ -5,36 +5,45 @@ The drawing is built from a few rules rather than tuned by eye, so each number f
 - The dial is always exactly half an oval: an invisible line through its center cuts it, and the
   cut ends of its rim lie along that line. Where the line cuts the tail decides how far the top
   runs on, through the gnomon.
-- The gnomon's straight edge rises from the dial's center at 45° and is one radius long. Its base
-  is that edge divided by the golden ratio. Its back is one curve from the tip that lands flat on
-  the base, so all three tips come to points.
+- The gnomon's straight edge lies along that same line, so the cut and the gnomon read as one
+  diagonal, and is one radius long. Its base is that edge divided by the golden ratio. Its back is
+  one curve from the tip that lands flat on the base, so all three tips come to points. The outline
+  rounds its corner outward, so the gnomon is slid until the outline's outer edges meet at the
+  dial's center.
+- The half dial is filled with a faint wash of the ink.
 - The base is centered across the icon, the padding is even left and right (the cut's angle is
   solved for that), and the drawing is centered top to bottom.
 
-A filled gnomon on a line dial, with the dial cut along the gnomon's own edge, read as a pointy
-tail; cutting the dial through the gnomon instead fixed that. Run render.sh afterwards.
+An unfilled dial cut along the gnomon's edge read as a pointy tail; the fill fixed that. Cutting
+the dial at a different angle from the gnomon instead left a sliver of dial above the gnomon's
+edge. Run render.sh afterwards.
 """
 import math, pathlib
 
 PHI = (1 + 5 ** 0.5) / 2
 ASPECT = 0.5        # the dial's height against its width: rounder put its top higher up the gnomon
-GNOMON_DEG = 45
 BASE = 1 / PHI      # the gnomon's base, in dial radii; its straight edge is one radius
 DEPTH = 0.7         # how far the back curves in toward the gnomon's corner: 1 left the tips hairlines
 SIDE_PAD = 23.3     # left and right, on the 170 grid: at this size the diagonal is exactly one radius
-LINE = 7            # the dial's rim
+LINE = 5            # the dial's rim: 7 looked heavy beside the filled face
 TIP = 3.5           # the outline round the filled gnomon: points, softened this much
 GROUND = "#121417"
 INK = "#FFA43D"
 GLOW = 5
-GLOW_OPACITY = 0.4  # at 0.8 the halo pooled where lines meet and blurred the dial
+GLOW_OPACITY = 0.2  # at 0.8 the halo pooled where lines meet and blurred the dial; 0.4 fringed the face
+FACE_OPACITY = 0.18
 
-g = math.radians(GNOMON_DEG)
-tip = (math.cos(g), math.sin(g))     # dial units, y up, the dial's center at the origin
+# Dial units, y up, the dial's center at the origin. The gnomon's angle is the cut's, in degrees.
+def gnomon_at(deg, sc, n=200):
+    # The straight edge to the tip, then the back from the tip to the base's end, pulled toward the
+    # corner by DEPTH; slid along the corner's bisector by the outline's half width.
+    g = math.radians(deg)
+    tip = (math.cos(g), math.sin(g))
+    h = TIP / 2 / sc
+    return [(x + h / math.tan(g / 2), y + h) for x, y in [(0, 0)] + back(tip, n)]
 
 
-def back(n=200):
-    # From the tip to the base's end, pulled toward the gnomon's corner (the origin) by DEPTH.
+def back(tip, n):
     pts = []
     for i in range(n + 1):
         t = i / n
@@ -62,7 +71,7 @@ def rim_ink(cut, sc, n=4000):
 
 def ink_box(cut, sc, ox, oy):
     pts = [(ox + sc * x, oy - sc * y) for x, y in rim_ink(cut, sc)]
-    fin = [(ox + sc * x, oy - sc * y) for x, y in [(0, 0)] + back()]
+    fin = [(ox + sc * x, oy - sc * y) for x, y in gnomon_at(cut, sc)]
     xs = [p[0] for p in pts] + [p[0] - TIP / 2 for p in fin] + [p[0] + TIP / 2 for p in fin]
     ys = [p[1] for p in pts] + [p[1] - TIP / 2 for p in fin] + [p[1] + TIP / 2 for p in fin]
     return min(xs), max(xs), min(ys), max(ys)
@@ -70,7 +79,7 @@ def ink_box(cut, sc, ox, oy):
 
 def balanced_cut(sc, ox):
     # A steeper cut shortens the tail, moving the left edge in; the rim fixes the right edge.
-    lo, hi = GNOMON_DEG - 10.0, 85.0
+    lo, hi = 35.0, 85.0
     for _ in range(40):
         m = (lo + hi) / 2
         l, r, _, _ = ink_box(m, sc, ox, 85)
@@ -96,9 +105,12 @@ d = (math.cos(math.radians(cut)), math.sin(math.radians(cut)))
 Q = 5
 half = [(d[0] * Q, d[1] * Q), (d[0] * Q + d[1] * Q, d[1] * Q - d[0] * Q),
         (-d[0] * Q + d[1] * Q, -d[1] * Q - d[0] * Q), (-d[0] * Q, -d[1] * Q)]
+c = math.atan2(d[1] / ASPECT, d[0])
+face = [(math.cos(c - math.pi * k / 160), ASPECT * math.sin(c - math.pi * k / 160)) for k in range(161)]
 rim = [(math.cos(2 * math.pi * i / 240), ASPECT * math.sin(2 * math.pi * i / 240)) for i in range(240)]
-gnomon = [(0, 0)] + back()
-shapes = (f'<path d="{line(rim)} Z" fill="none" stroke-width="{LINE}" clip-path="url(#half)"/>'
+gnomon = gnomon_at(cut, sc)
+face_svg = f'<path d="{line(face)} Z" fill="{INK}" fill-opacity="{FACE_OPACITY}" stroke="none"/>'
+shapes = (face_svg + f'<path d="{line(rim)} Z" fill="none" stroke-width="{LINE}" clip-path="url(#half)"/>'
           f'<path d="{line(gnomon)} Z" fill="{INK}" stroke-width="{TIP}"/>')
 svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!-- Generated by draw.py. macOS icon grid: an 824pt body centered on 1024; drawn on a 170 grid. -->
@@ -119,4 +131,4 @@ svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
 </svg>
 """
 pathlib.Path(__file__).with_name("AppIcon.svg").write_text(svg)
-print(f"cut {cut:.2f}°, scale {sc:.2f}, padding {l:.1f}/{170 - r:.1f} sides, {t:.1f}/{170 - b:.1f} top and bottom")
+print(f"cut and gnomon {cut:.2f}°, scale {sc:.2f}, padding {l:.1f}/{170 - r:.1f} sides, {t:.1f}/{170 - b:.1f} top and bottom")
