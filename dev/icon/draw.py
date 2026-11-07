@@ -31,7 +31,7 @@ GROUND = "#38393C"      # a dark gray, not black: black sank into a dark desktop
 INK = "#FFA43D"
 GLOW = 5
 GLOW_OPACITY = 0.2  # at 0.8 the halo pooled where lines meet and blurred the dial; 0.4 fringed the face
-FACE_OPACITY = 0.18
+FACE_OPACITY = 0.3   # at 0.18 the diagonal along the face barely showed
 
 # Dial units, y up, the dial's center at the origin. The gnomon's angle is the cut's, in degrees.
 def gnomon_at(deg, sc, n=200):
