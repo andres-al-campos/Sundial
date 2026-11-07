@@ -1,67 +1,122 @@
-"""Draw AppIcon.svg: a minimal sundial, a filled gnomon standing on an oval dial, in one color.
+"""Draw AppIcon.svg: a gnomon standing on half a sundial's dial, in one color on black.
 
-The gnomon's tip sits at the dial's center and its base runs out to the rim. Its top edge is a
-straight line, and its back is a scoop cut from a smaller oval that leaves the top edge's far
-end along the edge itself, so that end comes to a point. The gnomon and its base
-are one filled shape, so its tips are points rather than round line ends ("the round tips were
-bad"). Run render.sh afterwards.
+The drawing is built from a few rules rather than tuned by eye, so each number follows from them:
+
+- The dial is always exactly half an oval: an invisible line through its center cuts it, and the
+  cut ends of its rim lie along that line. Where the line cuts the tail decides how far the top
+  runs on, through the gnomon.
+- The gnomon's straight edge rises from the dial's center at 45° and is one radius long. Its base
+  is that edge divided by the golden ratio. Its back is one curve from the tip that lands flat on
+  the base, so all three tips come to points.
+- The base is centered across the icon, the padding is even left and right (the cut's angle is
+  solved for that), and the drawing is centered top to bottom.
+
+A filled gnomon on a line dial, with the dial cut along the gnomon's own edge, read as a pointy
+tail; cutting the dial through the gnomon instead fixed that. Run render.sh afterwards.
 """
 import math, pathlib
 
-RX, ASPECT = 63, 0.7     # the oval the scoop is cut from; the dial has the same aspect
-GNOMON_DEG = 42          # the gnomon's top edge against its base
-A = 60                   # where the scoop meets the base, on its oval
-DIAL = 1.05              # the dial's radius, against the gnomon's reach from its tip
-STROKE = 7               # one weight for every line; 7 still holds at 16px as a light line on black
+PHI = (1 + 5 ** 0.5) / 2
+ASPECT = 0.5        # the dial's height against its width: rounder put its top higher up the gnomon
+GNOMON_DEG = 45
+BASE = 1 / PHI      # the gnomon's base, in dial radii; its straight edge is one radius
+DEPTH = 0.7         # how far the back curves in toward the gnomon's corner: 1 left the tips hairlines
+SIDE_PAD = 23.3     # left and right, on the 170 grid: at this size the diagonal is exactly one radius
+LINE = 7            # the dial's rim
+TIP = 3.5           # the outline round the filled gnomon: points, softened this much
 GROUND = "#121417"
 INK = "#FFA43D"
-GLOW = 5                 # blur of the glow behind the lines; it fades out at 16px, which is fine
-GLOW_OPACITY = 0.4       # at 0.8 the halo pooled where lines meet and blurred the oval
-TIP = 2                  # the outline round the filled gnomon: its tips are points, softened this much
+GLOW = 5
+GLOW_OPACITY = 0.4  # at 0.8 the halo pooled where lines meet and blurred the dial
 
-ry = RX * ASPECT
-pt = lambda th: (RX * math.cos(math.radians(th)), -ry * math.sin(math.radians(th)))
-# The scoop starts where the oval's tangent makes GNOMON_DEG with the horizontal.
-s = 180 - math.degrees(math.atan(ASPECT / math.tan(math.radians(GNOMON_DEG))))
-S0, F = pt(s), pt(A + 180)
-r = math.radians(s); t = (-RX * math.sin(r), -ry * math.cos(r))
-B = (S0[0] + t[0] * (F[1] - S0[1]) / t[1], F[1])          # the tip, down the top edge on the base
-n = math.hypot(*t); u = (-t[0] / n, -t[1] / n)
-reach = -B[0]   # from the tip to the scoop oval's center line, which the old top edge ran to: sizes the dial
+g = math.radians(GNOMON_DEG)
+tip = (math.cos(g), math.sin(g))     # dial units, y up, the dial's center at the origin
 
-N = 120
-scoop = [pt(s + (A + 180 - s) * i / N) for i in range(N + 1)]
-dial_r = DIAL * reach
-dial = [(B[0] + dial_r * math.cos(2 * math.pi * i / N), B[1] - dial_r * ASPECT * math.sin(2 * math.pi * i / N)) for i in range(N + 1)]
-rim = (B[0] + dial_r, B[1])
 
-pts = dial
-xs, ys = [p[0] for p in pts], [p[1] for p in pts]
-sc = min(122 / (max(xs) - min(xs)), 122 / (max(ys) - min(ys)))
-ox, oy = 85 - sc * (max(xs) + min(xs)) / 2, 85 - sc * (max(ys) + min(ys)) / 2
-fmt = lambda p: f"{ox + sc * p[0]:.2f} {oy + sc * p[1]:.2f}"
+def back(n=200):
+    # From the tip to the base's end, pulled toward the gnomon's corner (the origin) by DEPTH.
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c = (1 - t) ** 2, 2 * DEPTH * t * (1 - t), t * t
+        pts.append(((a * tip[0] + c * BASE) / (a + b + c), (a * tip[1]) / (a + b + c)))
+    return pts
+
+
+def rim_ink(cut, sc, n=4000):
+    # The stroked rim's outer and inner edges, kept where they fall on the dial's side of the cut.
+    d = (math.cos(math.radians(cut)), math.sin(math.radians(cut)))
+    hw = LINE / 2 / sc
+    out = []
+    for i in range(n):
+        th = 2 * math.pi * i / n
+        x, y = math.cos(th), ASPECT * math.sin(th)
+        nx, ny = ASPECT * math.cos(th), math.sin(th)
+        k = math.hypot(nx, ny)
+        for s in (-hw, hw):
+            p = (x + s * nx / k, y + s * ny / k)
+            if p[0] * d[1] - p[1] * d[0] >= 0:   # right of the cut line, looking along it
+                out.append(p)
+    return out
+
+
+def ink_box(cut, sc, ox, oy):
+    pts = [(ox + sc * x, oy - sc * y) for x, y in rim_ink(cut, sc)]
+    fin = [(ox + sc * x, oy - sc * y) for x, y in [(0, 0)] + back()]
+    xs = [p[0] for p in pts] + [p[0] - TIP / 2 for p in fin] + [p[0] + TIP / 2 for p in fin]
+    ys = [p[1] for p in pts] + [p[1] - TIP / 2 for p in fin] + [p[1] + TIP / 2 for p in fin]
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+def balanced_cut(sc, ox):
+    # A steeper cut shortens the tail, moving the left edge in; the rim fixes the right edge.
+    lo, hi = GNOMON_DEG - 10.0, 85.0
+    for _ in range(40):
+        m = (lo + hi) / 2
+        l, r, _, _ = ink_box(m, sc, ox, 85)
+        lo, hi = (m, hi) if l < 170 - r else (lo, m)
+    return (lo + hi) / 2
+
+
+sc = 100.0
+for _ in range(8):
+    ox = 85 - sc * BASE / 2
+    cut = balanced_cut(sc, ox)
+    l, r, _, _ = ink_box(cut, sc, ox, 85)
+    sc *= (170 - 2 * SIDE_PAD) / (r - l)
+ox = 85 - sc * BASE / 2
+cut = balanced_cut(sc, ox)
+_, _, t, b = ink_box(cut, sc, ox, 85)
+oy = 85 + (170 - t - b) / 2
+l, r, t, b = ink_box(cut, sc, ox, oy)
+
+fmt = lambda p: f"{ox + sc * p[0]:.2f} {oy - sc * p[1]:.2f}"
 line = lambda ps: "M" + " L".join(fmt(p) for p in ps)
-
-# The base is a band the stroke's width, part of the gnomon's shape; it runs under the dial's rim.
-hw = STROKE / 2 / sc
-top, bottom = B[1] - hw, B[1] + hw
-gnomon = [(B[0], bottom)] + [p for p in scoop if p[1] <= top] + [(rim[0] - hw, top), (rim[0] - hw, bottom)]
-shapes = f'<path d="{line(dial)}"/><path d="{line(gnomon)} Z" fill="{INK}" stroke-width="{TIP}"/>'
+d = (math.cos(math.radians(cut)), math.sin(math.radians(cut)))
+Q = 5
+half = [(d[0] * Q, d[1] * Q), (d[0] * Q + d[1] * Q, d[1] * Q - d[0] * Q),
+        (-d[0] * Q + d[1] * Q, -d[1] * Q - d[0] * Q), (-d[0] * Q, -d[1] * Q)]
+rim = [(math.cos(2 * math.pi * i / 240), ASPECT * math.sin(2 * math.pi * i / 240)) for i in range(240)]
+gnomon = [(0, 0)] + back()
+shapes = (f'<path d="{line(rim)} Z" fill="none" stroke-width="{LINE}" clip-path="url(#half)"/>'
+          f'<path d="{line(gnomon)} Z" fill="{INK}" stroke-width="{TIP}"/>')
 svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!-- Generated by draw.py. macOS icon grid: an 824pt body centered on 1024; drawn on a 170 grid. -->
-  <g transform="translate(100 100) scale(4.847)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(100 100) scale(4.847)" stroke-linejoin="round">
     <defs>
       <filter id="glow" filterUnits="userSpaceOnUse" x="-20" y="-20" width="210" height="210">
         <feGaussianBlur stdDeviation="{GLOW}"/>
       </filter>
       <clipPath id="body"><rect width="170" height="170" rx="38"/></clipPath>
+      <clipPath id="half"><path d="{line(half)} Z"/></clipPath>
     </defs>
     <g clip-path="url(#body)">
       <rect width="170" height="170" rx="38" fill="{GROUND}"/>
-      <g stroke="{INK}" stroke-width="{STROKE * 1.6}" opacity="{GLOW_OPACITY}" filter="url(#glow)">{shapes}</g>
-      <g stroke="{INK}" stroke-width="{STROKE}">{shapes}</g>
+      <g stroke="{INK}" opacity="{GLOW_OPACITY}" filter="url(#glow)">{shapes}</g>
+      <g stroke="{INK}">{shapes}</g>
     </g>
   </g>
 </svg>
 """
 pathlib.Path(__file__).with_name("AppIcon.svg").write_text(svg)
+print(f"cut {cut:.2f}°, scale {sc:.2f}, padding {l:.1f}/{170 - r:.1f} sides, {t:.1f}/{170 - b:.1f} top and bottom")
