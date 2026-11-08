@@ -85,17 +85,21 @@ private struct PresetsSection: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GeometryReader { geo in
-                PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height)
-            }
-            Divider()
+            // Top right, where Lights keeps its buttons.
             HStack {
                 Spacer()
                 HoverButton("Add Preset", systemImage: "plus", rest: HoverButton.createBlue, action: addPreset)
             }
-            .font(.subheadline)
-            .padding(.horizontal, 14)
+            .frame(height: 28)
+            .padding(.horizontal, Layout.edge)
             .padding(.vertical, 10)
+            GeometryReader { geo in
+                // Settings' width, centered: across the whole window the sliders ran long and
+                // the values sat far from their labels.
+                PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height)
+                    .frame(maxWidth: 520 + 2 * Layout.edge)
+                    .frame(maxWidth: .infinity)
+            }
         }
         // The popup's preset card opens the window on that preset.
         .onAppear(perform: openAsked)
