@@ -183,7 +183,7 @@ struct CurrentPresetCard: View {
                 // The popup is the key window; nothing else closes it as the window comes up.
                 NSApp.keyWindow?.close()
                 appState.openPreset(preset.id)
-            }, collapses: false)
+            }, collapses: false, insetShade: true)
                 .id(preset.id)
         } else {
             Text("No preset is on right now.")
@@ -202,6 +202,9 @@ private struct PresetCardRow: View {
     let isExpanded: Bool
     let onExpandToggle: () -> Void
     var collapses = true
+    /// The popup's lone card shades as a rounded card inside its margins: shaded edge to edge it
+    /// touched the row above. The window's rows sit between dividers and shade full width.
+    var insetShade = false
 
     @EnvironmentObject var appState: AppState
     @State private var isHovered = false
@@ -217,7 +220,16 @@ private struct PresetCardRow: View {
                     .padding(.bottom, 12)
             }
         }
-        .background(isHovered ? Color.primary.opacity(0.06) : Color.clear)
+        .background {
+            if insetShade {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isHovered ? Color.primary.opacity(0.06) : Color.clear)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+            } else {
+                isHovered ? Color.primary.opacity(0.06) : Color.clear
+            }
+        }
         .background {
             if isExpanded {
                 GeometryReader { proxy in
