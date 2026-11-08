@@ -179,7 +179,7 @@ struct OutlinedButtonStyle: ButtonStyle {
                 .foregroundStyle(hovered ? Color.primary : rest)
                 .padding(.horizontal, 8)
                 .frame(height: OutlinedButtonStyle.height)
-                .background(.primary.opacity(configuration.isPressed ? 0.18 : hovered ? 0.12 : 0), in: RoundedRectangle(cornerRadius: 6))
+                .background(.primary.opacity(configuration.isPressed ? 0.18 : hovered ? HoverShade.strength : 0), in: RoundedRectangle(cornerRadius: 6))
                 .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(hovered ? 0.6 : 0.2)) }
                 .contentShape(RoundedRectangle(cornerRadius: 6))
                 .onHover { hovered = $0 }
@@ -239,14 +239,16 @@ struct HoverButton: View {
 
 /// Every button in a window answers the pointer the same way. macOS leaves its standard
 /// buttons still until they're pressed, so a button can't be told from a label by aiming at it.
-private struct HoverShade: ViewModifier {
+struct HoverShade: ViewModifier {
+    /// How strong a hovered button's shade is, in the window and the popup alike.
+    static let strength = 0.12
     @State private var hovered = false
 
     func body(content: Content) -> some View {
         content
             .overlay {
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(.primary.opacity(hovered ? 0.12 : 0))
+                    .fill(.primary.opacity(hovered ? Self.strength : 0))
                     .allowsHitTesting(false)
             }
             .onHover { hovered = $0 }
