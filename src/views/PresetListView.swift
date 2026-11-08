@@ -7,11 +7,11 @@ private enum Row {
     /// Collapsed card: pinned with a frame on the header row.
     static let collapsed: CGFloat = 56
     /// Expanded card: collapsed header + inline editor (time/toggle row, three
-    /// sliders, actions row) + its 12pt bottom padding, as measured on
-    /// 2026-10-27. Only the first open's start: the rendered card is measured
-    /// (`ExpandedHeightKey`) and that wins, so an editor change can't leave a
-    /// gap or cut a card.
-    static let expanded: CGFloat = 189
+    /// sliders, actions row) + its 12pt bottom padding, as measured in the window
+    /// on 2026-11-08 (189 was the popup's). Only the first open's start: the rendered
+    /// card is measured (`ExpandedHeightKey`) and that wins, so an editor change can't
+    /// leave a gap or cut a card, but a wrong start resizes the scroll bar's handle twice.
+    static let expanded: CGFloat = 190.5
     /// "No presets yet" block. Estimated.
     static let emptyState: CGFloat = 70
     /// One expanded card, its divider and one collapsed card.
@@ -80,9 +80,8 @@ struct PresetListView: View {
                         isExpanded: expandedPresetID == preset.id,
                         onExpandToggle: {
                             let wasExpanded = expandedPresetID == preset.id
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                expandedPresetID = wasExpanded ? nil : preset.id
-                            }
+                            // Unanimated here: the rows animate themselves, below.
+                            expandedPresetID = wasExpanded ? nil : preset.id
                             // Re-sort when collapsing so time changes take effect.
                             if wasExpanded { refreshSort() }
                             // Collapsing a row that owned a preview ends it.
@@ -105,6 +104,11 @@ struct PresetListView: View {
             .frame(maxWidth: width)
             .padding(.leading, leading)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // The rows animate, and the scroll view gets their final height at once. A
+            // withAnimation around the change animated the scroll view's own content size
+            // too, whatever the frame said, resizing the scroll bar's handle on every frame.
+            .animation(.easeInOut(duration: 0.15), value: expandedPresetID)
+            .frame(height: finalHeight, alignment: .top)
             .measureContentHeight()
         }
         // A card's first layout reports 195, its settled one 189 ~40ms later
@@ -167,6 +171,14 @@ struct PresetListView: View {
     /// Rows plus the dividers between them, capped. With two or more presets
     /// and one expanded this is the cap, so `Row.emptyState`, a guess, only
     /// matters for an empty list.
+    /// The rows' height once the open card has settled; nil with no rows, whose height is a guess.
+    private var finalHeight: CGFloat? {
+        guard !sortedPresets.isEmpty else { return nil }
+        return sortedPresets.reduce(CGFloat(sortedPresets.count - 1)) { sum, p in
+            sum + (p.id == expandedPresetID ? expandedHeight : Row.collapsed)
+        }
+    }
+
     private static func estimatedHeight(_ presets: [Preset], expanded: UUID?, expandedHeight: CGFloat) -> CGFloat {
         guard !presets.isEmpty else { return Row.emptyState }
         let rows = presets.reduce(CGFloat(0)) { sum, p in

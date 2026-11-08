@@ -1,6 +1,6 @@
 # Sundial features
 
-Updated 2026-11-05 23:18, at 1.1.0.
+Updated 2026-11-08 00:49, at 1.1.0.
 
 What a user can do with Sundial, how to reach it, and how to drive it. Read
 this before adding anything: if it's already here, extend it instead of
@@ -11,7 +11,7 @@ This map is partial. It grows one feature at a time, as each is changed.
 | Feature | File | Platforms | Driveable headless? |
 |---|---|---|---|
 | Auto | [auto.md](auto.md) | macOS | Partly: the room-light decisions (2026-10-26) |
-| Presets | [presets.md](presets.md) | macOS | Partly: the HDR contrast lock's decision (2026-10-12) |
+| Presets | [presets.md](presets.md) | macOS | Partly: the HDR contrast lock's decision (2026-10-12), the scroll handle resizing once (2026-11-08) |
 | Lamps | [lamps.md](lamps.md) | macOS | Partly: the blending between keyframes (2026-11-02) |
 | Command line | [cli.md](cli.md) | macOS | Partly: what each URL means (2026-11-02) |
 

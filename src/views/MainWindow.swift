@@ -126,6 +126,6 @@ private struct PresetsSection: View {
         appState.addPreset(preset)
         appState.addScheduleEntry(ScheduleEntry(presetID: preset.id, hour: 12, minute: 0))
         appState.onScheduleChanged?()
-        withAnimation(.easeInOut(duration: 0.15)) { expanded = preset.id }
+        expanded = preset.id
     }
 }
