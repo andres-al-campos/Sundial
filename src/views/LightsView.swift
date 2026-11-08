@@ -1113,10 +1113,9 @@ private struct KeyTimeRow: View {
         HStack(spacing: 8) {
             Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
             TimeField(label: "Time", time: timeBinding)
-            // A pull-down, so it reads as a setting to pick from rather than a caption, with its
-            // single down caret over a popup's up-and-down arrows, by request.
-            PullDown(title: caption, items: [Self.fixedText] + choices.map { LightsView.anchorText($0) ?? "" },
-                     checked: key.anchor.flatMap { choices.firstIndex(of: $0).map { $0 + 1 } } ?? 0) { i in
+            // A popup, so it reads as a setting to pick from rather than a caption.
+            PopUp(items: [Self.fixedText] + choices.map { LightsView.anchorText($0) ?? "" },
+                  selected: key.anchor.flatMap { choices.firstIndex(of: $0).map { $0 + 1 } } ?? 0) { i in
                 anchorBinding.wrappedValue = i == 0 ? nil : choices[i - 1]
             }
             // One width for every choice, so the button and its caret don't move as it changes.
@@ -1290,51 +1289,36 @@ private struct ColorWheel: View {
     }
 }
 
-/// AppKit's pull-down button, whose open list can be held to the button's width: SwiftUI's Menu
-/// opens a list sized to its items, narrower than the button it hangs from.
-private struct PullDown: NSViewRepresentable {
-    let title: String
+/// AppKit's popup button, which opens its list over the button with the current choice on the
+/// label. A pull-down's list, SwiftUI's or AppKit's, opened offset from its button.
+private struct PopUp: NSViewRepresentable {
     let items: [String]
-    let checked: Int
+    let selected: Int
     let pick: (Int) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSPopUpButton {
-        let button = NSPopUpButton(frame: .zero, pullsDown: true)
-        button.controlSize = .small
-        button.cell?.controlSize = .small
+        let button = NSPopUpButton(frame: .zero, pullsDown: false)
         button.font = .systemFont(ofSize: NSFont.systemFontSize(for: .small))
         button.setContentHuggingPriority(.defaultLow, for: .horizontal)
         button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        (button.cell as? NSPopUpButtonCell)?.arrowPosition = .arrowAtBottom
-        context.coordinator.button = button
-        button.menu?.delegate = context.coordinator
+        button.target = context.coordinator
+        button.action = #selector(Coordinator.picked(_:))
         return button
     }
 
     func updateNSView(_ button: NSPopUpButton, context: Context) {
         context.coordinator.pick = pick
-        // Into the menu directly: addItem(withTitle:) drops an item whose title is already there,
-        // and the title is always one of the choices.
+        // Into the menu directly: addItem(withTitle:) drops an item whose title is already there.
         let menu = button.menu!
         menu.removeAllItems()
-        // A pull-down's first item is its title and isn't listed.
-        menu.addItem(NSMenuItem(title: title, action: nil, keyEquivalent: ""))
-        for (i, item) in items.enumerated() {
-            let menuItem = NSMenuItem(title: item, action: nil, keyEquivalent: "")
-            menu.addItem(menuItem)
-            menuItem.state = i == checked ? .on : .off
-            menuItem.tag = i
-            menuItem.target = context.coordinator
-            menuItem.action = #selector(Coordinator.picked(_:))
-        }
+        for item in items { menu.addItem(NSMenuItem(title: item, action: nil, keyEquivalent: "")) }
+        button.selectItem(at: selected)
     }
 
-    final class Coordinator: NSObject, NSMenuDelegate {
-        weak var button: NSPopUpButton?
+    final class Coordinator: NSObject {
         var pick: (Int) -> Void = { _ in }
-        @objc func picked(_ item: NSMenuItem) { pick(item.tag) }
-        func menuWillOpen(_ menu: NSMenu) { menu.minimumWidth = button?.bounds.width ?? 0 }
+        @objc func picked(_ button: NSPopUpButton) { pick(button.indexOfSelectedItem) }
     }
 }
