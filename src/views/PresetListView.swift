@@ -39,12 +39,14 @@ struct PresetListView: View {
     private let initialHeight: CGFloat
     /// The tallest the list may get. In the desktop window, the room it has.
     private let height: CGFloat
+    private let width: CGFloat
 
     /// Takes `appState` here as well as from the environment so the list starts
     /// with its rows and its height: filling them in after the first layout
     /// showed the empty state for a frame and resized the popup.
-    init(expandedPresetID: Binding<UUID?>, appState: AppState, height: CGFloat) {
+    init(expandedPresetID: Binding<UUID?>, appState: AppState, height: CGFloat, width: CGFloat = .infinity) {
         self.height = height
+        self.width = width
         _expandedPresetID = expandedPresetID
         let sorted = Self.sorted(appState)
         _sortedPresets = State(initialValue: sorted)
@@ -85,13 +87,9 @@ struct PresetListView: View {
                             if wasExpanded, appState.previewingPresetID == preset.id {
                                 endPreview()
                             }
-                            // Scroll expanded row to the top of the viewport after the
-                            // expand animation settles.
-                            if !wasExpanded {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                    withAnimation { proxy.scrollTo(preset.id, anchor: .top) }
-                                }
-                            }
+                            // No scroll to the opened card: a header moves only when the
+                            // user scrolls, and scrolling it to the top jumped it once the
+                            // list grew past the window.
                         }
                     )
                     .id(preset.id)
@@ -99,6 +97,10 @@ struct PresetListView: View {
                     if preset.id != sortedPresets.last?.id { Divider() }
                 }
             }
+            // Capped inside the scroll view, so the scroll bar sits at the window's edge
+            // and its appearing can't narrow the column and slide it sideways.
+            .frame(maxWidth: width)
+            .frame(maxWidth: .infinity)
             .measureContentHeight()
         }
         // A card's first layout reports 195, its settled one 189 ~40ms later
