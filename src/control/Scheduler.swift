@@ -111,11 +111,9 @@ class Scheduler {
 
     /// Force a full apply of the active preset, bypassing the `matches()` dedupe.
     /// Used on wake so Night Shift (which `matches()` can't read back) is corrected
-    /// even when brightness/contrast already match. Respects the user's
-    /// "Re-apply preset after sleep/wake" setting and any active preview.
+    /// even when brightness/contrast already match. Respects any active preview.
     private func forceApplyActive(state: AppState, controller: DDCController) {
         guard state.isSetUp else { return }
-        guard state.applyOnWake else { return }
         guard state.previewingPresetID == nil else { return }
         guard !state.autoDrivesMonitor else { return }
 

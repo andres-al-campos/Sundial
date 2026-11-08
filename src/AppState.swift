@@ -7,7 +7,6 @@ class AppState: ObservableObject {
     @Published var schedule: [ScheduleEntry] = []
     @Published var activePresetID: UUID?
     @Published var displayName: String = ""
-    @Published var applyOnWake: Bool = true
     @Published var launchAtLogin: Bool = false
 
     /// Auto sets the monitor from the room's light and the clock; Schedule
@@ -167,7 +166,6 @@ class AppState: ObservableObject {
         var presets: [Preset]
         var schedule: [ScheduleEntry]
         var displayName: String
-        var applyOnWake: Bool
         var launchAtLogin: Bool
         var isSetUp: Bool?
         var mode: Mode?
@@ -189,7 +187,6 @@ class AppState: ObservableObject {
             presets: presets,
             schedule: schedule,
             displayName: displayName,
-            applyOnWake: applyOnWake,
             launchAtLogin: launchAtLogin,
             isSetUp: isSetUp,
             mode: mode,
@@ -220,7 +217,6 @@ class AppState: ObservableObject {
         presets = config.presets
         schedule = config.schedule.sorted { $0.minutesSinceMidnight < $1.minutesSinceMidnight }
         displayName = config.displayName
-        applyOnWake = config.applyOnWake
         launchAtLogin = config.launchAtLogin
         isSetUp = config.isSetUp ?? false
         mode = config.mode ?? .auto

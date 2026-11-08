@@ -62,7 +62,6 @@ final class AutoController {
                     guard let self else { return }
                     if self.slide?.evening == false { self.slide = nil }
                     self.snapOnNextReading = true
-                    guard self.state?.applyOnWake == true else { return }
                     self.forceApply()
                 }
             }

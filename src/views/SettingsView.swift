@@ -6,6 +6,36 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // The switch at the row's right edge, where the Lamps row's button sits.
+            Toggle(isOn: $appState.launchAtLogin) {
+                Text("Launch at login").frame(maxWidth: .infinity, alignment: .leading)
+            }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .onChange(of: appState.launchAtLogin) { _, enabled in
+                    do {
+                        if enabled {
+                            // Only let a Release build (installed to /Applications via
+                            // build.sh) claim the login item. A Debug build runs from an
+                            // ephemeral DerivedData path; registering it there means a
+                            // later Clean Build / Xcode prune leaves macOS launching a
+                            // stale or missing binary on the next reboot.
+                            #if DEBUG
+                            print("[Sundial] Debug build — skipping login-item registration so it can't bind a DerivedData path. Install via ./build.sh to enable launch-at-login from /Applications.")
+                            #else
+                            try SMAppService.mainApp.register()
+                            #endif
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
+                    } catch {
+                        print("[Sundial] Login item error: \(error.localizedDescription). Open System Settings → General → Login Items to resolve.")
+                    }
+                    appState.save()
+                }
+
+            Divider()
+
             // Monitor
             VStack(alignment: .leading, spacing: 6) {
                 Text("Monitor")
@@ -60,42 +90,6 @@ struct SettingsView: View {
 
             LocationSection()
 
-            Divider()
-
-            // Behavior
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Behavior")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
-
-                Toggle("Launch at login", isOn: $appState.launchAtLogin)
-                    .controlSize(.small)
-                    .onChange(of: appState.launchAtLogin) { _, enabled in
-                        do {
-                            if enabled {
-                                // Only let a Release build (installed to /Applications via
-                                // build.sh) claim the login item. A Debug build runs from an
-                                // ephemeral DerivedData path; registering it there means a
-                                // later Clean Build / Xcode prune leaves macOS launching a
-                                // stale or missing binary on the next reboot.
-                                #if DEBUG
-                                print("[Sundial] Debug build — skipping login-item registration so it can't bind a DerivedData path. Install via ./build.sh to enable launch-at-login from /Applications.")
-                                #else
-                                try SMAppService.mainApp.register()
-                                #endif
-                            } else {
-                                try SMAppService.mainApp.unregister()
-                            }
-                        } catch {
-                            print("[Sundial] Login item error: \(error.localizedDescription). Open System Settings → General → Login Items to resolve.")
-                        }
-                        appState.save()
-                    }
-
-                Toggle("Re-apply preset after sleep/wake", isOn: $appState.applyOnWake)
-                    .controlSize(.small)
-                    .onChange(of: appState.applyOnWake) { _, _ in appState.save() }
-            }
         }
         .padding(.horizontal, Layout.edge)
         .padding(.vertical, 14)
