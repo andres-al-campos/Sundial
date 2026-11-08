@@ -35,6 +35,11 @@ struct PresetListView: View {
     @MainActor private static var lastExpanded = Row.expanded
     @State private var expandedHeight = PresetListView.lastExpanded
     @State private var settleTask: Task<Void, Never>?
+    /// The height the list keeps while a card closes, so the rows glide up inside it before it
+    /// shrinks. Shrinking at once clamped the scroll position and snapped the list.
+    @State private var held: CGFloat = 0
+    /// Where the list is scrolled to. A class, so following the scroll doesn't redraw the list.
+    @State private var scrolled = ScrollSpot()
     /// The list's height before its first measurement, worked out from the rows.
     private let initialHeight: CGFloat
     /// The tallest the list may get. In the desktop window, the room it has.
@@ -108,7 +113,10 @@ struct PresetListView: View {
             // withAnimation around the change animated the scroll view's own content size
             // too, whatever the frame said, resizing the scroll bar's handle on every frame.
             .animation(.easeInOut(duration: 0.15), value: expandedPresetID)
-            .frame(height: finalHeight, alignment: .top)
+            .frame(height: finalHeight.map { max($0, held) }, alignment: .top)
+            .background(GeometryReader { g in
+                Color.clear.onChange(of: g.frame(in: .named(Self.space)).minY, initial: true) { _, y in scrolled.y = -y }
+            })
             .measureContentHeight()
         }
         // A card's first layout reports 195, its settled one 189 ~40ms later
@@ -128,7 +136,19 @@ struct PresetListView: View {
         // MenuBarExtra(.window) on macOS 26. Cap = 1 expanded card + 1 collapsed card
         // (heights pinned via Row above), so expanding a card shows itself + exactly one
         // collapsed neighbor, then scrolls. Grows to fit content below the cap.
+        .coordinateSpace(name: Self.space)
         .scrollContentHeight("presets", cap: height, initial: initialHeight)
+        .onChange(of: finalHeight) { old, new in
+            guard let new, let old, new < old else { held = new ?? 0; return }
+            // Closing below the new end: scroll there with the rows, so the list arrives as it
+            // shrinks instead of jumping.
+            if scrolled.y > new - height, let last = sortedPresets.last?.id {
+                withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(last, anchor: .bottom) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                if finalHeight == new { held = new }
+            }
+        }
         .onAppear {
             refreshSort()
             // Scroll the currently-active preset to the top of the viewport on open.
@@ -171,6 +191,8 @@ struct PresetListView: View {
     /// Rows plus the dividers between them, capped. With two or more presets
     /// and one expanded this is the cap, so `Row.emptyState`, a guess, only
     /// matters for an empty list.
+    private static let space = "presetList"
+
     /// The rows' height once the open card has settled; nil with no rows, whose height is a guess.
     private var finalHeight: CGFloat? {
         guard !sortedPresets.isEmpty else { return nil }
@@ -729,3 +751,6 @@ struct LabeledSlider: View {
         .foregroundStyle(lockedNote == nil ? Color.primary : Layout.dim)
     }
 }
+
+/// A scroll position kept without redrawing whoever keeps it.
+private final class ScrollSpot { var y: CGFloat = 0 }

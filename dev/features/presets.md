@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-08 00:49, at 1.1.0.
+Updated 2026-11-08 01:42, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -43,8 +43,9 @@ the headroom comparison loosened.
 
 `./build.sh drive scroll-once` (~10s): opens and closes a card in a list long enough to scroll,
 off-screen, and checks the list's scroll height changes once per toggle, so the scroll bar's handle
-resizes once rather than on every frame. Last driven: 2026-11-08, passed; failed with 22 changes
-per toggle when the change was wrapped in `withAnimation`, as it was before.
+resizes once rather than on every frame, and that closing a card at the end of the list glides to
+the new end. Last driven: 2026-11-08, passed; failed with 22 changes per toggle when the change was
+wrapped in `withAnimation`, and with a 134-point snap when the list shrank at once on closing.
 
 By hand only: that the note replaces the slider and goes away again when HDR
 is toggled in System Settings → Displays, and everything else in this feature (editing, live apply,

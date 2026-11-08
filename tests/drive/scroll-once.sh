@@ -1,6 +1,7 @@
 #!/bin/bash
 # Drive: opening or closing a preset card changes the list's scroll height once, so the scroll
-# bar's handle resizes once instead of on every frame of the animation. Off-screen, taking no focus.
+# bar's handle resizes once instead of on every frame of the animation, and closing one at the end
+# of the list glides it to its new end. Off-screen, taking no focus.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -67,6 +68,33 @@ Task { @MainActor in
             failures.append("\(name) a card changed the list's height \(heights.count - 1) times (\(shown)…), so the scroll bar's handle resized with it. PresetListView gives the scroll view its final height at once (finalHeight) and animates the rows inside it; a withAnimation around the change, or a wrong Row.expanded, brings the steps back.")
         }
     }
+    // Closing a card while scrolled to the very end: the list glides to its new end, no step
+    // more than a third of the way, and still changes height once.
+    open.id = target
+    await wait(0.6)
+    let clip = sv.contentView
+    clip.scroll(to: NSPoint(x: 0, y: (sv.documentView?.frame.height ?? 0) - clip.bounds.height))
+    sv.reflectScrolledClipView(clip)
+    await wait(0.3)
+    var ys: [CGFloat] = [], heights: [CGFloat] = []
+    let timer = Timer(timeInterval: 1.0 / 240, repeats: true) { _ in MainActor.assumeIsolated {
+        if ys.last != clip.bounds.origin.y { ys.append(clip.bounds.origin.y) }
+        let h = sv.documentView?.frame.height ?? -1
+        if heights.last != h { heights.append(h) }
+    }}
+    RunLoop.main.add(timer, forMode: .common)
+    await wait(0.05)
+    open.id = nil
+    await wait(0.6)
+    timer.invalidate()
+    let steps = zip(ys, ys.dropFirst()).map { abs($1 - $0) }
+    let moved = abs((ys.last ?? 0) - (ys.first ?? 0))
+    if moved == 0 || (steps.max() ?? 0) > moved / 3 {
+        failures.append(String(format: "closing a card at the end of the list moved it %.0f points with a step of %.0f, a snap rather than a glide. PresetListView holds its height (held) while the card closes and scrolls to the new end with the rows; shrinking at once clamps the scroll position.", moved, steps.max() ?? 0))
+    }
+    if heights.count > 2 {
+        failures.append("closing a card at the end of the list changed its height \(heights.count - 1) times; it should shrink once, after the rows settle.")
+    }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
@@ -87,4 +115,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/scroll-once" "$work/main.swift
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/scroll-once"
-echo "✓ scroll-once: opening or closing a preset card changes the list's scroll height once"
+echo "✓ scroll-once: opening or closing a preset card changes the list's scroll height once, and closing one at the end glides"
