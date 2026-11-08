@@ -67,9 +67,6 @@ struct LightsView: View {
     @Environment(\.colorScheme) private var scheme
     @State private var playTask: Task<Void, Never>?
     @State private var previewing: Previewing?
-    /// The dragged keyframe's anchor when the drag began, so passing over a mark on the way doesn't
-    /// turn a fixed keyframe into one that follows the day.
-    @State private var dragStart: (id: UUID, anchor: LightDay.Anchor?)?
     /// What the card last showed, so it still has it while it slides away. Something from
     /// the start, because a card whose contents are new on its first open jumps open
     /// instead of sliding.
@@ -719,8 +716,7 @@ struct LightsView: View {
     /// what a new one is for. The bulbs wait for the drop, as scrubbing past noon at night would flood the room.
     private func moveKey(_ id: UUID, bulb: LightDay.Bulb, to x: CGFloat, width: CGFloat) {
         let at = minute(atX: x, width: width)
-        if dragStart?.id != id { dragStart = (id, bulb.keys.first { $0.id == id }?.anchor) }
-        let anchor = LightDay.reanchor(dragStart?.anchor, at: at, marks: marks)
+        let anchor = LightDay.dragged(to: at, marks: marks)
         let minute = anchor.flatMap { $0.offset == 0 ? marks.minute(of: $0.mark) : nil } ?? at
         appState.movingKeyframe = true
         edit { index in
@@ -736,7 +732,6 @@ struct LightsView: View {
 
     private func dropKey() {
         previewing = nil
-        dragStart = nil
         // Before the save, whose tick takes the bulb to the new day at the usual fade. Ending a
         // preview here would rush it there in half a second, with nothing to come back from.
         appState.movingKeyframe = false
@@ -1170,7 +1165,7 @@ private struct KeyTimeRow: View {
                 let m = (c.hour ?? 0) * 60 + (c.minute ?? 0)
                 change {
                     $0.minute = m
-                    $0.anchor = LightDay.reanchor($0.anchor, at: m, marks: marks, snapping: false)
+                    $0.anchor = LightDay.reanchor($0.anchor, at: m, marks: marks)
                 }
                 commit()
             }

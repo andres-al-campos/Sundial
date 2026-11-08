@@ -209,12 +209,17 @@ enum LightDay {
         return choices(minute, marks: marks).min { abs($0.offset) < abs($1.offset) }!
     }
 
-    /// Where a keyframe's anchor goes when its time changes. Dragged near a mark, any keyframe lands
-    /// on it; a typed time is taken as typed. Otherwise a fixed one stays fixed, and one that follows
-    /// the day keeps its side, after the mark on its left or before the one on its right, whichever
-    /// marks those now are.
-    static func reanchor(_ old: Anchor?, at minute: Int, marks: Marks, snapping: Bool = true) -> Anchor? {
-        if snapping, let s = snap(minute, marks: marks) { return s }
+    /// A dragged keyframe's anchor: on a mark when it lands near one, otherwise At This Time,
+    /// whatever it followed before. Dragging puts a keyframe at a time; following a mark is
+    /// picked from its menu.
+    static func dragged(to minute: Int, marks: Marks) -> Anchor? {
+        snap(minute, marks: marks)
+    }
+
+    /// A keyframe's anchor when its time is typed, taken as typed with no snapping. A fixed one stays
+    /// fixed, and one that follows the day keeps its side, after the mark on its left or before the
+    /// one on its right, whichever marks those now are.
+    static func reanchor(_ old: Anchor?, at minute: Int, marks: Marks) -> Anchor? {
         guard let old else { return nil }
         let options = choices(minute, marks: marks)
         guard options.count == 2 else { return options.first }
