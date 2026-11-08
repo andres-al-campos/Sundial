@@ -202,8 +202,8 @@ private struct PresetCardRow: View {
     let isExpanded: Bool
     let onExpandToggle: () -> Void
     var collapses = true
-    /// The popup's lone card shades as a rounded card inside its margins: shaded edge to edge it
-    /// touched the row above. The window's rows sit between dividers and shade full width.
+    /// The popup's lone card keeps its shade 8 points clear above and below: shaded to its edges it
+    /// touched the row above. The window's rows sit between dividers and shade their whole height.
     var insetShade = false
 
     @EnvironmentObject var appState: AppState
@@ -222,10 +222,9 @@ private struct PresetCardRow: View {
         }
         .background {
             if insetShade {
-                RoundedRectangle(cornerRadius: 8)
+                Rectangle()
                     .fill(isHovered ? Color.primary.opacity(0.06) : Color.clear)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
             } else {
                 isHovered ? Color.primary.opacity(0.06) : Color.clear
             }
