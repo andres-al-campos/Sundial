@@ -102,6 +102,7 @@ preview, add, delete).
   current preset's card, expanded: it's for seeing and small tweaks, not sitting down to edit. Quit stays in one
   place across modes, and Open Sundial is blue, white on hover ("blue and white on hover"), in
   the link blue: the accent blue was too dark to read on the glass. Applies *Never a fight with
-  the controls*.- In the window, the preset list is one column at Settings' width, centered, with Add Preset at
+  the controls*.
+- 2026-11-08 00:29, 1.1.0. In the window, the preset list is one column at Settings' width, centered, with Add Preset at
   the top right, and only one card opens at a time. A grid with every card open was tried and
   turned down: "theres no reason to see more than one at the same time".
