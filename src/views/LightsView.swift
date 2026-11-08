@@ -1082,8 +1082,9 @@ private struct LookPanel<Identity: View>: View {
                 adjust { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
             }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
             // A color greys only the bar: the knob stays white, since dragging it is the way
-            // back to a white. Off dims the whole slider, as it does Brightness.
-            .tint(white ? nil : .gray)
+            // back to a white. Off dims the whole slider, as it does Brightness. One tint for
+            // both cases: an inner .tint(nil) overrode dimmed's grey and left off whites blue.
+            .tint(white && look.on ? nil : .gray)
             .dimmed(look.on)
         }
         .foregroundStyle(white && look.on ? .primary : .secondary)
