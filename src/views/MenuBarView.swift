@@ -36,17 +36,19 @@ struct MenuBarView: View {
             Divider()
 
             HStack {
-                HoverButton("Quit Sundial") {
+                Button("Quit Sundial") {
                     NSApplication.shared.terminate(nil)
                 }
+                .buttonStyle(.outlined(.secondary))
                 Spacer()
                 if appState.isSetUp {
-                    HoverButton("Open Sundial", rest: HoverButton.createBlue) {
+                    Button("Open Sundial") {
                         // The popup is the key window here. Nothing closes it for us,
                         // because the new window comes up without it losing focus first.
                         NSApp.keyWindow?.close()
                         appState.onOpenWindow?()
                     }
+                    .buttonStyle(.outlined(HoverButton.createBlue))
                 }
             }
             .font(.subheadline)
@@ -158,35 +160,45 @@ struct Segments<Value: Hashable>: View {
 
 /// A button inside a popup panel: an outline, so it reads as something to press among the
 /// panel's labels, which plain text didn't. The footer's links stay plain.
+/// The popup's buttons, one look for all: an outline that shows where the click is, text in the
+/// button's own color at rest, and under the pointer white text, a shade and a brighter outline.
 struct OutlinedButtonStyle: ButtonStyle {
+    var rest: Color = .primary
+
     func makeBody(configuration: Configuration) -> some View {
-        Outlined(configuration: configuration)
+        Outlined(configuration: configuration, rest: rest)
     }
 
     private struct Outlined: View {
         let configuration: Configuration
+        let rest: Color
         @State private var hovered = false
 
         var body: some View {
             configuration.label
+                .foregroundStyle(hovered ? Color.primary : rest)
                 .padding(.horizontal, 8)
-                .frame(height: 20)
+                .frame(height: OutlinedButtonStyle.height)
                 .background(.primary.opacity(configuration.isPressed ? 0.14 : hovered ? 0.07 : 0), in: RoundedRectangle(cornerRadius: 6))
-                .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.2)) }
+                .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(hovered ? 0.4 : 0.2)) }
                 .contentShape(RoundedRectangle(cornerRadius: 6))
                 .onHover { hovered = $0 }
                 .animation(.easeOut(duration: 0.1), value: hovered)
         }
     }
+
+    /// One size for the popup, sized for its .subheadline text.
+    static let height: CGFloat = 22
 }
 
 extension ButtonStyle where Self == OutlinedButtonStyle {
     static var outlined: OutlinedButtonStyle { .init() }
+    static func outlined(_ rest: Color) -> OutlinedButtonStyle { .init(rest: rest) }
 }
 
 // MARK: - Header Button
 
-/// A footer action: dimmed text that turns primary under the pointer.
+/// A text action, such as the window's Add Preset: dimmed text that turns primary under the pointer.
 struct HoverButton: View {
     let label: String
     let systemImage: String?

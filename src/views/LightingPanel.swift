@@ -143,22 +143,22 @@ struct LightingPanel: View {
                 appState.toggleLampsFollow()
             } label: {
                 Text(appState.lampsFollow ? "Pause" : "Resume")
-                    .foregroundStyle(appState.lampsPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
             }
-            .buttonStyle(.outlined)
+            .buttonStyle(.outlined(appState.lampsPaused ? .orange : .primary))
             if !appState.holds.isEmpty {
                 Button {
                     appState.returnLampsToSchedule { read = [:] }
                 } label: {
-                    Text("Return to schedule").foregroundStyle(.orange)
+                    Text("Return to schedule")
                 }
-                .buttonStyle(.outlined)
+                .buttonStyle(.outlined(.orange))
                 .transition(.opacity)
             }
             Spacer(minLength: 0)
         }
-        .font(.caption)
-        .frame(height: 20)
+        // The footer's size, so the popup's buttons are one size.
+        .font(.subheadline)
+        .frame(height: OutlinedButtonStyle.height)
         .animation(.easeOut(duration: 0.15), value: appState.holds.isEmpty)
     }
 
@@ -176,7 +176,8 @@ struct LightingPanel: View {
             Text("Sundial can fade Hue lamps along with the day.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            HoverButton("Pair Hue Bridge…", rest: HoverButton.createBlue) { appState.onPairLamps?() }
+            Button("Pair Hue Bridge…") { appState.onPairLamps?() }
+                .buttonStyle(.outlined(HoverButton.createBlue))
                 .font(.subheadline)
             if appState.lampStatus != "Not paired" {
                 Text(appState.lampStatus)

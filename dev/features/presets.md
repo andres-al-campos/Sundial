@@ -111,3 +111,7 @@ preview, add, delete).
 - 2026-11-08 00:29, 1.1.0. In the window, the preset list is one column at Settings' width, centered, with Add Preset at
   the top right, and only one card opens at a time. A grid with every card open was tried and
   turned down: "theres no reason to see more than one at the same time".
+- 2026-11-08 01:04, 1.1.0. Every button in the popup, Pause and Return to schedule as well as Quit and Open Sundial, is
+  the one outlined style at one size: text in its own color at rest, and under the pointer white
+  text, a shade and a brighter outline. The outline tells you where the click is. Applies *Never a
+  fight with the controls*.
