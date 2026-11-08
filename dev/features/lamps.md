@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-08 00:57, at 1.1.0.
+Updated 2026-11-08 01:32, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -181,3 +181,6 @@ blend looks in the room.
 - macOS asks for local network access the first time Sundial looks for the bridge.
   Refused, no bridge is found. Allow it in System Settings → Privacy & Security
   → Local Network.
+- The popup's oranges measure lighter than the window's (#ffb033 against #ff9230), though both are
+  the system orange: the glass brightens them. Left as it is, as the platform draws it. Applies
+  *Never a fight with the controls*.
