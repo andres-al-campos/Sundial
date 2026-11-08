@@ -70,9 +70,8 @@ extension MenuBarView {
     /// segmented row under Display | Lights read as a second level of tabs.
     private var screenRow: some View {
         HStack(spacing: 8) {
-            // The label carries the verb, so it reads "Follows room light": "Screen" under the
-            // Display tab said the same thing twice.
-            Text("Follows")
+            // The label carries the verb, so the row reads as a sentence: "Display follows room light".
+            Text("Display follows")
                 .font(.caption)
             Spacer(minLength: 0)
             PopUp(items: Self.modeNames, selected: appState.mode == .auto ? 0 : 1) { i in

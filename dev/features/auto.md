@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-07 23:18, at 1.1.0.
+Updated 2026-11-07 23:19, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -63,11 +63,11 @@ presets; Schedule (the presets) is the other.
   only at 0 lux; `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
   night minimum and `dark` columns, from 2026-10-31 night contrast, and from 2026-11-04 `lamps`, each bulb's brightness and xy or "off" at the last
   read, up to 30 seconds old, as `Light 1=45/0.512/0.414;Light 2=off`. A log started before then has the older header.
-- **Follows**, a popup at the top of the Display tab, picks which one drives the monitor: Room light or Schedule. The schedule's card opens that preset in the window on a click.
+- **Display follows**, a popup at the top of the Display tab, picks which one drives the monitor: Room light or Schedule. The schedule's card opens that preset in the window on a click.
 
 ## How to get to it
 
-Click the sun in the menu bar. Auto is what opens; Follows → Schedule
+Click the sun in the menu bar. Auto is what opens; Display follows → Schedule
 shows the schedule's preset in force.
 
 ## Driving it
@@ -165,9 +165,9 @@ real reply from the M27Q.
   with no offset, though the presets' line had one ("the preset is 1
   datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
-- 2026-11-07 23:18, 1.1.0. Follows is a two-choice popup at the right of the Display tab's first
-  row, Room light or Schedule, so it reads "Follows room light"; "Screen" under the Display
-  tab said display twice. It began as a switch that changed the whole popup ("what
+- 2026-11-07 23:19, 1.1.0. Display follows is a two-choice popup at the right of the Display tab's
+  first row, Room light or Schedule, so the row reads as a sentence; a bare "Screen" under
+  the Display tab said display twice. It began as a switch that changed the whole popup ("what
   toggle does that?"), then a segmented Auto | Schedule; once the header became Display |
   Lights, that second segmented row read as a second level of tabs ("having to tab toggle
   feels kind of off"). A switch again named only one side ("Auto is not very descriptive"),
