@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-07 23:23, at 1.1.0.
+Updated 2026-11-08 00:40, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -29,7 +29,7 @@ artificial light follows the natural light along with the screen.
   (700 to 6500 K) and colour. Right-click a dot to delete it. A bulb the bridge has no scene for starts
   on three: sunrise, sunset and bedtime. Until they're changed its name says to click a dot.
 - **Temperature** only means something for the glowing-metal whites. For any other colour
-  the slider dims, says "Color", and stays where it was before the wheel left the whites.
+  the slider's bar goes grey, it says "Color", and stays where it was before the wheel left the whites.
   That's remembered until Sundial quits; a keyframe that's already a colour sits at its
   nearest temperature. Dragging the slider goes back to a white.
 - **Moving.** Dragging a keyframe changes only its time, as typing one does: it keeps its colour, brightness and on or off, and the band reshapes around it as it moves. The bulbs stay as they are until the drop, then fade to the new day at the usual pace. Dropped within 10 minutes of a mark it lands on it and reads "At Sunset".
@@ -46,7 +46,7 @@ artificial light follows the natural light along with the screen.
   rows' card, which stays put: a colour wheel, then the settings reading left to right and top
   to bottom: the bulb with its on/off switch to the left of its name and "Color Key" or "6 Color Keys" after it, the time,
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
-  sliders, keeping their fill, and both say "Off". Every button shades on hover, and pointing at a bulb's name shades its whole row. The band shows nothing on hover:
+  sliders, keeping their fill, and both still show their values. Every button shades on hover, and pointing at a bulb's name shades its whole row. The band shows nothing on hover:
   a ring where a click would add a color key was "annoying when you're just moving around". The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows. A right-click leaves it open. If its keyframe goes, from a delete, Paste Day or an undo, it moves to that bulb's own card.
@@ -148,9 +148,9 @@ blend looks in the room.
   mix up", and in words it took the end of the time's row for something rarely used. The close chevron stays at the top right, and the time goes
   right under the name because "the time is basically their id".
 
-- 2026-11-04 16:21, 1.1.0. **A dimmed slider keeps its fill.** Off looks the same as Temperature on a colour: a grey fill at half strength. `.disabled` would
+- 2026-11-08 00:40, 1.1.0. **A dimmed slider keeps its fill.** Off is a grey fill at half strength. Temperature on a color greys only the fill, with the knob at full strength: "slider white and bar grey". `.disabled` would
   take the fill away, and "removing the filled bar looks kind of weird". Temperature's look was already "fine". Applies *The room shows
-  what you're changing*: it says "Off" and can't be dragged.
+  what you're changing*: it can't be dragged, and shows the value the key keeps.
 
 - 2026-11-05 12:13, 1.1.0. **The way back is quick.** 1 second "still feels a bit slow", and the wait before it counted too: the moved bulb took its turn behind the rest. Gradually is for
   the day (*Just right for the room*); this answers your hand. Half a second, the moved bulbs first, with the preview's pacing cut short. A deleted keyframe's bulb goes the same way: half a second.

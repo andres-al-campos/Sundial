@@ -1048,7 +1048,7 @@ private struct LookPanel<Identity: View>: View {
                 Spacer(minLength: 0)
                 identity()
                 Spacer(minLength: 0)
-                field("Brightness", value: look.on ? "\(Int(look.brightness.rounded()))%" : "Off") {
+                field("Brightness", value: "\(Int(look.brightness.rounded()))%") {
                     Slider(value: Binding(get: { look.brightness }, set: { b in adjust { $0.brightness = b } }), in: 0...100, onEditingChanged: edited)
                         .dimmed(look.on)
                         .allowsHitTesting(look.on)
@@ -1071,18 +1071,20 @@ private struct LookPanel<Identity: View>: View {
         if look.on { change(apply) }
     }
 
-    /// Dimmed for a colour that isn't a white, which has no temperature, with the slider
-    /// staying where it was and the reason in place of a number. It can still be dragged,
-    /// since that's the way back to a white.
+    /// A color that isn't a white has no temperature: the bar goes grey, the slider stays where
+    /// it was, and the reason is in place of a number.
     private var temperature: some View {
         let white = LightDay.hasTemperature(look.xy)
-        return field("Temperature", value: !look.on ? "Off" : white ? "\(LightDay.kelvin(look.xy)) K" : "Color") {
+        return field("Temperature", value: white ? "\(LightDay.kelvin(look.xy)) K" : "Color") {
             // Rounded here rather than with the slider's step, which draws a tick at
             // every step and made it look unlike Brightness.
             Slider(value: Binding(get: { Double(LightDay.sliderKelvin(look.xy, kept: kept[keptFor])) }, set: { k in
                 adjust { $0.xy = LampBlend.xy(mirek: 1_000_000 / ((k / 50).rounded() * 50)) }
             }), in: LampBlend.lowestKelvin...6500, onEditingChanged: edited)
-            .dimmed(white && look.on)
+            // A color greys only the bar: the knob stays white, since dragging it is the way
+            // back to a white. Off dims the whole slider, as it does Brightness.
+            .tint(white ? nil : .gray)
+            .dimmed(look.on)
         }
         .foregroundStyle(white && look.on ? .primary : .secondary)
         .help(white || !look.on ? "" : "Only whites have a temperature, and this color isn't one. Drag to go back to a white.")
