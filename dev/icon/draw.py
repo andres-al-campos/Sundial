@@ -27,11 +27,11 @@ DEPTH = 0.7         # how far the back curves in toward the gnomon's corner: 1 l
 SIDE_PAD = 23.3     # left and right, on the 170 grid: at this size the diagonal is exactly one radius
 LINE = 5            # the dial's rim: 7 looked heavy beside the filled face
 TIP = 3.5           # the outline round the filled gnomon: points, softened this much
-GROUND = "#38393C"      # a dark gray, not black: black sank into a dark desktop
+GROUND = "#313235"      # a dark gray, not black: black sank into a dark desktop
 INK = "#FFA43D"
 GLOW = 5
 GLOW_OPACITY = 0.2  # at 0.8 the halo pooled where lines meet and blurred the dial; 0.4 fringed the face
-FACE_OPACITY = 0.3   # at 0.18 the diagonal along the face barely showed
+FACE_OPACITY = 0.21  # at 0.18 the diagonal along the face barely showed; 0.3 was too strong
 
 # Dial units, y up, the dial's center at the origin. The gnomon's angle is the cut's, in degrees.
 def gnomon_at(deg, sc, n=200):
