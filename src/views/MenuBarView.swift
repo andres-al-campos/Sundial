@@ -179,7 +179,7 @@ struct OutlinedButtonStyle: ButtonStyle {
                 .foregroundStyle(hovered ? Color.primary : rest)
                 .padding(.horizontal, 8)
                 .frame(height: OutlinedButtonStyle.height)
-                .background(.primary.opacity(configuration.isPressed ? 0.14 : hovered ? 0.07 : 0), in: RoundedRectangle(cornerRadius: 6))
+                .background(.primary.opacity(configuration.isPressed ? 0.18 : hovered ? 0.12 : 0), in: RoundedRectangle(cornerRadius: 6))
                 .overlay { RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(hovered ? 0.6 : 0.2)) }
                 .contentShape(RoundedRectangle(cornerRadius: 6))
                 .onHover { hovered = $0 }
