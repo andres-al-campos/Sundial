@@ -70,9 +70,11 @@ extension MenuBarView {
     /// segmented row under Display | Lights read as a second level of tabs.
     private var screenRow: some View {
         HStack(spacing: 8) {
-            Text("Screen")
+            // The label carries the verb, so it reads "Follows room light": "Screen" under the
+            // Display tab said the same thing twice.
+            Text("Follows")
                 .font(.caption)
-                .frame(width: 72, alignment: .leading)
+            Spacer(minLength: 0)
             PopUp(items: Self.modeNames, selected: appState.mode == .auto ? 0 : 1) { i in
                 // The popup resizes to the other mode's panel, eased, not in one jump.
                 withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(i == 0 ? .auto : .schedule) }
@@ -80,13 +82,12 @@ extension MenuBarView {
             .controlSize(.small)
             .frame(width: Self.modeWidth)
             .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
         .padding(.top, 10)
     }
 
-    private static let modeNames = ["Matches room light", "Follows schedule"]
+    private static let modeNames = ["Room light", "Schedule"]
     /// The longer name and the arrows, so the button is the same width in either mode.
     private static let modeWidth: CGFloat = {
         let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
