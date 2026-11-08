@@ -541,8 +541,8 @@ struct LightsView: View {
 
     @ViewBuilder
     private func keyMenu(_ key: LightDay.Key, bulb: LightDay.Bulb) -> some View {
-        Button("Copy Color Key") { clip.key = key }
-        Button("Paste Color and Brightness") { pasteLook(onto: key.id, bulb: bulb) }
+        Button("Copy Color Key Values") { clip.key = key }
+        Button("Paste Color Key Values") { pasteLook(onto: key.id, bulb: bulb) }
             .disabled(clip.key == nil)
         Divider()
         Button("Delete Color Key") { deleteKey(key.id, of: bulb.id) }
@@ -747,9 +747,12 @@ struct LightsView: View {
                 $0.brightness = from.brightness
                 $0.x = from.x
                 $0.y = from.y
+                // What it follows too, so a keyframe on another bulb can keep in step with this one.
+                $0.minute = from.minute
+                $0.anchor = from.anchor
             }
         }
-        history.commit(undo, "Paste Color and Brightness")
+        history.commit(undo, "Paste Color Key Values")
     }
 
     private func deleteKey(_ id: UUID, of bulb: String) {
@@ -1106,24 +1109,15 @@ private struct KeyTimeRow: View {
         HStack(spacing: 8) {
             Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
             TimeField(label: "Time", time: timeBinding)
-            Menu {
-                Picker("Follows", selection: anchorBinding) {
-                    Text(Self.fixedText).tag(LightDay.Anchor?.none)
-                    ForEach(choices, id: \.self) { Text(LightsView.anchorText($0) ?? "").tag(Optional($0)) }
-                }
-                .pickerStyle(.inline)
-                .labelsHidden()
-            } label: {
-                // Gives way first when the window is small, with the whole of it on hover.
-                Text(caption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            // A standard popup button, so it reads as a setting to pick from rather than a caption.
+            Picker("Follows", selection: anchorBinding) {
+                Text(Self.fixedText).tag(LightDay.Anchor?.none)
+                ForEach(choices, id: \.self) { Text(LightsView.anchorText($0) ?? "").tag(Optional($0)) }
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize(horizontal: false, vertical: true)
-            .hoverShade()
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
             .help(caption)
             Spacer(minLength: 0)
         }
