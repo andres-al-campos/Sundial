@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-07 23:06, at 1.1.0.
+Updated 2026-11-07 23:15, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -63,12 +63,12 @@ presets; Schedule (the presets) is the other.
   only at 0 lux; `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
   night minimum and `dark` columns, from 2026-10-31 night contrast, and from 2026-11-04 `lamps`, each bulb's brightness and xy or "off" at the last
   read, up to 30 seconds old, as `Light 1=45/0.512/0.414;Light 2=off`. A log started before then has the older header.
-- **Auto**, a switch at the top of the popup's Display tab, picks which one drives the monitor: on, the room; off, the schedule, whose card opens that preset in the window on a click.
+- **Screen**, a popup at the top of the Display tab, picks which one drives the monitor: "Matches room light" or "Follows schedule". The schedule's card opens that preset in the window on a click.
 
 ## How to get to it
 
-Click the sun in the menu bar. Auto is what opens; switching it off shows the
-schedule's preset in force.
+Click the sun in the menu bar. Auto is what opens; Screen → Follows schedule
+shows the schedule's preset in force.
 
 ## Driving it
 
@@ -165,12 +165,13 @@ real reply from the M27Q.
   with no offset, though the presets' line had one ("the preset is 1
   datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
-- 2026-11-07 23:06, 1.1.0. Auto is a switch at the top of the popup's Display tab, on for the
-  room and off for the schedule. It began as a switch that changed the whole popup ("what
+- 2026-11-07 23:15, 1.1.0. Screen is a two-choice popup at the top of the Display tab, "Matches
+  room light" or "Follows schedule". It began as a switch that changed the whole popup ("what
   toggle does that?"), then a segmented Auto | Schedule; once the header became Display |
   Lights, that second segmented row read as a second level of tabs ("having to tab toggle
-  feels kind of off"), and under the tabs a switch is "fine". It stays in the popup: in the
-  window's Presets, picking it changed nothing you could see. Clicking the schedule's card,
+  feels kind of off"). A switch again named only one side ("Auto is not very descriptive"),
+  and the popup names both. It stays in the popup: in the window's Presets, picking it
+  changed nothing you could see. Clicking the schedule's card,
   which shades on hover, opens that preset in the window. Applies *Never a fight with the controls*.
 - 2026-11-01 20:34, 1.1.0. Before sunset brightness follows the room, after sunset the clock, because
   once Sundial drives the lamps the sensor is reading its own light: "post sunset

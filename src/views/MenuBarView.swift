@@ -25,7 +25,7 @@ struct MenuBarView: View {
             } else if !appState.isSetUp {
                 SetupView()
             } else {
-                autoRow
+                screenRow
                 if appState.mode == .auto {
                     AutoView()
                 } else {
@@ -66,24 +66,32 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
-    /// Auto on, or the schedule: a switch, since under Display | Lights a second segmented row
-    /// read as a second level of tabs.
-    private var autoRow: some View {
+    /// What drives the monitor, as a popup that names both: a switch named only one side, and a
+    /// segmented row under Display | Lights read as a second level of tabs.
+    private var screenRow: some View {
         HStack(spacing: 8) {
-            Text("Auto")
+            Text("Screen")
                 .font(.caption)
-            Spacer()
-            Toggle("Auto", isOn: Binding(get: { appState.mode == .auto }, set: { on in
+                .frame(width: 72, alignment: .leading)
+            PopUp(items: Self.modeNames, selected: appState.mode == .auto ? 0 : 1) { i in
                 // The popup resizes to the other mode's panel, eased, not in one jump.
-                withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(on ? .auto : .schedule) }
-            }))
-            .toggleStyle(.switch)
-            .controlSize(.mini)
-            .labelsHidden()
+                withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(i == 0 ? .auto : .schedule) }
+            }
+            .controlSize(.small)
+            .frame(width: Self.modeWidth)
+            .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
         .padding(.top, 10)
     }
+
+    private static let modeNames = ["Matches room light", "Follows schedule"]
+    /// The longer name and the arrows, so the button is the same width in either mode.
+    private static let modeWidth: CGFloat = {
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
+        return ceil(modeNames.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 120) + 40
+    }()
 
     /// The window's name for them, and singular for someone with one bulb.
     private var lightsLabel: String { appState.lights?.count == 1 ? "Light" : "Lights" }
