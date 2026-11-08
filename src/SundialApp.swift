@@ -101,11 +101,25 @@ private struct MenuBarIcon: View {
             .accessibilityLabel(offTheDay ? "Sundial, lights held or paused" : "Sundial")
     }
 
+    /// A filled sun drawn here rather than the system's sun.max.fill, whose larger disk crowds its
+    /// rays: the same outer size as sun.max at 15pt, a smaller disk and shorter rays.
     static func sun(_ orange: Bool) -> NSImage {
-        var config = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        if orange { config = config.applying(.init(paletteColors: [.systemOrange])) }
-        let image = NSImage(systemSymbolName: "sun.max", accessibilityDescription: nil)?
-            .withSymbolConfiguration(config) ?? NSImage()
+        let side = 19.0
+        let image = NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
+            (orange ? NSColor.systemOrange : .black).set()
+            let c = side / 2, disk = side * 0.165
+            NSBezierPath(ovalIn: NSRect(x: c - disk, y: c - disk, width: 2 * disk, height: 2 * disk)).fill()
+            for i in 0..<8 {
+                let a = Double(i) * .pi / 4
+                let ray = NSBezierPath()
+                ray.lineWidth = 1.15
+                ray.lineCapStyle = .round
+                ray.move(to: NSPoint(x: c + side * 0.32 * sin(a), y: c + side * 0.32 * cos(a)))
+                ray.line(to: NSPoint(x: c + side * 0.42 * sin(a), y: c + side * 0.42 * cos(a)))
+                ray.stroke()
+            }
+            return true
+        }
         image.isTemplate = !orange
         return image
     }
