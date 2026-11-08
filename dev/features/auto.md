@@ -165,17 +165,13 @@ real reply from the M27Q.
   with no offset, though the presets' line had one ("the preset is 1
   datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
-- 2026-11-07 23:06, 1.1.0. Auto | Schedule is a full-width segmented control under the header. A
-  switch was wrong because it changed the whole popup ("what toggle does
-  that?"), and tabs read as two pages you could both look at, not one choice
-  of what drives the monitor. The first segmented control sized to its labels
-  and left the right side empty, so its halves now fill the width they have. The selection
-  slides between the halves ("nothing should teleport") and the other half glows faintly on
-  hover. Schedule opens on the preset in force. Since the header's control became Display |
-  Lights, this one became a switch at the top of the Display tab: under the header's tabs a
-  second segmented row read as a second level of tabs ("having to tab toggle feels kind of
-  off"). It stays in the popup, a few clicks closer than the window: in the window's Presets
-  it changed nothing you could see. Applies *Never a fight with the controls*.
+- 2026-11-07 23:06, 1.1.0. Auto is a switch at the top of the popup's Display tab, on for the
+  room and off for the schedule. It began as a switch that changed the whole popup ("what
+  toggle does that?"), then a segmented Auto | Schedule; once the header became Display |
+  Lights, that second segmented row read as a second level of tabs ("having to tab toggle
+  feels kind of off"), and under the tabs a switch is "fine". It stays in the popup: in the
+  window's Presets, picking it changed nothing you could see. Clicking the schedule's card,
+  which shades on hover, opens that preset in the window. Applies *Never a fight with the controls*.
 - 2026-11-01 20:34, 1.1.0. Before sunset brightness follows the room, after sunset the clock, because
   once Sundial drives the lamps the sensor is reading its own light: "post sunset
   light lerps, so essentially the monitor would also just follow the post sunset
