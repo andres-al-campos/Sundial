@@ -29,7 +29,7 @@ func save(_ id: Int, _ path: String) {
 
 Task { @MainActor in
     let out = CommandLine.arguments[1]
-    let labels = ["Every day at this time", "1 hr 30 min after sunset", "4 hr 50 min before bedtime"]
+    let labels = ["At This Time", "1 hr 30 min After Sunset", "4 hr 50 min Before Bedtime"]
     stayOutOfTheWay()
     let front = NSWorkspace.shared.frontmostApplication?.processIdentifier
     let view = PopUp(items: labels, selected: 1) { _ in }

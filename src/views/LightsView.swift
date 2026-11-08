@@ -827,14 +827,15 @@ struct LightsView: View {
         }
     }
 
+    /// In title case, as menu items are; "hr" and "min" stay lowercase as abbreviations.
     static func anchorText(_ anchor: LightDay.Anchor?) -> String? {
         guard let anchor else { return nil }
-        let name = markName(anchor.mark).lowercased()
+        let name = markName(anchor.mark)
         if anchor.offset == 0 { return "At \(name)" }
         let mins = abs(anchor.offset)
         let amount = [mins / 60 > 0 ? "\(mins / 60) hr" : nil, mins % 60 > 0 ? "\(mins % 60) min" : nil]
             .compactMap { $0 }.joined(separator: " ")
-        return "\(amount) \(anchor.offset < 0 ? "before" : "after") \(name)"
+        return "\(amount) \(anchor.offset < 0 ? "Before" : "After") \(name)"
     }
 
     static func keyHelp(_ key: LightDay.Key, marks: LightDay.Marks) -> String {
@@ -1127,11 +1128,12 @@ private struct KeyTimeRow: View {
         }
     }
 
-    private static let fixedText = "Every day at this time"
+    /// "Every day" went unsaid: every color key repeats daily.
+    private static let fixedText = "At This Time"
     /// The widest a choice can read, with room for the caret.
     private static let menuWidth: CGFloat = {
         let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
-        let widest = [fixedText] + ["sunrise", "sunset", "bedtime"].flatMap { ["00 hr 00 min before \($0)", "00 hr 00 min after \($0)"] }
+        let widest = [fixedText] + ["Sunrise", "Sunset", "Bedtime"].flatMap { ["00 hr 00 min Before \($0)", "00 hr 00 min After \($0)"] }
         return ceil(widest.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 150) + 40
     }()
     private var caption: String { LightsView.anchorText(key.anchor) ?? Self.fixedText }
