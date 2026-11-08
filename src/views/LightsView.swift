@@ -1113,33 +1113,27 @@ private struct KeyTimeRow: View {
         HStack(spacing: 8) {
             Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
             TimeField(label: "Time", time: timeBinding)
-            // A standard pull-down button, so it reads as a setting to pick from rather than a
-            // caption; its single down caret over a popup's up-and-down arrows, by request.
-            Menu {
-                Picker("Follows", selection: anchorBinding) {
-                    Text(Self.fixedText).tag(LightDay.Anchor?.none)
-                    ForEach(choices, id: \.self) { Text(LightsView.anchorText($0) ?? "").tag(Optional($0)) }
-                }
-                .pickerStyle(.inline)
-                .labelsHidden()
-            } label: {
-                // One width for every choice, so the button and its caret don't move as it changes.
-                Text(caption).frame(width: Self.menuWidth, alignment: .leading)
+            // A pull-down, so it reads as a setting to pick from rather than a caption, with its
+            // single down caret over a popup's up-and-down arrows, by request.
+            PullDown(title: caption, items: [Self.fixedText] + choices.map { LightsView.anchorText($0) ?? "" },
+                     checked: key.anchor.flatMap { choices.firstIndex(of: $0).map { $0 + 1 } } ?? 0) { i in
+                anchorBinding.wrappedValue = i == 0 ? nil : choices[i - 1]
             }
-            .menuStyle(.button)
+            // One width for every choice, so the button and its caret don't move as it changes.
             .controlSize(.small)
-            .fixedSize()
+            .frame(width: Self.menuWidth)
+            .fixedSize(horizontal: false, vertical: true)
             .help(caption)
             Spacer(minLength: 0)
         }
     }
 
     private static let fixedText = "Every day at this time"
-    /// The widest a choice can read; a frame on the Menu itself only centers the button in it.
+    /// The widest a choice can read, with room for the caret.
     private static let menuWidth: CGFloat = {
         let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
         let widest = [fixedText] + ["sunrise", "sunset", "bedtime"].flatMap { ["00 hr 00 min before \($0)", "00 hr 00 min after \($0)"] }
-        return ceil(widest.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 150) + 2
+        return ceil(widest.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 150) + 40
     }()
     private var caption: String { LightsView.anchorText(key.anchor) ?? Self.fixedText }
 
@@ -1293,5 +1287,54 @@ private struct ColorWheel: View {
                     .onEnded { _ in commit() }
             )
         }
+    }
+}
+
+/// AppKit's pull-down button, whose open list can be held to the button's width: SwiftUI's Menu
+/// opens a list sized to its items, narrower than the button it hangs from.
+private struct PullDown: NSViewRepresentable {
+    let title: String
+    let items: [String]
+    let checked: Int
+    let pick: (Int) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSPopUpButton {
+        let button = NSPopUpButton(frame: .zero, pullsDown: true)
+        button.controlSize = .small
+        button.cell?.controlSize = .small
+        button.font = .systemFont(ofSize: NSFont.systemFontSize(for: .small))
+        button.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        (button.cell as? NSPopUpButtonCell)?.arrowPosition = .arrowAtBottom
+        context.coordinator.button = button
+        button.menu?.delegate = context.coordinator
+        return button
+    }
+
+    func updateNSView(_ button: NSPopUpButton, context: Context) {
+        context.coordinator.pick = pick
+        // Into the menu directly: addItem(withTitle:) drops an item whose title is already there,
+        // and the title is always one of the choices.
+        let menu = button.menu!
+        menu.removeAllItems()
+        // A pull-down's first item is its title and isn't listed.
+        menu.addItem(NSMenuItem(title: title, action: nil, keyEquivalent: ""))
+        for (i, item) in items.enumerated() {
+            let menuItem = NSMenuItem(title: item, action: nil, keyEquivalent: "")
+            menu.addItem(menuItem)
+            menuItem.state = i == checked ? .on : .off
+            menuItem.tag = i
+            menuItem.target = context.coordinator
+            menuItem.action = #selector(Coordinator.picked(_:))
+        }
+    }
+
+    final class Coordinator: NSObject, NSMenuDelegate {
+        weak var button: NSPopUpButton?
+        var pick: (Int) -> Void = { _ in }
+        @objc func picked(_ item: NSMenuItem) { pick(item.tag) }
+        func menuWillOpen(_ menu: NSMenu) { menu.minimumWidth = button?.bounds.width ?? 0 }
     }
 }
