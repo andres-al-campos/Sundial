@@ -1109,13 +1109,19 @@ private struct KeyTimeRow: View {
         HStack(spacing: 8) {
             Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
             TimeField(label: "Time", time: timeBinding)
-            // A standard popup button, so it reads as a setting to pick from rather than a caption.
-            Picker("Follows", selection: anchorBinding) {
-                Text(Self.fixedText).tag(LightDay.Anchor?.none)
-                ForEach(choices, id: \.self) { Text(LightsView.anchorText($0) ?? "").tag(Optional($0)) }
+            // A standard pull-down button, so it reads as a setting to pick from rather than a
+            // caption; its single down caret over a popup's up-and-down arrows, by request.
+            Menu {
+                Picker("Follows", selection: anchorBinding) {
+                    Text(Self.fixedText).tag(LightDay.Anchor?.none)
+                    ForEach(choices, id: \.self) { Text(LightsView.anchorText($0) ?? "").tag(Optional($0)) }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } label: {
+                Text(caption)
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
+            .menuStyle(.button)
             .controlSize(.small)
             .fixedSize()
             .help(caption)
