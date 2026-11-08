@@ -25,8 +25,7 @@ struct MenuBarView: View {
             } else if !appState.isSetUp {
                 SetupView()
             } else {
-                // Auto or Schedule is picked in the window: under Display | Lights a second
-                // segmented row read as a second level of tabs, and it's rarely changed.
+                autoRow
                 if appState.mode == .auto {
                     AutoView()
                 } else {
@@ -67,6 +66,25 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
+    /// Auto on, or the schedule: a switch, since under Display | Lights a second segmented row
+    /// read as a second level of tabs.
+    private var autoRow: some View {
+        HStack(spacing: 8) {
+            Text("Auto")
+                .font(.caption)
+            Spacer()
+            Toggle("Auto", isOn: Binding(get: { appState.mode == .auto }, set: { on in
+                // The popup resizes to the other mode's panel, eased, not in one jump.
+                withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(on ? .auto : .schedule) }
+            }))
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .labelsHidden()
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 10)
+    }
+
     /// The window's name for them, and singular for someone with one bulb.
     private var lightsLabel: String { appState.lights?.count == 1 ? "Light" : "Lights" }
 

@@ -85,8 +85,6 @@ private struct PresetsSection: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            screenRow
-            Divider()
             GeometryReader { geo in
                 PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height)
             }
@@ -99,6 +97,9 @@ private struct PresetsSection: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
         }
+        // The popup's preset card opens the window on that preset.
+        .onAppear(perform: openAsked)
+        .onChange(of: appState.presetToOpen) { _, _ in openAsked() }
         .onDisappear {
             // Leaving the list ends any preview, so the monitor goes back to the
             // scheduled preset.
@@ -109,22 +110,10 @@ private struct PresetsSection: View {
         }
     }
 
-    /// Auto or Schedule: one or the other drives the monitor, so a segmented control (pick one),
-    /// over the presets Schedule steps through.
-    private var screenRow: some View {
-        HStack(spacing: 12) {
-            Text("Screen")
-            Segments(items: [(AppState.Mode.auto, "Auto"), (.schedule, "Schedule")], picked: appState.mode) { mode in
-                withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(mode) }
-            }
-            .frame(width: 240)
-            Text(appState.mode == .auto ? "Follows the room's light." : "Steps through these presets.")
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .font(.subheadline)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+    private func openAsked() {
+        guard let id = appState.presetToOpen else { return }
+        appState.presetToOpen = nil
+        expanded = id
     }
 
     /// A new preset at noon, opened for editing; the list scrolls to it.

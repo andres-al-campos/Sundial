@@ -266,6 +266,16 @@ class AppState: ObservableObject {
     // MARK: - Mutations
 
     /// Whichever mode is now on takes the monitor at once, in full.
+    /// A preset the window's Presets section should open, asked for from the popup.
+    @Published var presetToOpen: UUID?
+
+    /// Opens the window on a preset, as clicking the popup's card does.
+    func openPreset(_ id: UUID) {
+        windowSection = .presets
+        presetToOpen = id
+        onOpenWindow?()
+    }
+
     func setMode(_ newMode: Mode) {
         guard newMode != mode else { return }
         previewingPresetID = nil

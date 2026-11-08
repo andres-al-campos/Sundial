@@ -178,7 +178,12 @@ struct CurrentPresetCard: View {
 
     var body: some View {
         if let preset = appState.preset(for: appState.activePresetID) {
-            PresetCardRow(preset: preset, isActive: true, isExpanded: true, onExpandToggle: {}, collapses: false)
+            // It shades on hover like the window's rows, so a click opens it there.
+            PresetCardRow(preset: preset, isActive: true, isExpanded: true, onExpandToggle: {
+                // The popup is the key window; nothing else closes it as the window comes up.
+                NSApp.keyWindow?.close()
+                appState.openPreset(preset.id)
+            }, collapses: false)
                 .id(preset.id)
         } else {
             Text("No preset is on right now.")
