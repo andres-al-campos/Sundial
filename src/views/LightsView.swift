@@ -541,8 +541,8 @@ struct LightsView: View {
 
     @ViewBuilder
     private func keyMenu(_ key: LightDay.Key, bulb: LightDay.Bulb) -> some View {
-        Button("Copy Color Key Values") { clip.key = key }
-        Button("Paste Color Key Values") { pasteLook(onto: key.id, bulb: bulb) }
+        Button("Copy Color Key") { clip.key = key }
+        Button("Paste Color Key") { pasteLook(onto: key.id, bulb: bulb) }
             .disabled(clip.key == nil)
         Divider()
         Button("Delete Color Key") { deleteKey(key.id, of: bulb.id) }
@@ -752,7 +752,7 @@ struct LightsView: View {
                 $0.anchor = from.anchor
             }
         }
-        history.commit(undo, "Paste Color Key Values")
+        history.commit(undo, "Paste Color Key")
     }
 
     private func deleteKey(_ id: UUID, of bulb: String) {
