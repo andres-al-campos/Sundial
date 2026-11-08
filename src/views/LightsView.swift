@@ -1123,7 +1123,8 @@ private struct KeyTimeRow: View {
                 .pickerStyle(.inline)
                 .labelsHidden()
             } label: {
-                Text(caption)
+                // One width for every choice, so the button and its caret don't move as it changes.
+                Text(caption).frame(width: Self.menuWidth, alignment: .leading)
             }
             .menuStyle(.button)
             .controlSize(.small)
@@ -1134,6 +1135,12 @@ private struct KeyTimeRow: View {
     }
 
     private static let fixedText = "Every day at this time"
+    /// The widest a choice can read; a frame on the Menu itself only centers the button in it.
+    private static let menuWidth: CGFloat = {
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .small))
+        let widest = [fixedText] + ["sunrise", "sunset", "bedtime"].flatMap { ["00 hr 00 min before \($0)", "00 hr 00 min after \($0)"] }
+        return ceil(widest.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 150) + 2
+    }()
     private var caption: String { LightsView.anchorText(key.anchor) ?? Self.fixedText }
 
     /// The marks either side of the keyframe, and its own anchor if the day has moved those since.
