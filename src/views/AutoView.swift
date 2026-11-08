@@ -46,9 +46,9 @@ struct AutoView: View {
     }
 
     /// Night Shift now, and bedtime: one time where Night Shift is full, the
-    /// lamps reach DuskLight and the screen is at its dimmest.
-    /// "Darkest" names all three; a separate Bedtime row repeated Night
-    /// Shift's "full at".
+    /// lamps reach DuskLight and the screen is at its dimmest. It's on this
+    /// row because a separate Bedtime row repeated Night Shift's "full at".
+    /// Named Bedtime as the Lights band names it, though staying up later is fine.
     private var nightShiftRow: some View {
         HStack(spacing: 8) {
             Text("Night Shift")
@@ -59,7 +59,7 @@ struct AutoView: View {
                 .foregroundStyle(.secondary)
             Spacer(minLength: 8)
             // Bedtime sits at the right edge, where the sliders' values end.
-            Text("darkest at")
+            Text("Bedtime")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             TimeField(label: "Bedtime", time: bedtimeBinding)

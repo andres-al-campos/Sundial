@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-05 23:18, at 1.1.0.
+Updated 2026-11-07 20:38, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -24,7 +24,7 @@ presets; Schedule (the presets) is the other.
   0 there.
 - **Night Shift follows the sun**: it starts warming 40 minutes before
   sunset, rises evenly to full at your bedtime (the time in the Night Shift
-  row, "darkest at", midnight by default; past midnight counts as the same
+  row, "Bedtime", midnight by default; past midnight counts as the same
   night), and turns off 46 minutes before
   sunrise. Fitted to the presets' evening values (R² 0.98) on 2026-10-26,
   when that was 5:13 PM to 6:30 AM. Sunrise and sunset are computed for the
@@ -97,7 +97,7 @@ followed the slider live; the level saved and survived a restart.
 By hand only: how the easing feels, the popup's look, wake, and the lid-closed
 row.
 
-`./build.sh drive time-field` (~6s): the arrows on the time field, which "darkest at" uses.
+`./build.sh drive time-field` (~6s): the arrows on the time field, which Bedtime uses.
 
 `./build.sh drive slow-monitor` (~10s): the monitor's commands against a stand-in monitor that
 takes 2 seconds a write. The main thread keeps answering, and the values land in the order a drag
@@ -216,12 +216,15 @@ real reply from the M27Q.
   shift ... and the auto mode night shift should be customizable too". It
   replaces the fixed midnight above, which stays the default. Applies *Just
   right for the room*.
-- 2026-10-30 17:34, 1.1.0. Bedtime lives in the Night Shift row as "darkest at [time]", not its own
+- 2026-11-07 20:38, 1.1.0. Bedtime lives in the Night Shift row as "Bedtime [time]", not its own
   row: one time is where Night Shift is full, the lamps reach DuskLight and a
   dark room has the screen at its dimmest, and a Bedtime row repeated Night
   Shift's "full at" ("the bedtime line is kind of redundant ... still make it
   obvious the value means at this time you get min brightness"). The row
-  drops "warms at" and "off at", which follow the sun and can't be set.
+  drops "warms at" and "off at", which follow the sun and can't be set. Named
+  "Bedtime", as the Lights band names the mark, after "darkest at" for a while:
+  "i honestly can't think of anything else that means this is the point the
+  light should be the darkest at".
   Applies *Just right for the room*.
 - 2026-10-30 17:34, 1.1.0. When the room reads 0 before bedtime, brightness keeps falling by the clock
   to the night minimum at bedtime ("if lux is 0 before midnight it should
