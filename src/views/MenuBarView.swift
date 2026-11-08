@@ -25,7 +25,8 @@ struct MenuBarView: View {
             } else if !appState.isSetUp {
                 SetupView()
             } else {
-                screenRow
+                // Auto or Schedule is picked in the window: under Display | Lights a second
+                // segmented row read as a second level of tabs, and it's rarely changed.
                 if appState.mode == .auto {
                     AutoView()
                 } else {
@@ -66,27 +67,8 @@ struct MenuBarView: View {
 }
 
 extension MenuBarView {
-    /// Auto or Schedule: one or the other drives the monitor, so a segmented control (pick one)
-    /// rather than a switch (one thing on or off). Labelled, since below the tabs it would
-    /// otherwise read as a choice for the whole app.
-    private var screenRow: some View {
-        HStack(spacing: 8) {
-            Text("Screen")
-                .font(.caption)
-                .frame(width: 72, alignment: .leading)
-            Segments(items: [(.auto, "Auto"), (.schedule, "Schedule")], picked: appState.mode, onPick: setMode)
-        }
-        .padding(.horizontal, 14)
-        .padding(.top, 10)
-    }
-
     /// The window's name for them, and singular for someone with one bulb.
     private var lightsLabel: String { appState.lights?.count == 1 ? "Light" : "Lights" }
-
-    private func setMode(_ newMode: AppState.Mode) {
-        // The popup resizes to the other mode's panel, eased, not in one jump.
-        withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(newMode) }
-    }
 
     private func setTab(_ tab: AppState.PopupTab) {
         withAnimation(.easeInOut(duration: 0.15)) { appState.popupTab = tab }

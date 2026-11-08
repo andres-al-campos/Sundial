@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-07 20:38, at 1.1.0.
+Updated 2026-11-07 23:01, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -63,12 +63,12 @@ presets; Schedule (the presets) is the other.
   only at 0 lux; `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
   night minimum and `dark` columns, from 2026-10-31 night contrast, and from 2026-11-04 `lamps`, each bulb's brightness and xy or "off" at the last
   read, up to 30 seconds old, as `Light 1=45/0.512/0.414;Light 2=off`. A log started before then has the older header.
-- **Auto | Schedule** under the header picks which one drives the monitor.
+- **Auto | Schedule**, on top of the window's Presets section, picks which one drives the monitor. The popup's Display tab shows whichever is in force.
 
 ## How to get to it
 
-Click the sun in the menu bar. Auto is what opens; Schedule is the other half of
-the control under the header.
+Click the sun in the menu bar: the Display tab shows Auto while it drives the
+monitor. To switch, Open Sundial → Presets → Screen.
 
 ## Driving it
 
@@ -165,15 +165,17 @@ real reply from the M27Q.
   with no offset, though the presets' line had one ("the preset is 1
   datapoint"), so a level of 0 is brightness 0 and contrast 0. Applies *Just right for the
   room*.
-- 2026-11-05 21:05, 1.1.0. Auto | Schedule is a full-width segmented control under the header. A
+- 2026-11-07 23:01, 1.1.0. Auto | Schedule is a full-width segmented control under the header. A
   switch was wrong because it changed the whole popup ("what toggle does
   that?"), and tabs read as two pages you could both look at, not one choice
   of what drives the monitor. The first segmented control sized to its labels
   and left the right side empty, so its halves now fill the width they have. The selection
   slides between the halves ("nothing should teleport") and the other half glows faintly on
   hover. Schedule opens on the preset in force. Since the header's control became Display |
-  Lights, this one is the Display tab's first row, labelled Screen so it doesn't read as a
-  choice for the whole app. Applies *Never a fight with the controls*.
+  Lights, this one moved to the top of the window's Presets section, labelled Screen: under
+  the header's tabs a second segmented row read as a second level of tabs ("having to tab
+  toggle feels kind of off"), and switching is a few times a day, "mostly to test/fidget".
+  Applies *Never a fight with the controls*.
 - 2026-11-01 20:34, 1.1.0. Before sunset brightness follows the room, after sunset the clock, because
   once Sundial drives the lamps the sensor is reading its own light: "post sunset
   light lerps, so essentially the monitor would also just follow the post sunset

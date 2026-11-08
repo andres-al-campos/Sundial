@@ -85,6 +85,8 @@ private struct PresetsSection: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            screenRow
+            Divider()
             GeometryReader { geo in
                 PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height)
             }
@@ -105,6 +107,24 @@ private struct PresetsSection: View {
                 appState.onPreviewEnded?()
             }
         }
+    }
+
+    /// Auto or Schedule: one or the other drives the monitor, so a segmented control (pick one),
+    /// over the presets Schedule steps through.
+    private var screenRow: some View {
+        HStack(spacing: 12) {
+            Text("Screen")
+            Segments(items: [(AppState.Mode.auto, "Auto"), (.schedule, "Schedule")], picked: appState.mode) { mode in
+                withAnimation(.easeInOut(duration: 0.15)) { appState.setMode(mode) }
+            }
+            .frame(width: 240)
+            Text(appState.mode == .auto ? "Follows the room's light." : "Steps through these presets.")
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
     }
 
     /// A new preset at noon, opened for editing; the list scrolls to it.
