@@ -96,8 +96,9 @@ private struct PresetsSection: View {
             GeometryReader { geo in
                 // Settings' width, centered: across the whole window the sliders ran long and
                 // the values sat far from their labels.
+                let column = 520 + 2 * Layout.edge
                 PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height,
-                               width: 520 + 2 * Layout.edge)
+                               width: column, leading: max(0, (geo.size.width - column) / 2))
             }
         }
         // The popup's preset card opens the window on that preset.
