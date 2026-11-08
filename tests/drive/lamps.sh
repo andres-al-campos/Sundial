@@ -95,6 +95,8 @@ check("a before keyframe follows the mark on its right", beforeSunrise == .init(
 let offSunset = LightDay.reanchor(.init(mark: .sunset, offset: 0), at: 1000, marks: m0)
 check("dragged off its mark, a keyframe is before or after it by the side it went", offSunset == .init(mark: .sunset, offset: -80), offSunset as Any)
 check("a following keyframe dropped near a mark lands on it", LightDay.reanchor(.init(mark: .sunset, offset: 60), at: 425, marks: m0) == .init(mark: .sunrise, offset: 0), "reanchor")
+check("a pasted rule is kept at the keyframe's own time", LightDay.anchor(like: .init(mark: .sunset, offset: 60), at: 600, marks: m0, snapping: false) == .init(mark: .sunrise, offset: 180) && LightDay.anchor(like: .init(mark: .darkest, offset: -30), at: 600, marks: m0, snapping: false) == .init(mark: .sunset, offset: -480) && LightDay.anchor(like: nil, at: 600, marks: m0, snapping: false) == nil, "anchor(like:)")
+check("a pasted \"At sunset\" follows the nearer mark", LightDay.anchor(like: .init(mark: .sunset, offset: 0), at: 1149, marks: m0, snapping: false) == .init(mark: .sunset, offset: 69), "anchor(like:)")
 check("a new keyframe follows the nearer of its marks", LightDay.anchorForNew(1149, marks: m0) == .init(mark: .sunset, offset: 69), LightDay.anchorForNew(1149, marks: m0))
 check("an anchored keyframe follows its mark", LightDay.minute(of: key(0, 1, .init(mark: .sunset, offset: -40)), marks: m0) == 1040, "anchor")
 check("whites read back as their temperature, and a colour as the nearest one", LightDay.kelvin(LampBlend.xy(mirek: 500)) == 2000 && (700...6500).contains(LightDay.kelvin(.init(x: 0.17, y: 0.7))), "kelvin")

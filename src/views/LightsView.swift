@@ -554,7 +554,7 @@ struct LightsView: View {
             guard var key = clip.key else { return }
             key.id = UUID()
             key.minute = minute(atX: hoverX, width: width)
-            key.anchor = LightDay.reanchor(key.anchor, at: key.minute, marks: marks)
+            key.anchor = LightDay.anchor(like: key.anchor, at: key.minute, marks: marks, snapping: true)
             if let a = key.anchor, a.offset == 0 { key.minute = marks.minute(of: a.mark) }
             edit { $0[bulb.id]?.keys.append(key) }
             history.commit(undo, "Paste Color Key")
@@ -747,9 +747,9 @@ struct LightsView: View {
                 $0.brightness = from.brightness
                 $0.x = from.x
                 $0.y = from.y
-                // What it follows too, so a keyframe on another bulb can keep in step with this one.
-                $0.minute = from.minute
-                $0.anchor = from.anchor
+                // Its rule too, at this keyframe's own time: fixed, or after or before a mark.
+                $0.minute = LightDay.minute(of: $0, marks: marks)
+                $0.anchor = LightDay.anchor(like: from.anchor, at: $0.minute, marks: marks, snapping: false)
             }
         }
         history.commit(undo, "Paste Color Key")

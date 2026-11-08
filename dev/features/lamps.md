@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-07 20:20, at 1.1.0.
+Updated 2026-11-07 20:31, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -53,7 +53,7 @@ artificial light follows the natural light along with the screen.
 - **Colour wheel.** Its green and blue are the screen's and its red the bulbs', so every
   temperature has its own spot. Screens run out of red around 900 K, so below that the
   thumb moves and the bulb changes while the colours on screen stay the same red.
-- **Right-click.** Copy a keyframe's values and paste them onto another (its look, and its time or what it follows), paste a whole keyframe onto a band, or copy and paste a bulb's whole day;
+- **Right-click.** Copy a keyframe and paste it onto another or onto a band at the point clicked. It brings its look and its rule (every day at this time, or after or before a mark), at the time where it lands, or copy and paste a bulb's whole day;
   rename a bulb, which renames it on the bridge; make one bulb follow another's
   day, and unlink it again.
 - **Undo.** Cmd-Z and Shift-Cmd-Z cover every change to the bulbs.

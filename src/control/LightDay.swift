@@ -222,6 +222,17 @@ enum LightDay {
         return after ? options[0] : options[1]
     }
 
+    /// Another keyframe's rule at this time: fixed, after the mark on its left or before the one on
+    /// its right, so a pasted keyframe keeps its own time. "At sunset" follows the nearer mark.
+    static func anchor(like rule: Anchor?, at minute: Int, marks: Marks, snapping: Bool) -> Anchor? {
+        if snapping, let s = snap(minute, marks: marks) { return s }
+        guard let rule else { return nil }
+        let options = choices(minute, marks: marks)
+        guard options.count == 2 else { return options.first }
+        if rule.offset == 0 { return options.min { abs($0.offset) < abs($1.offset) } }
+        return rule.offset > 0 ? options[0] : options[1]
+    }
+
     /// The shortest way from one time of day to another, through midnight if
     /// that's shorter: -720 to 720.
     static func signedGap(from a: Int, to b: Int) -> Int {
