@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-07 20:47, at 1.1.0.
+Updated 2026-11-07 21:56, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -107,6 +107,8 @@ The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's fu
 `./build.sh drive window` (~20s): builds the real window from the code as it is and renders Lights off-screen to PNGs, dark and light, taking no focus. `WINDOW_OUT=dir` keeps them and `WINDOW_REAL=1` starts from a throwaway copy of the real config. It shows the window at rest; showing a card takes a scratch copy of `src/` calling the view's private functions.
 
 `./build.sh drive popup` (~20s): builds the real popup and renders both tabs off-screen, taking no focus. It checks the Lights label turns orange while a bulb is held and that a hold doesn't resize the popup. `POPUP_OUT=dir` keeps the PNGs. A slider's drag isn't driven: the hold it makes is `AppState.holdLamp`, the window card's too.
+
+`./build.sh drive popup-list` (~3s): opens the time menu's real list and checks it sits on the button's edges, with the chosen item over the label. It flashes in the screen's bottom-left corner for under half a second, taking no focus, since macOS moves a list opened off-screen onto a display. Renders can't show an open list: four fixes looked right closed and opened off the button's edges.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They step
 what's highlighted and write to the keyframe showing now.
