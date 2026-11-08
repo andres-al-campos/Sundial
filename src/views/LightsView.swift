@@ -1290,7 +1290,7 @@ private struct ColorWheel: View {
 }
 
 /// AppKit's popup button, which opens its list over the button with the current choice on the
-/// label. A pull-down's list, SwiftUI's or AppKit's, opened offset from its button.
+/// label. SwiftUI's pull-down opened a list narrower than its button.
 private struct PopUp: NSViewRepresentable {
     let items: [String]
     let selected: Int
@@ -1305,6 +1305,9 @@ private struct PopUp: NSViewRepresentable {
         button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         button.target = context.coordinator
         button.action = #selector(Coordinator.picked(_:))
+        // macOS lines the chosen item's text up on the label's, so a checkmark column pushes the
+        // list left of the button by its width. The chosen one still shows, highlighted on open.
+        button.menu?.showsStateColumn = false
         return button
     }
 
