@@ -11,7 +11,7 @@ enum LightDay {
     /// A keyframe tied to the day's marks, which move with the seasons and with
     /// the darkest time. Scenes placed "40 minutes before sunset" keep that as
     /// sunset moves; a fixed time would drift past its neighbours by summer.
-    struct Anchor: Codable, Equatable {
+    struct Anchor: Codable, Hashable {
         var mark: Mark
         var offset: Int
     }
@@ -183,6 +183,43 @@ enum LightDay {
             .filter { $0.gap <= snapDistance }
             .min { $0.gap < $1.gap }
             .map { Anchor(mark: $0.mark, offset: 0) }
+    }
+
+    /// The marks either side of a time: the last one before it and the next one after it. On a
+    /// mark, both are that mark.
+    static func neighbours(_ minute: Int, marks: Marks) -> (left: Mark, right: Mark) {
+        let behind = { (m: Mark) in wrap(minute - marks.minute(of: m)) }
+        let ahead = { (m: Mark) in wrap(marks.minute(of: m) - minute) }
+        return (Mark.allCases.min { behind($0) < behind($1) }!, Mark.allCases.min { ahead($0) < ahead($1) }!)
+    }
+
+    /// What a keyframe at this time can follow: after the mark on its left or before the one on its
+    /// right, or just the mark it sits on. Only its neighbours, so nothing reads "11 hr before sunset".
+    static func choices(_ minute: Int, marks: Marks) -> [Anchor] {
+        let n = neighbours(minute, marks: marks)
+        let after = wrap(minute - marks.minute(of: n.left))
+        if after == 0 { return [Anchor(mark: n.left, offset: 0)] }
+        return [Anchor(mark: n.left, offset: after),
+                Anchor(mark: n.right, offset: -wrap(marks.minute(of: n.right) - minute))]
+    }
+
+    /// A new keyframe follows the day, from the nearer of its marks.
+    static func anchorForNew(_ minute: Int, marks: Marks) -> Anchor {
+        if let s = snap(minute, marks: marks) { return s }
+        return choices(minute, marks: marks).min { abs($0.offset) < abs($1.offset) }!
+    }
+
+    /// Where a keyframe's anchor goes when its time changes. Dragged near a mark, any keyframe lands
+    /// on it; a typed time is taken as typed. Otherwise a fixed one stays fixed, and one that follows
+    /// the day keeps its side, after the mark on its left or before the one on its right, whichever
+    /// marks those now are.
+    static func reanchor(_ old: Anchor?, at minute: Int, marks: Marks, snapping: Bool = true) -> Anchor? {
+        if snapping, let s = snap(minute, marks: marks) { return s }
+        guard let old else { return nil }
+        let options = choices(minute, marks: marks)
+        guard options.count == 2 else { return options.first }
+        let after = old.offset != 0 ? old.offset > 0 : signedGap(from: marks.minute(of: old.mark), to: minute) > 0
+        return after ? options[0] : options[1]
     }
 
     /// The shortest way from one time of day to another, through midnight if

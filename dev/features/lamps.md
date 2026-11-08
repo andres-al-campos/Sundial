@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-07 19:15, at 1.1.0.
+Updated 2026-11-07 19:33, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -32,9 +32,8 @@ artificial light follows the natural light along with the screen.
   the slider dims, says "Color", and stays where it was before the wheel left the whites.
   That's remembered until Sundial quits; a keyframe that's already a colour sits at its
   nearest temperature. Dragging the slider goes back to a white.
-- **Moving.** Dragging a keyframe changes only its time, as typing one does: it keeps its colour, brightness and on or off, and the band reshapes around it as it moves. The bulbs stay as they are until the drop, then fade to the new day at the usual pace. Within 10 minutes of a mark it snaps and
-  follows that mark. Imported keyframes can follow one at an offset, such as 40
-  minutes before sunset.
+- **Moving.** Dragging a keyframe changes only its time, as typing one does: it keeps its colour, brightness and on or off, and the band reshapes around it as it moves. The bulbs stay as they are until the drop, then fade to the new day at the usual pace. Dropped within 10 minutes of a mark it lands on it and reads "At sunset".
+- **Following the day.** The menu beside a keyframe's time says what it keeps to: "Every day at this time", like an alarm, or a time after the mark on its left or before the one on its right, such as "1 hr 9 min after sunset", so it moves as the sun's times change across the year. On a mark, the choices are that time or "At sunset". Dragging keeps the choice, following whichever marks are now either side; a typed time is taken as typed, without snapping. A new keyframe follows the nearer mark.
 - **Previews.** Changing a keyframe's settings shows it on the bulb. A badge in the top row says
   what it lands on, such as 45% at 6:48 PM, during a drag too. On letting go of a setting the bulb fades back to where
   the day has it, or to its hold, over half a second, and only the bulbs that moved are sent.

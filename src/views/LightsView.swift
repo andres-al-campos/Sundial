@@ -67,6 +67,9 @@ struct LightsView: View {
     @Environment(\.colorScheme) private var scheme
     @State private var playTask: Task<Void, Never>?
     @State private var previewing: Previewing?
+    /// The dragged keyframe's anchor when the drag began, so passing over a mark on the way doesn't
+    /// turn a fixed keyframe into one that follows the day.
+    @State private var dragStart: (id: UUID, anchor: LightDay.Anchor?)?
     /// What the card last showed, so it still has it while it slides away. Something from
     /// the start, because a card whose contents are new on its first open jumps open
     /// instead of sliding.
@@ -551,7 +554,8 @@ struct LightsView: View {
             guard var key = clip.key else { return }
             key.id = UUID()
             key.minute = minute(atX: hoverX, width: width)
-            key.anchor = LightDay.snap(key.minute, marks: marks)
+            key.anchor = LightDay.reanchor(key.anchor, at: key.minute, marks: marks)
+            if let a = key.anchor, a.offset == 0 { key.minute = marks.minute(of: a.mark) }
             edit { $0[bulb.id]?.keys.append(key) }
             history.commit(undo, "Paste Color Key")
         }
@@ -698,7 +702,7 @@ struct LightsView: View {
         // Adding doesn't change the band: the new keyframe takes what's under it.
         let look = LightDay.state(bulb.keys, at: Double(at), marks: marks)
         let warm = LampBlend.xy(mirek: 370)
-        let key = LightDay.Key(minute: at, anchor: LightDay.snap(at, marks: marks), on: look?.on ?? true,
+        let key = LightDay.Key(minute: at, anchor: LightDay.anchorForNew(at, marks: marks), on: look?.on ?? true,
                                brightness: look?.brightness ?? 50, x: look?.xy.x ?? warm.x, y: look?.xy.y ?? warm.y)
         edit { $0[bulb.id]?.keys.append(key) }
         history.commit(undo, "Add Color Key")
@@ -711,13 +715,14 @@ struct LightsView: View {
     /// what a new one is for. The bulbs wait for the drop, as scrubbing past noon at night would flood the room.
     private func moveKey(_ id: UUID, bulb: LightDay.Bulb, to x: CGFloat, width: CGFloat) {
         let at = minute(atX: x, width: width)
-        let snapped = LightDay.snap(at, marks: marks)
-        let minute = snapped.map { marks.minute(of: $0.mark) } ?? at
+        if dragStart?.id != id { dragStart = (id, bulb.keys.first { $0.id == id }?.anchor) }
+        let anchor = LightDay.reanchor(dragStart?.anchor, at: at, marks: marks)
+        let minute = anchor.flatMap { $0.offset == 0 ? marks.minute(of: $0.mark) : nil } ?? at
         appState.movingKeyframe = true
         edit { index in
             index.withKey(bulb.id, id) {
                 $0.minute = minute
-                $0.anchor = snapped
+                $0.anchor = anchor
             }
         }
         if let key = bulb.keys.first(where: { $0.id == id }) {
@@ -727,6 +732,7 @@ struct LightsView: View {
 
     private func dropKey() {
         previewing = nil
+        dragStart = nil
         // Before the save, whose tick takes the bulb to the new day at the usual fade. Ending a
         // preview here would rush it there in half a second, with nothing to come back from.
         appState.movingKeyframe = false
@@ -817,9 +823,10 @@ struct LightsView: View {
     static func anchorText(_ anchor: LightDay.Anchor?) -> String? {
         guard let anchor else { return nil }
         let name = markName(anchor.mark).lowercased()
-        if anchor.offset == 0 { return "Follows \(name)" }
+        if anchor.offset == 0 { return "At \(name)" }
         let mins = abs(anchor.offset)
-        let amount = mins >= 60 && mins % 60 == 0 ? "\(mins / 60) hr" : "\(mins) min"
+        let amount = [mins / 60 > 0 ? "\(mins / 60) hr" : nil, mins % 60 > 0 ? "\(mins % 60) min" : nil]
+            .compactMap { $0 }.joined(separator: " ")
         return "\(amount) \(anchor.offset < 0 ? "before" : "after") \(name)"
     }
 
@@ -1099,16 +1106,51 @@ private struct KeyTimeRow: View {
         HStack(spacing: 8) {
             Text("Time").frame(width: Layout.cardLabel, alignment: .leading)
             TimeField(label: "Time", time: timeBinding)
-            if let text = LightsView.anchorText(key.anchor) {
+            Menu {
+                Picker("Follows", selection: anchorBinding) {
+                    Text(Self.fixedText).tag(LightDay.Anchor?.none)
+                    ForEach(choices, id: \.self) { Text(LightsView.anchorText($0) ?? "").tag(Optional($0)) }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } label: {
                 // Gives way first when the window is small, with the whole of it on hover.
-                Text(text)
+                Text(caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .help(text)
             }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize(horizontal: false, vertical: true)
+            .hoverShade()
+            .help(caption)
             Spacer(minLength: 0)
         }
+    }
+
+    private static let fixedText = "Every day at this time"
+    private var caption: String { LightsView.anchorText(key.anchor) ?? Self.fixedText }
+
+    /// The marks either side of the keyframe, and its own anchor if the day has moved those since.
+    private var choices: [LightDay.Anchor] {
+        let near = LightDay.choices(LightDay.minute(of: key, marks: marks), marks: marks)
+        guard let own = key.anchor, !near.contains(own) else { return near }
+        return near + [own]
+    }
+
+    private var anchorBinding: Binding<LightDay.Anchor?> {
+        Binding(
+            get: { key.anchor },
+            set: { anchor in
+                let m = LightDay.minute(of: key, marks: marks)
+                change {
+                    $0.minute = m
+                    $0.anchor = anchor
+                }
+                commit()
+            }
+        )
     }
 
     private var timeBinding: Binding<Date> {
@@ -1119,7 +1161,7 @@ private struct KeyTimeRow: View {
                 let m = (c.hour ?? 0) * 60 + (c.minute ?? 0)
                 change {
                     $0.minute = m
-                    $0.anchor = LightDay.snap(m, marks: marks)
+                    $0.anchor = LightDay.reanchor($0.anchor, at: m, marks: marks, snapping: false)
                 }
                 commit()
             }
