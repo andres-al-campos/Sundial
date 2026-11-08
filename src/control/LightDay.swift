@@ -209,22 +209,17 @@ enum LightDay {
         return choices(minute, marks: marks).min { abs($0.offset) < abs($1.offset) }!
     }
 
-    /// A dragged keyframe's anchor: on a mark when it lands near one, otherwise At This Time,
-    /// whatever it followed before. Dragging puts a keyframe at a time; following a mark is
-    /// picked from its menu.
-    static func dragged(to minute: Int, marks: Marks) -> Anchor? {
-        snap(minute, marks: marks)
-    }
-
-    /// A keyframe's anchor when its time is typed, taken as typed with no snapping. A fixed one stays
+    /// A keyframe's anchor when its time moves, dragged or typed the same way. A fixed one stays
     /// fixed, and one that follows the day keeps its side, after the mark on its left or before the
-    /// one on its right, whichever marks those now are.
-    static func reanchor(_ old: Anchor?, at minute: Int, marks: Marks) -> Anchor? {
-        guard let old else { return nil }
+    /// one on its right, whichever marks those now are. One on a mark ("At Sunset") has no side, so
+    /// it becomes At This Time. A drag that lands near a mark goes onto it; a typed time is kept as
+    /// typed.
+    static func moved(_ old: Anchor?, to minute: Int, marks: Marks, snapping: Bool) -> Anchor? {
+        if snapping, let s = snap(minute, marks: marks) { return s }
+        guard let old, old.offset != 0 else { return nil }
         let options = choices(minute, marks: marks)
         guard options.count == 2 else { return options.first }
-        let after = old.offset != 0 ? old.offset > 0 : signedGap(from: marks.minute(of: old.mark), to: minute) > 0
-        return after ? options[0] : options[1]
+        return old.offset > 0 ? options[0] : options[1]
     }
 
     /// Another keyframe's rule at this time: fixed, after the mark on its left or before the one on
