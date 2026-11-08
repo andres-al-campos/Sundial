@@ -19,7 +19,7 @@ struct LightingPanel: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(appState.lampStatus.hasPrefix("Paired") ? "Reading your bulbs…" : appState.lampStatus)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                     if appState.keychainDeclined {
                         Button("Allow Keychain Access") { appState.onAllowKeychain?() }
                             .font(.subheadline)
@@ -90,7 +90,7 @@ struct LightingPanel: View {
             // The sun says what the slider moves, as Control Center's display slider does.
             Image(systemName: "sun.min")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             Slider(value: Binding(get: { look.on ? look.brightness : 0 }, set: { b in
                 let set = appState.holdLamp(bulb.id, from: look) {
                     // Dragging a bulb switched off brings it on: more light is what the drag asks for.
@@ -106,7 +106,7 @@ struct LightingPanel: View {
             .controlSize(.small)
             Text(look.on ? "\(Int(look.brightness.rounded()))%" : "Off")
                 .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
                 .frame(width: 32, alignment: .trailing)
         }
         .frame(height: 20)
@@ -125,9 +125,9 @@ struct LightingPanel: View {
             } else if appState.lampsPaused {
                 Text("Paused").foregroundStyle(.orange)
             } else if let next = nextKey {
-                Text("Next color key at \(LightsView.time(next))").foregroundStyle(.secondary)
+                Text("Next color key at \(LightsView.time(next))").foregroundStyle(Layout.dim)
             } else {
-                Text(appState.lampStatus).foregroundStyle(.secondary)
+                Text(appState.lampStatus).foregroundStyle(Layout.dim)
             }
         }
         .font(.caption)
@@ -175,14 +175,14 @@ struct LightingPanel: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Sundial can fade Hue lamps along with the day.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             Button("Pair Hue Bridge…") { appState.onPairLamps?() }
                 .buttonStyle(.outlined(HoverButton.createBlue))
                 .font(.subheadline)
             if appState.lampStatus != "Not paired" {
                 Text(appState.lampStatus)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

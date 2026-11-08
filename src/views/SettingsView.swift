@@ -40,12 +40,12 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Monitor")
                     .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Display name (partial match)")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                     TextField("GIGABYTE", text: $appState.displayName)
                         .textFieldStyle(.roundedBorder)
                         .onChange(of: appState.displayName) { _, _ in appState.save() }
@@ -58,7 +58,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Lamps")
                     .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
 
                 HStack {
                     Text(appState.hueHost == nil ? "Not paired with a Hue Bridge" : "Paired with your Hue Bridge")
@@ -80,10 +80,10 @@ struct SettingsView: View {
                         .lineLimit(2, reservesSpace: true)
                 } icon: {
                     Image(systemName: appState.lampStatus.hasPrefix("Paired") ? "checkmark.circle.fill" : "circle.dashed")
-                        .foregroundStyle(appState.lampStatus.hasPrefix("Paired") ? .green : .secondary)
+                        .foregroundStyle(appState.lampStatus.hasPrefix("Paired") ? Color.green : Layout.dim)
                 }
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             }
 
             Divider()

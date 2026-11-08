@@ -32,13 +32,13 @@ struct AutoView: View {
                 // sliders end at one line.
                 Text(appState.sensorReading ? Self.luxText(lux) : "—")
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
                     .frame(width: 32, alignment: .trailing)
                     .help(appState.sensorReading ? "Lux, from the light sensor beside the camera" : "No reading: the lid may be closed")
             } else {
                 Text("No reading yet: the lid may be closed")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
                 Spacer()
             }
         }
@@ -56,12 +56,12 @@ struct AutoView: View {
                 .frame(width: 72, alignment: .leading)
             Text("\(appState.autoNightShift)%")
                 .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             Spacer(minLength: 8)
             // Bedtime sits at the right edge, where the sliders' values end.
             Text("Bedtime")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             TimeField(label: "Bedtime", time: bedtimeBinding)
         }
         .frame(height: 20)

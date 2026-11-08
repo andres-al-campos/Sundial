@@ -18,14 +18,14 @@ struct SetupView: View {
                     .font(.headline)
                 Text("Sundial sets your monitor's own brightness and contrast over DDC.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Monitor name (any part of it)")
                     .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
                 TextField("e.g. GIGABYTE", text: $appState.displayName)
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: appState.displayName) { _, _ in appState.save() }

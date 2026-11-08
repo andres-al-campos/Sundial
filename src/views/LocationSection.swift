@@ -26,10 +26,10 @@ struct LocationSection: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Location")
                 .font(.caption.bold())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             Text("Searches go to Apple. Everything else stays on this Mac.")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             searchField
             // Over the map rather than between the two, so nothing moves as the list comes and goes.
             map.overlay(alignment: .top) { suggestions }
@@ -37,7 +37,7 @@ struct LocationSection: View {
             HStack {
                 Text(readout)
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
                     .lineLimit(1)
                 Spacer()
                 if isPicked, dragged == nil {
@@ -81,14 +81,14 @@ struct LocationSection: View {
                 if let problem = search.problem {
                     Text(problem)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                         .padding(8)
                 }
                 ForEach(Array(search.results.enumerated()), id: \.offset) { index, result in
                     Button { choose(index) } label: {
                         HStack(spacing: 6) {
                             Text(result.title)
-                            Text(result.subtitle).foregroundStyle(.secondary)
+                            Text(result.subtitle).foregroundStyle(Layout.dim)
                             Spacer(minLength: 0)
                         }
                         .font(.caption)

@@ -277,7 +277,7 @@ struct LightsView: View {
                 } else if let clockLine {
                     Text(clockLine)
                         .font(.title3.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                 } else {
                     Label {
                         Text(statusLine)
@@ -285,7 +285,7 @@ struct LightsView: View {
                         if isPaused { Image(systemName: "pause.fill") }
                     }
                     .font(.subheadline)
-                    .foregroundStyle(isPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+                    .foregroundStyle(isPaused ? AnyShapeStyle(.orange) : AnyShapeStyle(Layout.dim))
                 }
             }
             .frame(height: 28)
@@ -357,12 +357,12 @@ struct LightsView: View {
     private var unpaired: some View {
         VStack(spacing: 10) {
             Text("Pair with your Hue Bridge to see your bulbs here.")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
             Button("Pair Hue Bridge") { appState.onPairLamps?() }
                 .hoverShade()
             Text(appState.lampStatus)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -375,7 +375,7 @@ struct LightsView: View {
                     ForEach(LightDay.Mark.allCases, id: \.self) { mark in
                         Text("\(Self.markName(mark)) \(Self.time(marks.minute(of: mark)))")
                             .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Layout.dim)
                             .fixedSize()
                     }
                 }
@@ -383,7 +383,7 @@ struct LightsView: View {
                 GeometryReader { geo in
                     ForEach(LightDay.Mark.allCases, id: \.self) { mark in
                         Rectangle()
-                            .fill(.secondary)
+                            .fill(Layout.dim)
                             .frame(width: 1, height: 4)
                             .offset(x: geo.size.width * Layout.position(marks.minute(of: mark)))
                     }
@@ -400,7 +400,7 @@ struct LightsView: View {
                 ForEach([6, 9, 12, 15, 18, 21, 0, 3], id: \.self) { hour in
                     Text(Self.hour(hour))
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                         .fixedSize()
                         .position(x: geo.size.width * Layout.position(hour * 60), y: 7)
                 }
@@ -503,14 +503,14 @@ struct LightsView: View {
                     if bulb.parent == nil, LightDay.isUntouchedDefault(bulb.keys) {
                         Text("Click a dot to edit")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Layout.dim)
                             .lineLimit(1)
                     }
                 }
                 if bulb.parent != nil {
                     Image(systemName: "link")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                         .help("Follows \(bulbs.first { $0.id == bulb.parent }?.name ?? "another bulb")")
                 }
                 Spacer(minLength: 0)
@@ -850,6 +850,12 @@ struct LightsView: View {
 }
 
 enum Layout {
+    /// Every grey text, in the window and the popup. A fixed grey, the one the system's secondary
+    /// shows in the window (about 6:1 there): on the popup's glass the system's secondary came out
+    /// at 3.2:1, under the 4.5:1 small text needs, and a translucent white was dimmer in the window.
+    static let dim = Color(nsColor: NSColor(name: nil) { look in
+        look.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor(white: 0.62, alpha: 1) : NSColor(white: 0.42, alpha: 1)
+    })
     /// Between the window's edge and what's in it.
     static let edge: CGFloat = 28
     static let name: CGFloat = 130
@@ -1035,7 +1041,7 @@ private struct LookPanel<Identity: View>: View {
                         .font(.headline)
                         .lineLimit(1)
                     Text(kind)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                         .lineLimit(1)
                     Spacer(minLength: 0)
                 }
@@ -1048,7 +1054,7 @@ private struct LookPanel<Identity: View>: View {
                         .dimmed(look.on)
                         .allowsHitTesting(look.on)
                 }
-                .foregroundStyle(look.on ? .primary : .secondary)
+                .foregroundStyle(look.on ? Color.primary : Layout.dim)
                 Spacer(minLength: 0)
                 temperature
                     .allowsHitTesting(look.on)
@@ -1082,7 +1088,7 @@ private struct LookPanel<Identity: View>: View {
             .tint(white && look.on ? nil : .gray)
             .dimmed(look.on)
         }
-        .foregroundStyle(white && look.on ? .primary : .secondary)
+        .foregroundStyle(white && look.on ? Color.primary : Layout.dim)
         .help(white || !look.on ? "" : "Only whites have a temperature, and this color isn't one. Drag to go back to a white.")
     }
 
@@ -1092,7 +1098,7 @@ private struct LookPanel<Identity: View>: View {
             control()
             Text(value)
                 .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
                 .frame(width: 56, alignment: .trailing)
         }
     }
@@ -1214,7 +1220,7 @@ private struct HoldRow: View {
                     .foregroundStyle(.orange)
             } else {
                 Text(paused ? "Paused" : "Following the schedule")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Layout.dim)
             }
             Spacer(minLength: 8)
             // There either way and only usable when held, so nothing moves as it starts.

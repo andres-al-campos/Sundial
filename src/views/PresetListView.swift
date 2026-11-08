@@ -65,7 +65,7 @@ struct PresetListView: View {
                             .font(.subheadline.weight(.medium))
                         Text("Add one to get started.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Layout.dim)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 14)
@@ -206,7 +206,7 @@ struct CurrentPresetCard: View {
         } else {
             Text("No preset is on right now.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Layout.dim)
                 .padding(14)
         }
     }
@@ -316,7 +316,7 @@ private struct PresetCardRow: View {
 
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Layout.dim)
                         .padding(.leading, 4)
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -726,6 +726,6 @@ struct LabeledSlider: View {
                 .font(.caption.monospacedDigit())
                 .frame(width: 32, alignment: .trailing)
         }
-        .foregroundStyle(lockedNote == nil ? .primary : .secondary)
+        .foregroundStyle(lockedNote == nil ? Color.primary : Layout.dim)
     }
 }

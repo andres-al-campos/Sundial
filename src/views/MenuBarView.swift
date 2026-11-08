@@ -39,7 +39,7 @@ struct MenuBarView: View {
                 Button("Quit Sundial") {
                     NSApplication.shared.terminate(nil)
                 }
-                .buttonStyle(.outlined(.secondary))
+                .buttonStyle(.outlined(Layout.dim))
                 Spacer()
                 if appState.isSetUp {
                     Button("Open Sundial") {
@@ -124,7 +124,7 @@ struct Segments<Value: Hashable>: View {
                 let on = item == picked
                 Text(label)
                     .font(.system(size: 11, weight: on ? .medium : .regular))
-                    .foregroundStyle(item == orange ? AnyShapeStyle(.orange) : on ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                    .foregroundStyle(item == orange ? AnyShapeStyle(.orange) : on ? AnyShapeStyle(.primary) : AnyShapeStyle(Layout.dim))
                     .frame(maxWidth: .infinity)
                     .frame(height: 20)
                     .background {
@@ -211,7 +211,7 @@ struct HoverButton: View {
 
     static let createBlue = Color(nsColor: .linkColor)
 
-    init(_ label: String, systemImage: String? = nil, rest: Color = .secondary, action: @escaping () -> Void) {
+    init(_ label: String, systemImage: String? = nil, rest: Color = Layout.dim, action: @escaping () -> Void) {
         self.label = label
         self.systemImage = systemImage
         self.rest = rest
