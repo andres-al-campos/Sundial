@@ -63,7 +63,7 @@ Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Release
 | Contrast    | DDC VCP `0x12`                                                  |
 | Night Shift | macOS Night Shift (CoreBrightness)                              |
 
-The scheduler picks the active preset for the current time and interpolates between presets for smooth transitions. On wake, it forces a full re-apply so the display state always matches the schedule.
+The scheduler picks the active preset for the current time and holds it until the next, fading from one to the next over a minute. On wake, it forces a full re-apply so the display state always matches the schedule.
 
 ## Releasing
 
