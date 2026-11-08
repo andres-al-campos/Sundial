@@ -29,7 +29,8 @@ final class HueBridge {
     init(host: String, key: String?) {}
     var isPaired: Bool { true }
     static func discover(timeout: TimeInterval = 5) async -> String? { nil }
-    static func savedKey(host: String) -> String? { "stand-in" }
+    nonisolated(unsafe) static var keyRead = KeychainRead.found("stand-in")
+    static func savedKey(host: String) -> KeychainRead { keyRead }
     func pair(timeout: TimeInterval = 30) async throws {}
     func scenes() async throws -> [Scene] { [] }
     func lights() async throws -> [Light] { [Light(id: "a", deviceID: "da", name: "A"), Light(id: "b", deviceID: "db", name: "B")] }
@@ -238,6 +239,31 @@ Task { @MainActor in
     await settle()
     if named(state.lampsRead["a"]) != named(apart) {
         failures.append("the room log's read while paused: bulb a read \(named(state.lampsRead["a"])), wanted what it's doing now. Read the lamps above the pause guard in tick.")
+    }
+
+    // Declining the Keychain prompt: the lights stay put and the app says why, then Allow asks again.
+    let declined = AppState()
+    declined.lights = state.lights
+    declined.holds = [:]
+    declined.hueHost = "stand-in"
+    declined.lampsFollow = true
+    Bulbs.now["a"] = apart
+    HueBridge.keyRead = .declined
+    let locked = LampController()
+    declined.onAllowKeychain = { locked.readKey() }
+    locked.start(state: declined)
+    await settle()
+    if !declined.keychainDeclined || !declined.lampStatus.contains("Allow Keychain Access") {
+        failures.append("a declined Keychain prompt: keychainDeclined \(declined.keychainDeclined), status \"\(declined.lampStatus)\". LampController.readKey sets keychainDeclined and tick says how to allow it, so it doesn't read as unpaired.")
+    }
+    if named(Bulbs.now["a"]) != named(apart) {
+        failures.append("a declined Keychain prompt: bulb a moved to \(named(Bulbs.now["a"])) with no key to send with.")
+    }
+    HueBridge.keyRead = .found("stand-in")
+    declined.onAllowKeychain?()
+    await settle()
+    if declined.keychainDeclined || named(Bulbs.now["a"]) == named(apart) {
+        failures.append("Allow Keychain Access: keychainDeclined \(declined.keychainDeclined), bulb a on \(named(Bulbs.now["a"])). onAllowKeychain calls LampController.readKey, which reads the key again and refreshes.")
     }
 
     hung.cancel()

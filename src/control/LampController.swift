@@ -49,17 +49,7 @@ final class LampController {
     func start(state: AppState) {
         guard timer == nil else { return }
         self.state = state
-        if let host = state.hueHost {
-            // Off the main thread: this waits for as long as a Keychain prompt stays
-            // up, and on the main thread that held the whole launch, monitor included.
-            readingKey = true
-            Task {
-                let key = await Task.detached { HueBridge.savedKey(host: host) }.value
-                bridge = HueBridge(host: host, key: key)
-                readingKey = false
-                refresh()
-            }
-        }
+        readKey()
         timer = Timer.scheduledTimer(withTimeInterval: Self.interval, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.tick() }
         }
@@ -67,6 +57,26 @@ final class LampController {
             Task { @MainActor in self?.refresh() }
         }
         refresh()
+    }
+
+    /// Reads the bridge's key from the Keychain, which may ask first. Declined, the lamps stop until
+    /// it's allowed, so the state says so and offers to ask again rather than reading as unpaired.
+    func readKey() {
+        guard let state, let host = state.hueHost, !readingKey else { return }
+        // Off the main thread: this waits for as long as a Keychain prompt stays
+        // up, and on the main thread that held the whole launch, monitor included.
+        readingKey = true
+        state.keychainDeclined = false
+        Task {
+            let read = await Task.detached { HueBridge.savedKey(host: host) }.value
+            readingKey = false
+            switch read {
+            case .found(let key): bridge = HueBridge(host: host, key: key)
+            case .missing: bridge = HueBridge(host: host, key: nil)
+            case .declined: state.keychainDeclined = true
+            }
+            refresh()
+        }
     }
 
     /// Set the lamps for now, sending every lamp whether or not it changed.
@@ -89,6 +99,7 @@ final class LampController {
                 try await b.pair()
                 bridge = b
                 state.hueHost = host
+                state.keychainDeclined = false
                 state.lampsFollow = true
                 state.save()
                 bulbsRead = .distantPast
@@ -277,6 +288,10 @@ final class LampController {
             state.lampStatus = "Waiting for the Keychain. Choose Always Allow in its prompt."
             return
         }
+        guard !state.keychainDeclined else {
+            state.lampStatus = "Sundial wasn't allowed to read the Hue Bridge key from the Keychain, so the lights aren't following the day. Click Allow Keychain Access and choose Always Allow."
+            return
+        }
         guard let bridge, bridge.isPaired else {
             state.lampStatus = "Not paired"
             return
@@ -345,4 +360,11 @@ final class LampController {
             Self.log.error("tick failed: \(error.localizedDescription, privacy: .public)")
         }
     }
+}
+
+/// What reading the bridge key from the Keychain found.
+enum KeychainRead: Sendable {
+    case found(String)
+    case missing
+    case declined
 }

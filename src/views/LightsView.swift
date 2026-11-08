@@ -294,6 +294,10 @@ struct LightsView: View {
             .frame(height: 28)
             .transition(.opacity)
             Spacer()
+            if appState.keychainDeclined {
+                Button("Allow Keychain Access") { appState.onAllowKeychain?() }
+                    .hoverShade()
+            }
             // Here as well as on the card, since a hold is easy to forget once the card is shut.
             if !appState.holds.isEmpty {
                 Button(action: returnAllToSchedule) {

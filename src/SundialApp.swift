@@ -60,6 +60,7 @@ struct SundialApp: App {
         state.onSetBrightness = { auto.setBrightness($0, done: $1) }
         state.onSetContrast = { auto.setContrast($0, done: $1) }
         state.onPairLamps = { lamps.pair() }
+        state.onAllowKeychain = { lamps.readKey() }
         state.onLampsChanged = { lamps.refresh() }
         state.onPreviewLamps = { lamps.preview($0) }
         state.onEndLampPreview = { lamps.endPreview() }

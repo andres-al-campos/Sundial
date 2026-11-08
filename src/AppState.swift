@@ -53,6 +53,8 @@ class AppState: ObservableObject {
     @Published var hueHost: String?
     /// What the lamps are doing, or why they aren't, for Settings.
     @Published var lampStatus: String = "Not paired"
+    /// The Keychain prompt for the bridge key was declined; Allow Keychain Access asks again.
+    @Published var keychainDeclined = false
 
     // Auto's live state, set by AutoController and not saved.
 
@@ -83,6 +85,7 @@ class AppState: ObservableObject {
     var onSetContrast: ((Int, Bool) -> Void)?
     /// Set by the app at startup: find the bridge and pair with it.
     var onPairLamps: (() -> Void)?
+    var onAllowKeychain: (() -> Void)?
     /// Set by the app at startup: set the lamps for now, not on the next tick.
     var onLampsChanged: (() -> Void)?
     /// Set by the app at startup: show these states on the bulbs now.

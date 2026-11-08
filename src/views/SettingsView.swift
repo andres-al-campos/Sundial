@@ -33,9 +33,15 @@ struct SettingsView: View {
                 HStack {
                     Text(appState.hueHost == nil ? "Not paired with a Hue Bridge" : "Paired with your Hue Bridge")
                     Spacer()
-                    Button(appState.hueHost == nil ? "Pair Hue Bridge" : "Pair again") { appState.onPairLamps?() }
-                        .controlSize(.small)
-                        .hoverShade()
+                    if appState.keychainDeclined {
+                        Button("Allow Keychain Access") { appState.onAllowKeychain?() }
+                            .controlSize(.small)
+                            .hoverShade()
+                    } else {
+                        Button(appState.hueHost == nil ? "Pair Hue Bridge" : "Pair again") { appState.onPairLamps?() }
+                            .controlSize(.small)
+                            .hoverShade()
+                    }
                 }
                 // Two lines held whatever the status says, so a status change
                 // doesn't move what's below it.

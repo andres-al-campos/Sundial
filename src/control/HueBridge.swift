@@ -186,12 +186,18 @@ final class HueBridge: NSObject, URLSessionDelegate {
 
     private static let service = "com.aurende.sundial.hue"
 
-    static func savedKey(host: String) -> String? {
+    static func savedKey(host: String) -> KeychainRead {
         let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
                                 kSecAttrAccount as String: host, kSecReturnData as String: true]
         var out: AnyObject?
-        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let d = out as? Data else { return nil }
-        return String(decoding: d, as: UTF8.self)
+        switch SecItemCopyMatching(q as CFDictionary, &out) {
+        case errSecSuccess:
+            guard let d = out as? Data else { return .missing }
+            return .found(String(decoding: d, as: UTF8.self))
+        case errSecItemNotFound: return .missing
+        // Deny, closing the prompt, or a locked Keychain: the key is there, Sundial just wasn't let in.
+        default: return .declined
+        }
     }
 
     private static func saveKey(_ key: String, host: String) {

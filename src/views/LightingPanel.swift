@@ -16,11 +16,18 @@ struct LightingPanel: View {
             if appState.hueHost == nil {
                 unpaired
             } else if bulbs.isEmpty {
-                Text(appState.lampStatus.hasPrefix("Paired") ? "Reading your bulbs…" : appState.lampStatus)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(14)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(appState.lampStatus.hasPrefix("Paired") ? "Reading your bulbs…" : appState.lampStatus)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    if appState.keychainDeclined {
+                        Button("Allow Keychain Access") { appState.onAllowKeychain?() }
+                            .font(.subheadline)
+                            .hoverShade()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
             } else {
                 TimelineView(.everyMinute) { _ in
                     VStack(alignment: .leading, spacing: 14) {
@@ -111,7 +118,11 @@ struct LightingPanel: View {
     /// the state. A hold says itself in its bulb's orange name and in Return to schedule.
     private var status: some View {
         Group {
-            if appState.lampsPaused {
+            if appState.keychainDeclined {
+                // One line, as every status here is, so the popup keeps its size.
+                Button("Allow Keychain Access so the lights follow the day") { appState.onAllowKeychain?() }
+                    .buttonStyle(.link)
+            } else if appState.lampsPaused {
                 Text("Paused").foregroundStyle(.orange)
             } else if let next = nextKey {
                 Text("Next color key at \(LightsView.time(next))").foregroundStyle(.secondary)

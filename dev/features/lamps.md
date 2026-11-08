@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-07 20:31, at 1.1.0.
+Updated 2026-11-07 20:47, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -173,7 +173,9 @@ blend looks in the room.
 - macOS asks for the Keychain again after every `./build.sh`, because the app is
   signed ad-hoc and each build is a new signature to it. Allow lasts one launch,
   Always Allow lasts until the next build. Until it's answered the lamps wait and
-  the status says so; the rest of the app runs.
+  the status says so; the rest of the app runs. Declined, the lamps stop and the
+  popup, the Lights window and Settings say why, with Allow Keychain Access to
+  ask again (tests/drive/held-lamp.sh).
 - macOS asks for local network access the first time Sundial looks for the bridge.
   Refused, no bridge is found. Allow it in System Settings → Privacy & Security
   → Local Network.
