@@ -415,7 +415,11 @@ struct LightsView: View {
             name(bulb)
                 .frame(width: Layout.name, height: Layout.rowHeight, alignment: .leading)
                 .contentShape(Rectangle())
-                .hoverShade()
+                .onHover { inside in
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        hoveredName = inside ? bulb.id : (hoveredName == bulb.id ? nil : hoveredName)
+                    }
+                }
                 .contextMenu { rowMenu(bulb) }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -462,7 +466,7 @@ struct LightsView: View {
         // band's end by as much as it shows above and below the band.
         .background {
             RoundedRectangle(cornerRadius: 5)
-                .fill(.primary.opacity(selected ? 0.08 : 0))
+                .fill(.primary.opacity(selected ? 0.08 : hoveredName == bulb.id ? 0.12 : 0))
                 .padding(.trailing, -Layout.bandMargin)
                 .animation(.easeOut(duration: 0.15), value: selected)
         }
@@ -470,6 +474,9 @@ struct LightsView: View {
 
     /// Where the pointer last was over a band, for the band's right-click menu.
     @State private var hoverX: CGFloat = 0
+    /// The bulb whose name is under the pointer: its whole row shades, as a click there lights the
+    /// whole row.
+    @State private var hoveredName: String?
 
     @ViewBuilder
     private func name(_ bulb: LightDay.Bulb) -> some View {
@@ -840,7 +847,7 @@ enum Layout {
     static let bandHeight: CGFloat = 34
     static let linkedHeight: CGFloat = 12
     /// What shows of a row above and below its band.
-    static let bandMargin: CGFloat = 5
+    static let bandMargin: CGFloat = 8
     static let rowHeight: CGFloat = bandHeight + 2 * bandMargin
     static let rowGap: CGFloat = 8
     static let rowsPadding: CGFloat = 16

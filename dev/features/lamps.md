@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-05 21:14, at 1.1.0.
+Updated 2026-11-07 19:15, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -47,7 +47,7 @@ artificial light follows the natural light along with the screen.
   rows' card, which stays put: a colour wheel, then the settings reading left to right and top
   to bottom: the bulb with its on/off switch to the left of its name and "Color Key" or "6 Color Keys" after it, the time,
   then long Brightness and Temperature sliders. A faint line divides the wheel from the rest. Off dims the wheel and
-  sliders, keeping their fill, and both say "Off". Every button shades on hover, and so does a bulb's name. The band shows nothing on hover:
+  sliders, keeping their fill, and both say "Off". Every button shades on hover, and pointing at a bulb's name shades its whole row. The band shows nothing on hover:
   a ring where a click would add a color key was "annoying when you're just moving around". The rows scroll only if the
   window can't fit them and the card. Its close button or clicking the dot again puts it
   away, as does clicking around the rows. A right-click leaves it open. If its keyframe goes, from a delete, Paste Day or an undo, it moves to that bulb's own card.
