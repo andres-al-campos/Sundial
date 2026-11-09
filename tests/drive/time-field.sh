@@ -63,22 +63,22 @@ Task { @MainActor in
         if c.hour != h || c.minute != min { failures.append("\(what): expected \(h):\(min), got \(c.hour ?? -1):\(c.minute ?? -1). \(fix)") }
     }
     await click(up: true)
-    expect("up with nothing highlighted", m.first, 11, 30, fix: "It should highlight the hour and step it, as the system's arrows do. Check PickerHandle.step in TimeField.swift.")
+    expect("up with nothing highlighted", m.first, 10, 31, fix: "With nothing picked the arrows start on the minute. Check PickerHandle.step in TimeField.swift.")
     if w.firstResponder !== picker { failures.append("after an arrow the picker isn't focused, so nothing shows what the arrows step. Check PickerHandle.step in TimeField.swift.") }
     await click(up: false)
     expect("down", m.first, 10, 30, fix: "Check PickerHandle.step in TimeField.swift.")
-    let right = String(UnicodeScalar(NSRightArrowFunctionKey)!)
+    let left = String(UnicodeScalar(NSLeftArrowFunctionKey)!)
     picker.keyDown(with: NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: w.windowNumber,
-                                          context: nil, characters: right, charactersIgnoringModifiers: right, isARepeat: false, keyCode: 124)!)
+                                          context: nil, characters: left, charactersIgnoringModifiers: left, isARepeat: false, keyCode: 123)!)
     await wait(0.1)
     await click(up: true)
-    expect("up with the minutes highlighted", m.first, 10, 31, fix: "The arrows must step what's highlighted. EditFocus ends the edit on this click and PickerHandle.step starts it again, which relies on the picker remembering its field. If the hour moved it no longer does, so have EditFocus leave the arrows alone.")
+    expect("up with the hour highlighted", m.first, 11, 30, fix: "The arrows must step what's highlighted. EditFocus ends the edit on this click and PickerHandle.step starts it again, which relies on the picker remembering its field and on step moving to the minute only before anything was picked. If the minute moved, one of those broke.")
     m.usingSecond = true
     await wait(0.3)
     expect("a new binding shown", picker.dateValue, 18, 5, fix: "TimeField's updateNSView has to show the time it's given.")
     await click(up: true)
-    expect("a new binding written", m.second, 18, 6, fix: "TimeField's updateNSView has to hand the coordinator the current binding, or an arrow writes to the keyframe shown before.")
-    expect("the old binding left alone", m.first, 10, 31, fix: "TimeField's updateNSView has to hand the coordinator the current binding, or an arrow writes to the keyframe shown before.")
+    expect("a new binding written", m.second, 19, 5, fix: "TimeField's updateNSView has to hand the coordinator the current binding, or an arrow writes to the keyframe shown before.")
+    expect("the old binding left alone", m.first, 11, 30, fix: "TimeField's updateNSView has to hand the coordinator the current binding, or an arrow writes to the keyframe shown before.")
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
@@ -98,4 +98,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/time-field" "$work/main.swift"
     exit 1
 fi
 "$work/time-field"
-echo "✓ time-field: the arrows step what's highlighted, on whichever time the field shows"
+echo "✓ time-field: the arrows start on the minute, then step what's highlighted, on whichever time the field shows"

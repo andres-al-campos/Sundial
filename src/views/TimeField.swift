@@ -43,21 +43,35 @@ private struct FieldGround: ViewModifier {
 }
 
 /// The picker the arrows act on. The arrows send it an arrow key, the one public way in, so they
-/// step whichever of hour or minute is highlighted, as the system's own arrows do.
+/// step whichever of hour or minute is highlighted, as the system's own arrows do. With nothing
+/// picked yet they start on the minute, the finer step and the one usually wanted.
 @MainActor
 private final class PickerHandle {
     weak var view: NSDatePicker?
+    /// Whether a field has been picked, by the arrows or by a click. The picker remembers its field
+    /// after the edit ends, so moving right every time would pass the minute to AM/PM.
+    private var picked = false
 
     func step(up: Bool) {
         guard let view, let window = view.window else { return }
-        if window.firstResponder !== view { window.makeFirstResponder(view) }
-        let key = String(UnicodeScalar(up ? NSUpArrowFunctionKey : NSDownArrowFunctionKey)!)
-        guard let press = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [],
+        if window.firstResponder === view {
+            picked = true
+        } else {
+            window.makeFirstResponder(view)
+            if !picked { press(NSRightArrowFunctionKey, code: 124); picked = true }
+        }
+        up ? press(NSUpArrowFunctionKey, code: 126) : press(NSDownArrowFunctionKey, code: 125)
+    }
+
+    private func press(_ arrow: Int, code: UInt16) {
+        guard let view, let window = view.window else { return }
+        let key = String(UnicodeScalar(arrow)!)
+        guard let event = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [],
                                            timestamp: ProcessInfo.processInfo.systemUptime,
                                            windowNumber: window.windowNumber, context: nil,
                                            characters: key, charactersIgnoringModifiers: key,
-                                           isARepeat: false, keyCode: up ? 126 : 125) else { return }
-        view.keyDown(with: press)
+                                           isARepeat: false, keyCode: code) else { return }
+        view.keyDown(with: event)
     }
 }
 
