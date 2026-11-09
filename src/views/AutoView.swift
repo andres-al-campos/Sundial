@@ -57,8 +57,7 @@ struct AutoView: View {
             Text("\(appState.autoNightShift)%")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(Layout.dim)
-            // Beside the value you can't change, where the question comes up; it points at Bedtime,
-            // which moves it. In today's times rather than the rule behind them.
+            // Beside the value you can't change, where the question comes up.
             InfoButton(text: nightShiftHelp)
             Spacer(minLength: 8)
             // Bedtime sits at the right edge, where the sliders' values end.
@@ -70,14 +69,12 @@ struct AutoView: View {
     }
 
     private var nightShiftHelp: String {
-        let now = Date()
-        let warm = SunClock.schedule(on: now, bedtime: appState.bedtime)
-        let start = LightDay.clockTime(warm.from, on: now).formatted(date: .omitted, time: .shortened)
-        guard let sun = SunClock.sun(on: now) else {
-            return "Night Shift starts warming at \(start) and reaches 100% at bedtime. Change Bedtime to move it."
+        guard SunClock.sun() != nil else {
+            // No place for this time zone: the fixed start, the one time there is to give.
+            let start = LightDay.clockTime(RoomLight.fittedSchedule.from, on: Date()).formatted(date: .omitted, time: .shortened)
+            return "Starts warming at \(start) and reaches 100% at bedtime."
         }
-        let before = Int((sun.sunset - Double(warm.from)).rounded())
-        return "Night Shift starts warming at \(start), \(before) minutes before sunset, and reaches 100% at bedtime. Change Bedtime to move it."
+        return "Starts warming \(Int(RoomLight.warmBeforeSunset)) minutes before sunset and reaches 100% at bedtime."
     }
 
     private var bedtimeBinding: Binding<Date> {
