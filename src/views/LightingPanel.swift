@@ -177,7 +177,7 @@ struct LightingPanel: View {
                 .font(.subheadline)
                 .foregroundStyle(Layout.dim)
             Button("Pair Hue Bridge…") { appState.onPairLamps?() }
-                .buttonStyle(.outlined(HoverButton.createBlue))
+                .buttonStyle(.outlined(OutlinedButtonStyle.createBlue))
                 .font(.subheadline)
             if appState.lampStatus != "Not paired" {
                 Text(appState.lampStatus)

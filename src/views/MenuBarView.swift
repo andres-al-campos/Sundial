@@ -48,7 +48,7 @@ struct MenuBarView: View {
                         NSApp.keyWindow?.close()
                         appState.onOpenWindow?()
                     }
-                    .buttonStyle(.outlined(HoverButton.createBlue))
+                    .buttonStyle(.outlined(OutlinedButtonStyle.createBlue))
                 }
             }
             .font(.subheadline)
@@ -164,6 +164,9 @@ struct Segments<Value: Hashable>: View {
 /// button's own color at rest, and under the pointer white text, a shade and a brighter outline.
 struct OutlinedButtonStyle: ButtonStyle {
     var rest: Color = .primary
+    /// Blue for an action that creates something. The link blue, not the accent: the accent is
+    /// too dark to read on the popup's glass.
+    static let createBlue = Color(nsColor: .linkColor)
 
     func makeBody(configuration: Configuration) -> some View {
         Outlined(configuration: configuration, rest: rest)
@@ -194,47 +197,6 @@ struct OutlinedButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == OutlinedButtonStyle {
     static var outlined: OutlinedButtonStyle { .init() }
     static func outlined(_ rest: Color) -> OutlinedButtonStyle { .init(rest: rest) }
-}
-
-// MARK: - Header Button
-
-/// A text action, such as the window's Add Preset: dimmed text that turns primary under the pointer.
-struct HoverButton: View {
-    let label: String
-    let systemImage: String?
-    /// The colour at rest: secondary, or blue for an action that creates
-    /// something. The link blue, not the accent: the accent is too dark to
-    /// read on the popup's glass.
-    let rest: Color
-    let action: () -> Void
-    @State private var isHovered = false
-
-    static let createBlue = Color(nsColor: .linkColor)
-
-    init(_ label: String, systemImage: String? = nil, rest: Color = Layout.dim, action: @escaping () -> Void) {
-        self.label = label
-        self.systemImage = systemImage
-        self.rest = rest
-        self.action = action
-    }
-
-    var body: some View {
-        Button(action: action) {
-            if let systemImage {
-                // Not a Label: its gap between icon and text is wide enough to
-                // read as two things in a footer.
-                HStack(spacing: 4) {
-                    Image(systemName: systemImage)
-                    Text(label)
-                }
-            } else {
-                Text(label)
-            }
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(isHovered ? Color.primary : rest)
-        .onHover { isHovered = $0 }
-    }
 }
 
 /// Every button in a window answers the pointer the same way. macOS leaves its standard

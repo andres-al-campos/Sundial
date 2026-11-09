@@ -91,7 +91,12 @@ private struct PresetsSection: View {
             // At the column's top right, beside the cards it adds to.
             HStack {
                 Spacer()
-                HoverButton("Add Preset", systemImage: "plus", rest: HoverButton.createBlue, action: addPreset)
+                // The popup's button, so a button looks the same wherever it is.
+                Button(action: addPreset) {
+                    HStack(spacing: 4) { Image(systemName: "plus"); Text("Add Preset") }
+                }
+                .buttonStyle(.outlined(OutlinedButtonStyle.createBlue))
+                .font(.subheadline)
             }
             .frame(height: 28)
             .padding(.horizontal, Layout.edge)
@@ -99,8 +104,9 @@ private struct PresetsSection: View {
             .frame(maxWidth: Self.column)
             .frame(maxWidth: .infinity, alignment: .leading)
             GeometryReader { geo in
+                // The cards span what Settings' content spans, their lines on its lines.
                 PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height,
-                               width: Self.column)
+                               width: Self.column, inset: Layout.edge)
             }
         }
         // The popup's preset card opens the window on that preset.
