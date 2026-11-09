@@ -61,7 +61,6 @@ struct AutoView: View {
             // Bedtime sits at the right edge, where the sliders' values end.
             Text("Bedtime")
                 .font(.caption)
-                .foregroundStyle(Layout.dim)
             TimeField(label: "Bedtime", time: bedtimeBinding)
         }
         .frame(height: 20)
