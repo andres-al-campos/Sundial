@@ -96,11 +96,11 @@ Task { @MainActor in
                                           context: nil, characters: right, charactersIgnoringModifiers: right, isARepeat: false, keyCode: 124)!)
     await wait(0.1)
     let start = Calendar.current.dateComponents([.hour, .minute], from: m.second)
-    await hold(up: true, for: 2.2)
+    await hold(up: true, for: 3)
     let held = Calendar.current.dateComponents([.hour, .minute], from: m.second)
     let moved = (held.hour! * 60 + held.minute!) - (start.hour! * 60 + start.minute!)
     if held.minute! % 5 != 0 || moved < 40 {
-        failures.append("holding the up arrow 2 seconds from \(start.hour!):\(start.minute!) reached \(held.hour!):\(held.minute!), \(moved) minutes. After PickerHandle.speedUpAfter the steps should be 5 minutes, landing on multiples of 5. Check speedUp in TimeField.swift, and that a hold's repeats still share the press's mouse-down timestamp.")
+        failures.append("holding the up arrow 3 seconds from \(start.hour!):\(start.minute!) reached \(held.hour!):\(held.minute!), \(moved) minutes. After PickerHandle.speedUpAfter the steps should be 5 minutes, landing on multiples of 5. Check speedUp in TimeField.swift, and that a hold's repeats still share the press's mouse-down timestamp.")
     }
     await click(up: true)
     let after = Calendar.current.dateComponents([.hour, .minute], from: m.second)

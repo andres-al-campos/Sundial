@@ -71,7 +71,7 @@ private final class PickerHandle {
     }
 
     /// When a hold speeds up: the system's repeat is ten minutes a second, an hour every 6 seconds.
-    static let speedUpAfter: TimeInterval = 1
+    static let speedUpAfter: TimeInterval = 1.5
     private var heldSince: TimeInterval = 0
     private var pressedAt: TimeInterval = -1
 
