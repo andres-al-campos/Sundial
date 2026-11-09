@@ -125,4 +125,5 @@ preview, add, delete).
   camera". "nothing should ever teleport". Applies *Motion spends attention*.
 - 2026-11-09 17:23, 1.1.0. Deleting the open card opens the one after it, or the one before when it was the last, as
   Mac lists do. The one before was tried first, since its Delete isn't under the pointer and a
-  quick second click can't delete it too; the user chose the standard over that.
+  quick second click can't delete it too; the user chose the standard over that. Applies *Never a
+  fight with the controls* (where the platform has its own way, it's used).
