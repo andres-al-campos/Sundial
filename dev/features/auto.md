@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-08 19:25, at 1.1.0.
+Updated 2026-11-08 20:59, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -108,6 +108,9 @@ real reply from the M27Q.
 
 ## Gotchas
 
+- A hover tooltip (`.help`) shows nothing in the menu bar popup: the Night Shift ⓘ's did nothing
+  under the pointer (macOS 27, 2026-11-08). Explaining something there takes a click, a popover.
+  The Room reading's lux tooltip is the same and still unseen.
 - Sundial sets the monitor itself over IOAVService, Apple silicon's private DDC path, since
   2026-11-05; before, it went through BetterDisplay's command line, which took about 16 seconds a
   command with BetterDisplay's app closed. On the Mac's own HDMI port the I2C chip address is
@@ -226,6 +229,11 @@ real reply from the M27Q.
   "i honestly can't think of anything else that means this is the point the
   light should be the darkest at".
   Applies *Just right for the room*.
+- 2026-11-08 20:59, 1.1.0. An ⓘ beside Night Shift's value, the one you can't change, explains it in two lines: "Starts
+  warming 30 minutes before sunset and reaches 100% at bedtime." It gives the rule, not today's
+  times, the name or how to change it: "it doesnt need to say night shift, what time it starts or
+  how to change it"; "dumping the whole technical details is rarely the right way". It opens on a
+  click, above the icon. Applies *Never a fight with the controls*.
 - 2026-10-30 17:34, 1.1.0. When the room reads 0 before bedtime, brightness keeps falling by the clock
   to the night minimum at bedtime ("if lux is 0 before midnight it should
   interpolate"). The log showed it: the room read 0 from 22:30-23:00 every
