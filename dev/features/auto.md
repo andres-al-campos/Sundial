@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-07 23:20, at 1.1.0.
+Updated 2026-11-08 19:25, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -22,7 +22,7 @@ presets; Schedule (the presets) is the other.
   settled at 3.5-4 × from the 28th; a curve bent no better (power 0.99).
   Below brightness 1 a drag leaves the multiple alone: every multiple gives
   0 there.
-- **Night Shift follows the sun**: it starts warming 40 minutes before
+- **Night Shift follows the sun**: it starts warming 30 minutes before
   sunset, rises evenly to full at your bedtime (the time in the Night Shift
   row, "Bedtime", midnight by default; past midnight counts as the same
   night), and turns off 46 minutes before
@@ -33,11 +33,11 @@ presets; Schedule (the presets) is the other.
   no location permission. Until one is picked it's the point macOS's time zone table gives
   your time zone (Chicago for America/Chicago); each degree of longitude from
   the real place moves them about 4 minutes. A zone with no point (UTC) and no
-  pick keeps the fixed 5:13 PM and 6:30 AM. When the Mac changes time zone
+  pick keeps the fixed 5:23 PM and 6:30 AM. When the Mac changes time zone
   (traveling, with "Set time zone automatically" on), the clock and the sun
   move to the new zone at once, leaving the pick behind until you're back.
 - **After sunset, the clock dims to bedtime.** From where Night Shift starts
-  warming (40 minutes before sunset, where the lamps start on Twilight), lux
+  warming (30 minutes before sunset, where the lamps start on Twilight), lux
   stops counting: brightness and contrast slide evenly from what the room gave
   at that moment to the night pair (brightness 1, contrast 3 to start) by
   bedtime, and stay there until Night Shift turns off. If Sundial didn't see

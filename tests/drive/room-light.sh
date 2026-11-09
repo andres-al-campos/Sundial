@@ -55,7 +55,7 @@ check("contrast can be set at brightness 0", RoomLight.contrastScale(forContrast
 // Night Shift by the clock, against the presets it was fitted to.
 func ns(_ h: Int, _ m: Int) -> Double { RoomLight.nightShift(minuteOfDay: h * 60 + m) }
 check("off in the afternoon", ns(14, 47) == 0, ns(14, 47))
-check("off just before the ramp", ns(17, 12) == 0, ns(17, 12))
+check("off just before the ramp", ns(17, 22) == 0, ns(17, 22))
 check("near Twilight's 31 at 7:17 PM", near(ns(19, 17), 31, 4), ns(19, 17))
 check("near Evening's 42 at 8:07 PM", near(ns(20, 7), 42, 4), ns(20, 7))
 check("near Night's 67 at 10:17 PM", near(ns(22, 17), 67, 8), ns(22, 17))
@@ -64,24 +64,24 @@ check("full after midnight", ns(3, 0) == 100, ns(3, 0))
 check("off from 6:30 AM", ns(6, 30) == 0 && ns(6, 29) == 100, (ns(6, 29), ns(6, 30)))
 
 // The evening: the sensor reads the lamps then, so the clock takes the screen to
-// the night pair by bedtime (the fitted schedule: from 5:13 PM, full at midnight,
+// the night pair by bedtime (the fitted schedule: from 5:23 PM, full at midnight,
 // off 6:30 AM).
 let night = RoomLight.fittedSchedule
 func dk(_ h: Int, _ m: Int, since sh: Int, _ sm: Int) -> Double {
     RoomLight.eveningFraction(minuteOfDay: h * 60 + m, since: sh * 60 + sm, schedule: night)
 }
 func eve(_ h: Int, _ m: Int) -> Bool { RoomLight.isEvening(minuteOfDay: h * 60 + m, schedule: night) }
-check("the afternoon is before the evening", !eve(17, 12) && !eve(6, 30), (eve(17, 12), eve(6, 30)))
-check("Night Shift's start, midnight and 6:29 AM are the evening", eve(17, 13) && eve(0, 0) && eve(6, 29), "")
-check("the evening starts at the room's brightness", dk(17, 13, since: 17, 13) == 0, dk(17, 13, since: 17, 13))
-check("and is halfway halfway to bedtime", near(dk(20, 36, since: 17, 13), 0.5, 0.01), dk(20, 36, since: 17, 13))
-check("and at the night pair by bedtime and after", dk(0, 0, since: 17, 13) == 1 && dk(3, 0, since: 17, 13) == 1, (dk(0, 0, since: 17, 13), dk(3, 0, since: 17, 13)))
+check("the afternoon is before the evening", !eve(17, 22) && !eve(6, 30), (eve(17, 22), eve(6, 30)))
+check("Night Shift's start, midnight and 6:29 AM are the evening", eve(17, 23) && eve(0, 0) && eve(6, 29), "")
+check("the evening starts at the room's brightness", dk(17, 23, since: 17, 23) == 0, dk(17, 23, since: 17, 23))
+check("and is halfway halfway to bedtime", near(dk(20, 41, since: 17, 23), 0.5, 0.01), dk(20, 41, since: 17, 23))
+check("and at the night pair by bedtime and after", dk(0, 0, since: 17, 23) == 1 && dk(3, 0, since: 17, 23) == 1, (dk(0, 0, since: 17, 23), dk(3, 0, since: 17, 23)))
 check("a drag at 10:30 PM starts the slide over from there", dk(22, 30, since: 22, 30) == 0 && near(dk(23, 15, since: 22, 30), 0.5, 0.001), dk(23, 15, since: 22, 30))
 check("waking after bedtime is the night pair at once", dk(1, 0, since: 1, 0) == 1, dk(1, 0, since: 1, 0))
 check("the morning after Night Shift ends isn't on the slide", dk(7, 0, since: 22, 30) == 0, dk(7, 0, since: 22, 30))
 check("nor is the afternoon", dk(14, 0, since: 13, 0) == 0, dk(14, 0, since: 13, 0))
-check("a start from before the evening counts from its start", near(dk(20, 36, since: 15, 0), 0.5, 0.01), dk(20, 36, since: 15, 0))
-check("the evening's length is Night Shift's hours", RoomLight.eveningLength(schedule: night) == 13 * 60 + 17, RoomLight.eveningLength(schedule: night))
+check("a start from before the evening counts from its start", near(dk(20, 41, since: 15, 0), 0.5, 0.01), dk(20, 41, since: 15, 0))
+check("the evening's length is Night Shift's hours", RoomLight.eveningLength(schedule: night) == 13 * 60 + 7, RoomLight.eveningLength(schedule: night))
 check("the slide reaches the night value at bedtime", RoomLight.slid(5, toward: 1, dark: 1) == 1, "")
 check("halfway, halfway between", RoomLight.slid(5, toward: 1, dark: 0.5) == 3, "")
 check("a value already below the night's isn't raised", RoomLight.slid(0.5, toward: 1, dark: 1) == 0.5, "")
