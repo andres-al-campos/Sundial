@@ -81,11 +81,14 @@ private struct MainWindowView: View {
 /// The Schedule's presets, with room to edit them.
 private struct PresetsSection: View {
     @EnvironmentObject var appState: AppState
+    /// Settings' width, from the same left edge, so switching pages moves nothing: across the
+    /// whole window the sliders ran long and the values sat far from their labels.
+    private static let column = 520 + 2 * Layout.edge
     @State private var expanded: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top right, where Lights keeps its buttons.
+            // At the column's top right, beside the cards it adds to.
             HStack {
                 Spacer()
                 HoverButton("Add Preset", systemImage: "plus", rest: HoverButton.createBlue, action: addPreset)
@@ -93,12 +96,11 @@ private struct PresetsSection: View {
             .frame(height: 28)
             .padding(.horizontal, Layout.edge)
             .padding(.vertical, 10)
+            .frame(maxWidth: Self.column)
+            .frame(maxWidth: .infinity, alignment: .leading)
             GeometryReader { geo in
-                // Settings' width, centered: across the whole window the sliders ran long and
-                // the values sat far from their labels.
-                let column = 520 + 2 * Layout.edge
                 PresetListView(expandedPresetID: $expanded, appState: appState, height: geo.size.height,
-                               width: column, leading: max(0, (geo.size.width - column) / 2))
+                               width: Self.column)
             }
         }
         // The popup's preset card opens the window on that preset.

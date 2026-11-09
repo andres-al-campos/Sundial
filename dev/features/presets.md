@@ -109,8 +109,8 @@ preview, add, delete).
   place across modes, and Open Sundial is blue, white on hover ("blue and white on hover"), in
   the link blue: the accent blue was too dark to read on the glass. Applies *Never a fight with
   the controls*.
-- 2026-11-08 00:29, 1.1.0. In the window, the preset list is one column at Settings' width, centered, with Add Preset at
-  the top right, and only one card opens at a time. A grid with every card open was tried and
+- 2026-11-08 18:57, 1.1.0. In the window, the preset list is one column at Settings' width from the same left edge, so
+  switching pages moves nothing, with Add Preset at the column's top right, and only one card opens at a time. A grid with every card open was tried and
   turned down: "theres no reason to see more than one at the same time".
 - 2026-11-08 01:04, 1.1.0. Every button in the popup, Pause and Return to schedule as well as Quit and Open Sundial, is
   the one outlined style at one size: text in its own color at rest, and under the pointer white

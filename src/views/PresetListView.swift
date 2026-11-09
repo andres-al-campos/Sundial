@@ -45,15 +45,13 @@ struct PresetListView: View {
     /// The tallest the list may get. In the desktop window, the room it has.
     private let height: CGFloat
     private let width: CGFloat
-    private let leading: CGFloat
 
     /// Takes `appState` here as well as from the environment so the list starts
     /// with its rows and its height: filling them in after the first layout
     /// showed the empty state for a frame and resized the popup.
-    init(expandedPresetID: Binding<UUID?>, appState: AppState, height: CGFloat, width: CGFloat = .infinity, leading: CGFloat = 0) {
+    init(expandedPresetID: Binding<UUID?>, appState: AppState, height: CGFloat, width: CGFloat = .infinity) {
         self.height = height
         self.width = width
-        self.leading = leading
         _expandedPresetID = expandedPresetID
         let sorted = Self.sorted(appState)
         _sortedPresets = State(initialValue: sorted)
@@ -107,7 +105,6 @@ struct PresetListView: View {
             // the scroll view, and centering in it slid the column sideways as the bar came
             // and went. The bar sits in the margin on the right.
             .frame(maxWidth: width)
-            .padding(.leading, leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             // The rows animate, and the scroll view gets their final height at once. A
             // withAnimation around the change animated the scroll view's own content size
