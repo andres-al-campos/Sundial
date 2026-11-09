@@ -58,6 +58,17 @@ Task { @MainActor in
         }
         await wait(0.35)
     }
+    @MainActor func hold(up: Bool, for seconds: Double) async {
+        let at = NSPoint(x: box.midX, y: up ? box.minY + box.height * 0.75 : box.minY + box.height * 0.25)
+        func post(_ type: NSEvent.EventType) {
+            NSApp.postEvent(NSEvent.mouseEvent(with: type, location: at, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                               windowNumber: w.windowNumber, context: nil, eventNumber: 1, clickCount: 1, pressure: 1)!, atStart: false)
+        }
+        post(.leftMouseDown)
+        // The stepper tracks the press in a loop of its own, so the release has to come from outside it.
+        DispatchQueue.global().asyncAfter(deadline: .now() + seconds) { DispatchQueue.main.async { post(.leftMouseUp) } }
+        await wait(seconds + 0.4)
+    }
     func expect(_ what: String, _ date: Date, _ h: Int, _ min: Int, fix: String) {
         let c = Calendar.current.dateComponents([.hour, .minute], from: date)
         if c.hour != h || c.minute != min { failures.append("\(what): expected \(h):\(min), got \(c.hour ?? -1):\(c.minute ?? -1). \(fix)") }
@@ -79,6 +90,23 @@ Task { @MainActor in
     await click(up: true)
     expect("a new binding written", m.second, 19, 5, fix: "TimeField's updateNSView has to hand the coordinator the current binding, or an arrow writes to the keyframe shown before.")
     expect("the old binding left alone", m.first, 11, 30, fix: "TimeField's updateNSView has to hand the coordinator the current binding, or an arrow writes to the keyframe shown before.")
+    // Held on the minute, the steps become 5 minutes after a second; a click after is one minute again.
+    let right = String(UnicodeScalar(NSRightArrowFunctionKey)!)
+    picker.keyDown(with: NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: w.windowNumber,
+                                          context: nil, characters: right, charactersIgnoringModifiers: right, isARepeat: false, keyCode: 124)!)
+    await wait(0.1)
+    let start = Calendar.current.dateComponents([.hour, .minute], from: m.second)
+    await hold(up: true, for: 2.2)
+    let held = Calendar.current.dateComponents([.hour, .minute], from: m.second)
+    let moved = (held.hour! * 60 + held.minute!) - (start.hour! * 60 + start.minute!)
+    if held.minute! % 5 != 0 || moved < 40 {
+        failures.append("holding the up arrow 2 seconds from \(start.hour!):\(start.minute!) reached \(held.hour!):\(held.minute!), \(moved) minutes. After PickerHandle.speedUpAfter the steps should be 5 minutes, landing on multiples of 5. Check speedUp in TimeField.swift, and that a hold's repeats still share the press's mouse-down timestamp.")
+    }
+    await click(up: true)
+    let after = Calendar.current.dateComponents([.hour, .minute], from: m.second)
+    if (after.hour! * 60 + after.minute!) - (held.hour! * 60 + held.minute!) != 1 {
+        failures.append("a click after a hold moved \(held.hour!):\(held.minute!) to \(after.hour!):\(after.minute!), not one minute. A new press has to start slow again; check heldSince in TimeField.swift.")
+    }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
@@ -98,4 +126,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/time-field" "$work/main.swift"
     exit 1
 fi
 "$work/time-field"
-echo "✓ time-field: the arrows start on the minute, then step what's highlighted, on whichever time the field shows"
+echo "✓ time-field: the arrows start on the minute, then step what's highlighted, a held arrow speeds up to 5 minutes and a click after is 1, on whichever time the field shows"

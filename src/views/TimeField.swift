@@ -60,7 +60,34 @@ private final class PickerHandle {
             window.makeFirstResponder(view)
             if !picked { press(NSRightArrowFunctionKey, code: 124); picked = true }
         }
+        // The stepper's repeats while it's held all come under the press's own mouse-down, so a new
+        // timestamp is a new press.
+        let now = ProcessInfo.processInfo.systemUptime
+        let stamp = NSApp.currentEvent?.timestamp ?? now
+        if stamp != pressedAt { pressedAt = stamp; heldSince = now }
+        let before = view.dateValue
         up ? press(NSUpArrowFunctionKey, code: 126) : press(NSDownArrowFunctionKey, code: 125)
+        if now - heldSince > Self.speedUpAfter { speedUp(from: before, up: up) }
+    }
+
+    /// When a hold speeds up: the system's repeat is ten minutes a second, an hour every 6 seconds.
+    static let speedUpAfter: TimeInterval = 1
+    private var heldSince: TimeInterval = 0
+    private var pressedAt: TimeInterval = -1
+
+    /// Held long enough on the minute, the steps become 5 minutes, landing on :00, :05, :10. The hour
+    /// steps as the system's arrows step it.
+    private func speedUp(from before: Date, up: Bool) {
+        guard let view else { return }
+        let cal = Calendar.current
+        func minute(_ d: Date) -> Int { let c = cal.dateComponents([.hour, .minute], from: d); return c.hour! * 60 + c.minute! }
+        let was = minute(before), moved = (minute(view.dateValue) - was + 24 * 60) % (24 * 60)
+        guard moved == 1 || moved == 24 * 60 - 1 else { return }
+        let next = up ? (was / 5 + 1) * 5 : ((was + 4) / 5 - 1) * 5
+        let wrapped = (next + 24 * 60) % (24 * 60)
+        guard let date = cal.date(bySettingHour: wrapped / 60, minute: wrapped % 60, second: 0, of: before) else { return }
+        view.dateValue = date
+        if let action = view.action { NSApp.sendAction(action, to: view.target, from: view) }
     }
 
     private func press(_ arrow: Int, code: UInt16) {
