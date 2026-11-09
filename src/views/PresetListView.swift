@@ -165,11 +165,11 @@ struct PresetListView: View {
         .onChange(of: appState.presets.count) { old, new in
             let before = sortedPresets
             refreshSort()
-            // Deleting the open card opens the one before it, which now covers its time, and whose
-            // Delete isn't under the pointer, so a second click can't take it too. The first opens the next.
+            // Deleting the open card opens the one after it, the last the one before, as Mac lists do,
+            // chosen over the one before though a quick second click can delete that one too.
             if new < old, let gone = expandedPresetID, !sortedPresets.contains(where: { $0.id == gone }),
                let was = before.firstIndex(where: { $0.id == gone }) {
-                expandedPresetID = was > 0 ? before[was - 1].id : sortedPresets.first?.id
+                expandedPresetID = was + 1 < before.count ? before[was + 1].id : sortedPresets.last?.id
             }
             // A card opened by adding or deleting opens where it sorts. The list scrolls only when that's
             // out of view, and during the rows' own animation: a scroll after it moved everything twice.
