@@ -57,29 +57,27 @@ struct AutoView: View {
             Text("\(appState.autoNightShift)%")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(Layout.dim)
+            // Beside the value you can't change, where the question comes up; it points at Bedtime,
+            // which moves it. In today's times rather than the rule behind them.
+            InfoButton(text: nightShiftHelp)
             Spacer(minLength: 8)
             // Bedtime sits at the right edge, where the sliders' values end.
             Text("Bedtime")
                 .font(.caption)
-            // Says what the time does, in today's times rather than the rule behind them.
-            Image(systemName: "info.circle")
-                .font(.caption)
-                .foregroundStyle(Layout.dim)
-                .help(bedtimeHelp)
             TimeField(label: "Bedtime", time: bedtimeBinding)
         }
         .frame(height: 20)
     }
 
-    private var bedtimeHelp: String {
+    private var nightShiftHelp: String {
         let now = Date()
         let warm = SunClock.schedule(on: now, bedtime: appState.bedtime)
         let start = LightDay.clockTime(warm.from, on: now).formatted(date: .omitted, time: .shortened)
         guard let sun = SunClock.sun(on: now) else {
-            return "Night Shift starts warming at \(start) and reaches 100% at bedtime."
+            return "Night Shift follows the sun: it starts warming at \(start) and reaches 100% at bedtime. Change Bedtime to move it."
         }
         let before = Int((sun.sunset - Double(warm.from)).rounded())
-        return "Night Shift starts warming at \(start), \(before) minutes before sunset, and reaches 100% at bedtime."
+        return "Night Shift follows the sun: it starts warming at \(start), \(before) minutes before sunset, and reaches 100% at bedtime. Change Bedtime to move it."
     }
 
     private var bedtimeBinding: Binding<Date> {
@@ -156,6 +154,30 @@ private struct AutoSlider: View {
         .onAppear { value = current }
         .onChange(of: current) { _, newValue in
             if !dragging { value = newValue }
+        }
+    }
+}
+
+/// An ⓘ that says its text when clicked, in a popover, and on hover as a tooltip. Hover alone
+/// did nothing for a click, and a click is what an icon invites.
+struct InfoButton: View {
+    let text: String
+    @State private var shown = false
+
+    var body: some View {
+        Button { shown.toggle() } label: {
+            Image(systemName: "info.circle")
+                .font(.caption)
+                .foregroundStyle(Layout.dim)
+        }
+        .buttonStyle(.plain)
+        .help(text)
+        .popover(isPresented: $shown, arrowEdge: .bottom) {
+            Text(text)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: 240, alignment: .leading)
+                .padding(12)
         }
     }
 }
