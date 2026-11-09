@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-08 21:03, at 1.1.0.
+Updated 2026-11-08 22:27, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -111,7 +111,7 @@ The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's fu
 `./build.sh drive popup-list` (~3s): opens the time menu's real list and checks it sits on the button's edges, with the chosen item over the label. It flashes in the screen's bottom-left corner for under half a second, taking no focus, since macOS moves a list opened off-screen onto a display. Renders can't show an open list: four fixes looked right closed and opened off the button's edges.
 
 `./build.sh drive time-field` (~6s): clicks the time field's arrows off-screen, taking no focus. They start on
-the minute, then step what's highlighted; held more than 1.5 seconds on the minute, they step 5
+the minute, then step what's highlighted; held more than 2 seconds on the minute, they step 5
 minutes, and a click after is 1 again. They write to the keyframe showing now.
 
 By hand only: the window, a real drag and the right-click menus (SwiftUI's gestures and menus take nothing off-screen), how the card moves, pairing, that the bridge takes the fades, how the
