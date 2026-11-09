@@ -74,10 +74,10 @@ struct AutoView: View {
         let warm = SunClock.schedule(on: now, bedtime: appState.bedtime)
         let start = LightDay.clockTime(warm.from, on: now).formatted(date: .omitted, time: .shortened)
         guard let sun = SunClock.sun(on: now) else {
-            return "Night Shift follows the sun: it starts warming at \(start) and reaches 100% at bedtime. Change Bedtime to move it."
+            return "Night Shift starts warming at \(start) and reaches 100% at bedtime. Change Bedtime to move it."
         }
         let before = Int((sun.sunset - Double(warm.from)).rounded())
-        return "Night Shift follows the sun: it starts warming at \(start), \(before) minutes before sunset, and reaches 100% at bedtime. Change Bedtime to move it."
+        return "Night Shift starts warming at \(start), \(before) minutes before sunset, and reaches 100% at bedtime. Change Bedtime to move it."
     }
 
     private var bedtimeBinding: Binding<Date> {
@@ -172,7 +172,8 @@ struct InfoButton: View {
         }
         .buttonStyle(.plain)
         .help(text)
-        .popover(isPresented: $shown, arrowEdge: .bottom) {
+        // Above the icon, its arrow pointing down at it.
+        .popover(isPresented: $shown, arrowEdge: .top) {
             Text(text)
                 .font(.callout)
                 .fixedSize(horizontal: false, vertical: true)
