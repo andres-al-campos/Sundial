@@ -61,9 +61,25 @@ struct AutoView: View {
             // Bedtime sits at the right edge, where the sliders' values end.
             Text("Bedtime")
                 .font(.caption)
+            // Says what the time does, in today's times rather than the rule behind them.
+            Image(systemName: "info.circle")
+                .font(.caption)
+                .foregroundStyle(Layout.dim)
+                .help(bedtimeHelp)
             TimeField(label: "Bedtime", time: bedtimeBinding)
         }
         .frame(height: 20)
+    }
+
+    private var bedtimeHelp: String {
+        let now = Date()
+        let warm = SunClock.schedule(on: now, bedtime: appState.bedtime)
+        let start = LightDay.clockTime(warm.from, on: now).formatted(date: .omitted, time: .shortened)
+        guard let sun = SunClock.sun(on: now) else {
+            return "Night Shift starts warming at \(start) and reaches 100% at bedtime."
+        }
+        let before = Int((sun.sunset - Double(warm.from)).rounded())
+        return "Night Shift starts warming at \(start), \(before) minutes before sunset, and reaches 100% at bedtime."
     }
 
     private var bedtimeBinding: Binding<Date> {
