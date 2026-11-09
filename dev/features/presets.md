@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-09 01:36, at 1.1.0.
+Updated 2026-11-09 16:40, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -14,7 +14,7 @@ passed. Auto mode doesn't use them (see auto.md).
 - Dragging a slider on another preset previews that preset on the monitor; the
   Preview button does the same. Collapsing the row or closing the menu ends it.
 - Add a preset from the footer (it opens expanded, scrolled into view), and
-  delete one from its card.
+  delete one from its card (the one before it opens in its place).
 - **Contrast locks in HDR.** While the configured display is in HDR, the
   Contrast slider is replaced by the text "Locked by monitor in HDR", with a
   lock beside the label. The value stays visible. The schedule still sends contrast: the
@@ -45,7 +45,8 @@ the headroom comparison loosened.
 off-screen, and checks the list's scroll height changes once per toggle, so the scroll bar's handle
 resizes once rather than on every frame, that closing a card at the end of the list glides to
 the new end, and that adding a preset whose card opens out of view glides to it within the rows'
-own animation (failed at 0.45s with the old scroll 0.2s after the add). Last driven: 2026-11-08, passed; failed with 22 changes per toggle when the change was
+own animation (failed at 0.45s with the old scroll 0.2s after the add), and that deleting the open
+card opens the one before it. Last driven: 2026-11-08, passed; failed with 22 changes per toggle when the change was
 wrapped in `withAnimation`, and with a 134-point snap when the list shrank at once on closing.
 
 By hand only: that the note replaces the slider and goes away again when HDR
@@ -122,3 +123,7 @@ preview, add, delete).
   slide to make room, all in one 0.15s animation. The list scrolls only when the new card would
   open out of view, and in that same animation: a scroll after the rows had moved "snapped the
   camera". "nothing should ever teleport". Applies *Motion spends attention*.
+- 2026-11-09 16:40, 1.1.0. Deleting the open card opens the one before it in the day (the first opens the new first): that
+  one now covers the deleted one's time, and its Delete sits above the pointer, so a second click
+  can't delete it too. The one after was the other candidate; it would slide up under the pointer.
+  Applies *Never a fight with the controls*.

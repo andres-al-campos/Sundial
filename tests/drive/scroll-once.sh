@@ -131,6 +131,27 @@ Task { @MainActor in
     if addHeights.count > 2 {
         failures.append("adding a preset changed the list's height \(addHeights.count - 1) times; the scroll bar's handle should resize once.")
     }
+    // Deleting the open card opens the one before it in the day, in the same single height change.
+    open.id = target
+    await wait(0.6)
+    let order = state.schedule.sorted { $0.minutesSinceMidnight < $1.minutesSinceMidnight }.map(\.presetID)
+    let before = order[order.firstIndex(of: target)! - 1]
+    var delHeights: [CGFloat] = []
+    let delTimer = Timer(timeInterval: 1.0 / 240, repeats: true) { _ in MainActor.assumeIsolated {
+        let h = sv.documentView?.frame.height ?? -1
+        if delHeights.last != h { delHeights.append(h) }
+    }}
+    RunLoop.main.add(delTimer, forMode: .common)
+    await wait(0.05)
+    state.deletePreset(id: target)
+    await wait(0.6)
+    delTimer.invalidate()
+    if open.id != before {
+        failures.append("deleting the open card left \(open.id.map { id in state.presets.first { $0.id == id }?.name ?? "a missing preset" } ?? "nothing") open; it should open the one before it. PresetListView's onChange of presets.count picks it.")
+    }
+    if delHeights.count > 2 {
+        failures.append("deleting the open card changed the list's height \(delHeights.count - 1) times; it should change once, with the rows.")
+    }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
@@ -151,4 +172,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/scroll-once" "$work/main.swift
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/scroll-once"
-echo "✓ scroll-once: opening or closing a preset card changes the list's scroll height once, closing one at the end glides, and adding one glides to it in step with the rows"
+echo "✓ scroll-once: opening or closing a preset card changes the list's scroll height once, closing one at the end glides, adding one glides to it in step with the rows, and deleting the open one opens the one before it"

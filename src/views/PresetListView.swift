@@ -163,10 +163,17 @@ struct PresetListView: View {
             }
         }
         .onChange(of: appState.presets.count) { old, new in
+            let before = sortedPresets
             refreshSort()
-            // A preset added opens where it sorts. The list scrolls only when that's out of
-            // view, and during the rows' own animation: a scroll after it moved everything twice.
-            guard new > old, let id = expandedPresetID, let at = sortedPresets.firstIndex(where: { $0.id == id }) else { return }
+            // Deleting the open card opens the one before it, which now covers its time, and whose
+            // Delete isn't under the pointer, so a second click can't take it too. The first opens the next.
+            if new < old, let gone = expandedPresetID, !sortedPresets.contains(where: { $0.id == gone }),
+               let was = before.firstIndex(where: { $0.id == gone }) {
+                expandedPresetID = was > 0 ? before[was - 1].id : sortedPresets.first?.id
+            }
+            // A card opened by adding or deleting opens where it sorts. The list scrolls only when that's
+            // out of view, and during the rows' own animation: a scroll after it moved everything twice.
+            guard new != old, let id = expandedPresetID, let at = sortedPresets.firstIndex(where: { $0.id == id }) else { return }
             let top = CGFloat(at) * (Row.collapsed + 1)
             if top < scrolled.y || top + expandedHeight > scrolled.y + height {
                 // Next turn: in this one the new row isn't laid out yet, and a scroll to it does nothing.
