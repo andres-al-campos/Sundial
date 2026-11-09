@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-08 01:42, at 1.1.0.
+Updated 2026-11-09 01:36, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -43,8 +43,9 @@ the headroom comparison loosened.
 
 `./build.sh drive scroll-once` (~10s): opens and closes a card in a list long enough to scroll,
 off-screen, and checks the list's scroll height changes once per toggle, so the scroll bar's handle
-resizes once rather than on every frame, and that closing a card at the end of the list glides to
-the new end. Last driven: 2026-11-08, passed; failed with 22 changes per toggle when the change was
+resizes once rather than on every frame, that closing a card at the end of the list glides to
+the new end, and that adding a preset whose card opens out of view glides to it within the rows'
+own animation (failed at 0.45s with the old scroll 0.2s after the add). Last driven: 2026-11-08, passed; failed with 22 changes per toggle when the change was
 wrapped in `withAnimation`, and with a 134-point snap when the list shrank at once on closing.
 
 By hand only: that the note replaces the slider and goes away again when HDR
@@ -117,3 +118,7 @@ preview, add, delete).
   the one outlined style at one size: text in its own color at rest, and under the pointer white
   text, a shade and a brighter outline. The outline tells you where the click is. Applies *Never a
   fight with the controls*.
+- 2026-11-09 01:36, 1.1.0. Adding a preset opens its card where it sorts: it fades in, the open card closes and the rows
+  slide to make room, all in one 0.15s animation. The list scrolls only when the new card would
+  open out of view, and in that same animation: a scroll after the rows had moved "snapped the
+  camera". "nothing should ever teleport". Applies *Motion spends attention*.

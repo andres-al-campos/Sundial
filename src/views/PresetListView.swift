@@ -99,8 +99,10 @@ struct PresetListView: View {
                         }
                     )
                     .id(preset.id)
+                    // A new card fades in where it sorts while the rows below slide down for it.
+                    .transition(.opacity)
                     // The last card's line would double the footer's.
-                    if preset.id != sortedPresets.last?.id { Divider() }
+                    if preset.id != sortedPresets.last?.id { Divider().transition(.opacity) }
                 }
             }
             // Placed from the left edge, not centered: a scroll bar that takes room narrows
@@ -113,6 +115,7 @@ struct PresetListView: View {
             // withAnimation around the change animated the scroll view's own content size
             // too, whatever the frame said, resizing the scroll bar's handle on every frame.
             .animation(.easeInOut(duration: 0.15), value: expandedPresetID)
+            .animation(.easeInOut(duration: 0.15), value: sortedPresets.map(\.id))
             .frame(height: finalHeight.map { max($0, held) }, alignment: .top)
             .background(GeometryReader { g in
                 Color.clear.onChange(of: g.frame(in: .named(Self.space)).minY, initial: true) { _, y in scrolled.y = -y }
@@ -161,10 +164,14 @@ struct PresetListView: View {
         }
         .onChange(of: appState.presets.count) { old, new in
             refreshSort()
-            // A preset added from the footer opens expanded: bring it into view.
-            if new > old, let id = expandedPresetID {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    withAnimation { proxy.scrollTo(id, anchor: .top) }
+            // A preset added opens where it sorts. The list scrolls only when that's out of
+            // view, and during the rows' own animation: a scroll after it moved everything twice.
+            guard new > old, let id = expandedPresetID, let at = sortedPresets.firstIndex(where: { $0.id == id }) else { return }
+            let top = CGFloat(at) * (Row.collapsed + 1)
+            if top < scrolled.y || top + expandedHeight > scrolled.y + height {
+                // Next turn: in this one the new row isn't laid out yet, and a scroll to it does nothing.
+                DispatchQueue.main.async {
+                    withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(id, anchor: top < scrolled.y ? .top : .bottom) }
                 }
             }
         }

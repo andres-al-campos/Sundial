@@ -95,6 +95,42 @@ Task { @MainActor in
     if heights.count > 2 {
         failures.append("closing a card at the end of the list changed its height \(heights.count - 1) times; it should shrink once, after the rows settle.")
     }
+    // Adding a preset with a card open, scrolled to the end: the new card opens at midnight, first in
+    // the list and above the view, so the list glides up to it during the rows' own animation, and its height changes once.
+    open.id = target
+    await wait(0.6)
+    clip.scroll(to: NSPoint(x: 0, y: (sv.documentView?.frame.height ?? 0) - clip.bounds.height))
+    sv.reflectScrolledClipView(clip)
+    await wait(0.3)
+    var addYs: [(Double, CGFloat)] = [], addHeights: [CGFloat] = []
+    let t0 = ProcessInfo.processInfo.systemUptime
+    let addTimer = Timer(timeInterval: 1.0 / 240, repeats: true) { _ in MainActor.assumeIsolated {
+        if addYs.last?.1 != clip.bounds.origin.y { addYs.append((ProcessInfo.processInfo.systemUptime - t0, clip.bounds.origin.y)) }
+        let h = sv.documentView?.frame.height ?? -1
+        if addHeights.last != h { addHeights.append(h) }
+    }}
+    RunLoop.main.add(addTimer, forMode: .common)
+    await wait(0.05)
+    let added = Preset(name: "New", hardwareBrightness: 70, hardwareContrast: 75, nightShift: 0)
+    let addedAt = ProcessInfo.processInfo.systemUptime - t0
+    state.addPreset(added)
+    state.addScheduleEntry(ScheduleEntry(presetID: added.id, hour: 0, minute: 0))
+    open.id = added.id
+    await wait(0.8)
+    addTimer.invalidate()
+    let addSteps = zip(addYs, addYs.dropFirst()).map { abs($1.1 - $0.1) }
+    let addMoved = abs((addYs.last?.1 ?? 0) - (addYs.first?.1 ?? 0))
+    let settled = (addYs.last?.0 ?? 0) - addedAt
+    if addMoved == 0 {
+        failures.append("adding a preset whose card opens above the view didn't scroll to it. PresetListView's onChange of presets.count scrolls when the new card is out of view.")
+    } else if (addSteps.max() ?? 0) > addMoved / 3 {
+        failures.append(String(format: "adding a preset jumped the list %.0f points in one step of %.0f: it should glide to the new card.", addMoved, addSteps.max() ?? 0))
+    } else if settled > 0.35 {
+        failures.append(String(format: "adding a preset finished scrolling %.2fs after the add, after the rows had moved: the scroll has to run with the rows' 0.15s animation, not after it.", settled))
+    }
+    if addHeights.count > 2 {
+        failures.append("adding a preset changed the list's height \(addHeights.count - 1) times; the scroll bar's handle should resize once.")
+    }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
@@ -115,4 +151,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/scroll-once" "$work/main.swift
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/scroll-once"
-echo "✓ scroll-once: opening or closing a preset card changes the list's scroll height once, and closing one at the end glides"
+echo "✓ scroll-once: opening or closing a preset card changes the list's scroll height once, closing one at the end glides, and adding one glides to it in step with the rows"
