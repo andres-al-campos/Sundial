@@ -1,9 +1,10 @@
 # Sundial
 
-A person comes to Sundial so the artificial light in the room, the screen and
-the smart lights, matches the natural light, at any time of day, without
-touching anything. They open it only to
-change a preset or its time.
+A person comes to Sundial so the light in the room, the screen and the smart
+lights, follows the day without their touching anything: it matches the natural
+light while the sun is up, then carries on as an artificial sunset that ends when
+their night does. Opening it means something isn't right yet. Some of that will
+always happen; the aim is that it happens less.
 
 What a user can do, and the checks for each, are in `dev/features/`. Build, check
 and install with `./build.sh` (see the README).
