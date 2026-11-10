@@ -81,6 +81,7 @@ private struct MainWindowView: View {
 /// The Schedule's presets, with room to edit them.
 private struct PresetsSection: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.undoManager) private var undo
     /// Settings' width, from the same left edge, so switching pages moves nothing: across the
     /// whole window the sliders ran long and the values sat far from their labels.
     private static let column = 520 + 2 * Layout.edge
@@ -131,8 +132,10 @@ private struct PresetsSection: View {
     /// A new preset at noon, opened for editing; the list scrolls to it.
     private func addPreset() {
         let preset = Preset(name: "New Preset", hardwareBrightness: 70, hardwareContrast: 75, nightShift: 0)
-        appState.addPreset(preset)
-        appState.addScheduleEntry(ScheduleEntry(presetID: preset.id, hour: 12, minute: 0))
+        PresetsHistory.change(preset.id, "Add Preset", in: appState, undo: undo) {
+            appState.addPreset(preset)
+            appState.addScheduleEntry(ScheduleEntry(presetID: preset.id, hour: 12, minute: 0))
+        }
         appState.onScheduleChanged?()
         expanded = preset.id
     }

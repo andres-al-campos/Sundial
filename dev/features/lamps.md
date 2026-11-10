@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-08 22:27, at 1.1.0.
+Updated 2026-11-09 20:03, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -72,7 +72,7 @@ artificial light follows the natural light along with the screen.
   Bonjour and waits up to 30 seconds for its button to be pressed. The key is
   kept in the Keychain. Only the home network is needed, not the internet.
 
-Not built: deleting a bulb from the bridge, or adding a new one. Undo doesn't cover presets.
+Not built: deleting a bulb from the bridge, or adding a new one.
 
 ## How to get to it
 

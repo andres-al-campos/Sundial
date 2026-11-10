@@ -1,6 +1,6 @@
 import Foundation
 
-struct ScheduleEntry: Identifiable, Codable {
+struct ScheduleEntry: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var presetID: UUID
     var hour: Int

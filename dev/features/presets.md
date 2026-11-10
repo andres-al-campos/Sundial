@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-09 17:23, at 1.1.0.
+Updated 2026-11-09 20:03, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -15,6 +15,9 @@ passed. Auto mode doesn't use them (see auto.md).
   Preview button does the same. Collapsing the row or closing the menu ends it.
 - Add a preset from the footer (it opens expanded, scrolled into view), and
   delete one from its card (the one after it opens in its place).
+- **Undo.** In the window, Cmd-Z and Shift-Cmd-Z cover adding, deleting, renaming, the time,
+  on/off and each slider drag. A held time arrow is one undo, and a deleted preset comes back
+  opened.
 - **Contrast locks in HDR.** While the configured display is in HDR, the
   Contrast slider is replaced by the text "Locked by monitor in HDR", with a
   lock beside the label. The value stays visible. The schedule still sends contrast: the
@@ -39,6 +42,12 @@ because another screen is in HDR, not with no name set.
 Last driven: 2026-10-12, macOS. Passed; failed as expected against a copy with
 the headroom comparison loosened.
 
+`./build.sh drive preset-undo` (~8s): makes changes through the presets' undo history, off-screen,
+and checks that each is one undo, an undo touches only its own preset, twelve time steps in a row
+are one, a deleted preset comes back with its time and opens, and redo redoes. It doesn't press
+Cmd-Z: the Edit menu reaching the window's undo manager is by hand. Last driven: 2026-11-09,
+passed; failed with merging off, and with the reopen removed.
+
 `./build.sh drive time-field` (~6s): the arrows on the time field, which a preset's Time uses.
 
 `./build.sh drive scroll-once` (~10s): opens and closes a card in a list long enough to scroll,
@@ -51,7 +60,7 @@ wrapped in `withAnimation`, and with a 134-point snap when the list shrank at on
 
 By hand only: that the note replaces the slider and goes away again when HDR
 is toggled in System Settings → Displays, and everything else in this feature (editing, live apply,
-preview, add, delete).
+preview, add, delete, and Cmd-Z through the Edit menu).
 
 ## Gotchas
 
@@ -95,6 +104,10 @@ preview, add, delete).
   take keyboard focus. A tap on the popup's background fixed Auto but not the
   cards, whose list catches the clicks first, so `EditFocus` watches every
   click and ends an edit on anything that isn't a field (2026-10-31).
+
+- Undo keeps one preset at a time, with its times, not the whole list as the bulbs' undo does,
+  because the popup edits presets too: a whole-list undo in the window would take back a popup edit
+  to another preset. The popup's changes go on its own undo stack.
 
 ## Calls
 

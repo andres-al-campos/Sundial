@@ -162,9 +162,19 @@ struct PresetListView: View {
                 }
             }
         }
+        // The rows' copies follow edits and undos, in the order they're in: the list sorts again
+        // when a card closes, so a time being edited doesn't move its card away.
+        .onChange(of: appState.presets) { _, presets in
+            guard presets.count == sortedPresets.count else { return }
+            sortedPresets = sortedPresets.compactMap { p in presets.first { $0.id == p.id } }
+        }
         .onChange(of: appState.presets.count) { old, new in
             let before = sortedPresets
             refreshSort()
+            // One that appears opens, added or brought back by an undo.
+            if new > old, let back = sortedPresets.first(where: { p in !before.contains { $0.id == p.id } }) {
+                expandedPresetID = back.id
+            }
             // Deleting the open card opens the one after it, the last the one before, as Mac lists do,
             // chosen over the one before though a quick second click can delete that one too.
             if new < old, let gone = expandedPresetID, !sortedPresets.contains(where: { $0.id == gone }),
@@ -262,6 +272,7 @@ private struct PresetCardRow: View {
 
     @EnvironmentObject var appState: AppState
     @State private var isHovered = false
+    @Environment(\.undoManager) private var undo
     @State private var nameDraft: String = ""
     @FocusState private var nameFocused: Bool
 
@@ -392,10 +403,11 @@ private struct PresetCardRow: View {
             nameDraft = preset.name
             return
         }
-        guard trimmed != preset.name else { return }
-        var updated = preset
+        // From the preset as stored: the row's copy dates from the list's last sort, and saving it
+        // put back sliders moved since.
+        guard var updated = appState.preset(for: preset.id), trimmed != updated.name else { return }
         updated.name = trimmed
-        appState.updatePreset(updated)
+        PresetsHistory.change(preset.id, "Rename Preset", in: appState, undo: undo) { appState.updatePreset(updated) }
     }
 }
 
@@ -415,6 +427,7 @@ private struct PresetEditorBody: View {
     let preset: Preset
 
     @EnvironmentObject var appState: AppState
+    @Environment(\.undoManager) private var undo
     @State private var draft: Preset
     @State private var scheduleEntry: ScheduleEntry?
     @State private var scheduleTime: Date = Date()
@@ -463,7 +476,7 @@ private struct PresetEditorBody: View {
                     get: { draft.enabled },
                     set: { newValue in
                         draft.enabled = newValue
-                        persist()
+                        persist(newValue ? "Turn On Preset" : "Turn Off Preset")
                         appState.onScheduleChanged?()
                     }
                 ))
@@ -482,7 +495,7 @@ private struct PresetEditorBody: View {
                 },
                 onEditingBegan: { beginSliderEdit() },
                 onCommit: {
-                    persist()
+                    persist("Change Brightness")
                     if liveApply { applyNow() }
                     endSliderEdit()
                 }
@@ -497,7 +510,7 @@ private struct PresetEditorBody: View {
                 },
                 onEditingBegan: { beginSliderEdit() },
                 onCommit: {
-                    persist()
+                    persist("Change Contrast")
                     if liveApply { applyNow() }
                     endSliderEdit()
                 }
@@ -511,7 +524,7 @@ private struct PresetEditorBody: View {
                 },
                 onEditingBegan: { beginSliderEdit() },
                 onCommit: {
-                    persist()
+                    persist("Change Night Shift")
                     endSliderEdit()
                 }
             )
@@ -548,7 +561,7 @@ private struct PresetEditorBody: View {
 
                 Button(role: .destructive) {
                     if isPreviewing { endPreview() }
-                    appState.deletePreset(id: draft.id)
+                    PresetsHistory.change(draft.id, "Delete Preset", in: appState, undo: undo) { appState.deletePreset(id: draft.id) }
                     appState.onScheduleChanged?()
                 } label: {
                     Label("Delete", systemImage: "trash")
@@ -561,6 +574,16 @@ private struct PresetEditorBody: View {
         .onAppear {
             loadSchedule()
             refreshHDR()
+        }
+        // An undo changes the stored preset under the open card, which shows it. A drag in
+        // progress doesn't store anything, so it isn't overwritten.
+        .onChange(of: appState.preset(for: draft.id)) { _, stored in
+            if let stored, stored != draft { draft = stored }
+        }
+        .onChange(of: appState.schedule.first(where: { $0.presetID == draft.id })) { _, stored in
+            guard let stored, stored != scheduleEntry else { return }
+            scheduleEntry = stored
+            scheduleTime = Calendar.current.date(from: DateComponents(hour: stored.hour, minute: stored.minute)) ?? scheduleTime
         }
         .onReceive(NotificationCenter.default.publisher(
             for: NSApplication.didChangeScreenParametersNotification
@@ -601,14 +624,16 @@ private struct PresetEditorBody: View {
         let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
         entry.hour = comps.hour ?? entry.hour
         entry.minute = comps.minute ?? entry.minute
-        appState.updateScheduleEntry(entry)
+        // An undo sets the time from the stored entry: nothing to store again.
+        guard entry != appState.schedule.first(where: { $0.id == entry.id }) else { scheduleEntry = entry; return }
+        PresetsHistory.change(draft.id, "Change Time", in: appState, undo: undo, merging: true) { appState.updateScheduleEntry(entry) }
         scheduleEntry = entry
         // Moving a time may change which entry is active right now.
         appState.onScheduleChanged?()
     }
 
-    private func persist() {
-        appState.updatePreset(draft)
+    private func persist(_ name: String) {
+        PresetsHistory.change(draft.id, name, in: appState, undo: undo) { appState.updatePreset(draft) }
     }
 
     // MARK: - Preview / Live apply
