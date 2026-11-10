@@ -98,9 +98,12 @@ enum RoomLight {
     }
 
     /// How far the screen has gone from where the slide started to the night
-    /// pair: 0 to 1. Evenly from `since` (minutes after midnight) to bedtime, then
-    /// 1 until Night Shift turns off; outside Night Shift's hours, 0. A straight
-    /// line fitted the 31 evening drags better than a curve in log brightness.
+    /// pair: 0 to 1. From `since` (minutes after midnight) to bedtime along a fade
+    /// that halves what's left every `eveningHalfLife`, scaled to arrive at
+    /// bedtime, then 1 until Night Shift turns off; outside Night Shift's hours,
+    /// 0. Nine evenings of holds, 2026-11-01 to 09, fell fast after sunset and
+    /// slowly later (15, 10.5, 7, 5, 4 at sunset and each hour after); the
+    /// straight line it replaces sat up to 4 above them for most of the evening.
     static func eveningFraction(minuteOfDay m: Int, since d: Int, schedule s: WarmSchedule) -> Double {
         let day = 24 * 60
         func night(_ x: Int) -> Int { (x - s.from + 2 * day) % day }
@@ -109,8 +112,13 @@ enum RoomLight {
         if now >= bed { return 1 }
         // A start from before the evening began counts from its start.
         let since = night(d) > now ? 0 : night(d)
-        return Double(now - since) / Double(bed - since)
+        let left = { (minutes: Int) in pow(2, -Double(minutes) / eveningHalfLife) }
+        return (1 - left(now - since)) / (1 - left(bed - since))
     }
+
+    /// Minutes for the evening's fade to halve what's left: within 1 of the nine
+    /// evenings' medians at each hour from sunset to 3 hours after.
+    static let eveningHalfLife = 150.0
 
     /// A value `dark` of the way to its night value, never up to it when it's
     /// already lower.

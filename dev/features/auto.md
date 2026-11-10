@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-09 20:41, at 1.1.0.
+Updated 2026-11-09 23:31, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -38,14 +38,14 @@ presets; Schedule (the presets) is the other.
   move to the new zone at once, leaving the pick behind until you're back.
 - **After sunset, the clock dims to bedtime.** From where Night Shift starts
   warming (30 minutes before sunset, where the lamps start on Twilight), lux
-  stops counting: brightness and contrast slide evenly from what the room gave
-  at that moment to the night pair (brightness 1, contrast 3 to start) by
+  stops counting: brightness and contrast fade from what the room gave at that
+  moment, halving what's left every 2.5 hours (fast after sunset, slow later), to the night pair (brightness 1, contrast 3 to start) by
   bedtime, and stay there until Night Shift turns off. If Sundial didn't see
   the handover, it starts from your level at 38 lux, the median there over the
   first week. Contrast at night is its own number, not a multiple, so brightness
   0 can still have some. A drag before bedtime holds what you chose and the
-  slide runs on from it for the rest of the evening, across a wake too; it saves
-  nothing. A drag after bedtime sets the night pair. A drag before sunset at
+  slide runs on from it for the rest of the evening, across a wake and a relaunch
+  too (it's kept in `auto-slide.json`); it saves nothing. A drag after bedtime sets the night pair. A drag before sunset at
   0 lux holds until the room is lit or the Mac wakes.
 - **Easing.** The sensor is read once a second; a median of the last five
   readings drops a hand passing the notch, and a 6-second average smooths the
@@ -77,7 +77,7 @@ Preconditions: none; needs the Swift toolchain, no sensor or monitor.
 `./build.sh drive room-light` (~5s): compiles the app's room-light rules with
 a harness. It checks that brightness before sunset is the level times the
 room's square root (the day's drags at 35 to 470 lux, never past 100, level 0
-darkest), that the evening slides to the night pair by bedtime and not
+darkest), that the evening fades to the night pair by bedtime, fastest first, and not
 outside Night Shift's hours, that only a lit daytime drag saves the level, that a set
 brightness comes back in the same room and scales in another, that a set
 contrast comes back at the same brightness and scales with it, that a click on
@@ -96,6 +96,10 @@ followed the slider live; the level saved and survived a restart.
 
 By hand only: how the easing feels, the popup's look, wake, and the lid-closed
 row.
+
+`./build.sh drive auto-hold` (~5s): saves an evening hold and checks a new AutoController, as after
+an install or login, starts from it, and that a cleared one stays cleared. Last driven: 2026-11-09,
+passed; failed with the slide starting empty.
 
 `./build.sh drive time-field` (~6s): the arrows on the time field, which Bedtime uses.
 
@@ -257,3 +261,9 @@ real reply from the M27Q.
   2026-10-27 to 11-01 opened at about a fifth of the room's brightness, and the
   first drag of the day repaired it: "I don't think the on wake worked", when
   the jump had worked and landed on that level. Applies *Just right for the room*.
+- 2026-11-09 23:31, 1.1.0. The evening fades, halving every 2.5 hours, instead of sliding in a straight line, and a hold is
+  saved across relaunches. The fix for "i cant keep adjusting these sliders like 20 times a day": of
+  193 evening drags Nov 1 to 9, 167 went down, and 18 were the screen jumping back up after a
+  relaunch forgot the hold. A best fit on the post-sunset holds, to use "for now before coming back
+  to it"; the twilight hour either side of sunset, where both the monitor and the lamps run bright
+  for the room, is still open. Applies *Just right for the room*.

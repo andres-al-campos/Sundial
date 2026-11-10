@@ -24,9 +24,35 @@ final class AutoController {
     private var lastLogged = Date.distantPast
     private var lastRawLux: Double?
     /// Where the screen is falling from: the room's brightness at the handover,
-    /// or what a drag chose. Not saved. `at` and `evening` let a slide from a
-    /// night slept through be told apart from tonight's.
-    private var slide: (minute: Int, at: Date, evening: Bool, brightness: Double, contrast: Double)?
+    /// or what a drag chose. `at` and `evening` let a slide from a night slept
+    /// through be told apart from tonight's. Saved, so a relaunch keeps a drag:
+    /// kept only in memory, every install or login forgot the evening's hold and
+    /// the screen jumped back up 2 to 3 times, to be dragged down again (18 times
+    /// on 2026-11-07 to 09).
+    private var slide: Slide? = Slide.saved() {
+        didSet { if slide != oldValue { Slide.save(slide) } }
+    }
+    var heldSlide: Slide? { slide }
+
+    struct Slide: Codable, Equatable {
+        var minute: Int
+        var at: Date
+        var evening: Bool
+        var brightness: Double
+        var contrast: Double
+
+        static var url: URL { AppState.supportDirectory.appendingPathComponent("auto-slide.json") }
+        static func saved() -> Slide? {
+            (try? Data(contentsOf: url)).flatMap { try? JSONDecoder().decode(Slide.self, from: $0) }
+        }
+        static func save(_ slide: Slide?) {
+            if let slide, let data = try? JSONEncoder().encode(slide) {
+                try? data.write(to: url, options: .atomic)
+            } else {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+    }
     /// The last brightness the room gave, so the evening starts from it and
     /// doesn't step.
     private var lastLit: (brightness: Double, at: Date)?
@@ -152,7 +178,7 @@ final class AutoController {
     private func hold(brightness: Double, contrast: Double) {
         let now = Date()
         let comps = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: now)
-        slide = ((comps.hour ?? 0) * 60 + (comps.minute ?? 0), now, evening, brightness, contrast)
+        slide = Slide(minute: (comps.hour ?? 0) * 60 + (comps.minute ?? 0), at: now, evening: evening, brightness: brightness, contrast: contrast)
         dark = 0
     }
 
@@ -208,7 +234,7 @@ final class AutoController {
             if slide == nil {
                 let seen = lastLit.flatMap { now.timeIntervalSince($0.at) < Self.handoverWindow ? $0.brightness : nil }
                 let b = seen ?? RoomLight.brightness(level: state.dayLevel, lux: RoomLight.duskLux)
-                slide = (schedule.from, now, true, b, RoomLight.contrast(brightness: b, scale: state.autoContrastScale))
+                slide = Slide(minute: schedule.from, at: now, evening: true, brightness: b, contrast: RoomLight.contrast(brightness: b, scale: state.autoContrastScale))
             }
             let s = slide!
             dark = RoomLight.eveningFraction(minuteOfDay: minute, since: s.minute, schedule: schedule)
