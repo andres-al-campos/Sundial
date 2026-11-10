@@ -22,7 +22,7 @@ final class LightsHistory: ObservableObject {
         let before = committed
         committed = state.lights
         register(before, undo, name)
-        finish(from: before)
+        finish(from: before, name)
     }
 
     private func register(_ version: [LightDay.Bulb]?, _ undo: UndoManager?, _ name: String) {
@@ -34,14 +34,15 @@ final class LightsHistory: ObservableObject {
                 state.lights = version
                 history.committed = version
                 history.register(current, undo, name)
-                history.finish(from: current)
+                history.finish(from: current, "Undo or Redo \(name)")
             }
         }
     }
 
-    private func finish(from before: [LightDay.Bulb]?) {
+    private func finish(from before: [LightDay.Bulb]?, _ name: String) {
         guard let state else { return }
         state.save()
+        KeysLog.write(before: before, after: state.lights, change: name)
         for bulb in state.lights ?? [] {
             if let old = before?.first(where: { $0.id == bulb.id }), old.name != bulb.name {
                 state.onRenameBulb?(bulb.deviceID, bulb.name)
