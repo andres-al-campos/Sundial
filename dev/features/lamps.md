@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-09 20:03, at 1.1.0.
+Updated 2026-11-09 20:06, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -56,7 +56,7 @@ artificial light follows the natural light along with the screen.
 - **Right-click.** Copy a keyframe and paste it onto another or onto a band at the point clicked. It brings its look and its rule (every day at this time, or after or before a mark), at the time where it lands, or copy and paste a bulb's whole day;
   rename a bulb, which renames it on the bridge; make one bulb follow another's
   day, and unlink it again.
-- **Undo.** Cmd-Z and Shift-Cmd-Z cover every change to the bulbs.
+- **Undo.** Cmd-Z and Shift-Cmd-Z cover every change to the bulbs; Cmd-Y and Control-Y redo too.
 - **Play the day** runs the day on the bulbs in 10 seconds and returns to now.
 - **Pause** stops Sundial changing the bulbs until Resume, so the Hue app can use them.
   A preview while paused still shows on the bulb, then fades back to what the bulb was.

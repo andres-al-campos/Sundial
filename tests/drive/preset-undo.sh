@@ -111,6 +111,19 @@ Task { @MainActor in
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
+    // Cmd-Y and Control-Y redo too, through the window's key handling.
+    RedoKeys.install(for: w)
+    for (key, flags) in [("Cmd-Y", NSEvent.ModifierFlags.command), ("Control-Y", .control)] {
+        await step("y") { PresetsHistory.change(ids[0], "Change Brightness", in: state, undo: undo) { var p = state.preset(for: ids[0])!; p.hardwareBrightness = 33; state.updatePreset(p) } }
+        undo.undo()
+        let y = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: ProcessInfo.processInfo.systemUptime,
+                                 windowNumber: w.windowNumber, context: nil, characters: "y", charactersIgnoringModifiers: "y", isARepeat: false, keyCode: 16)!
+        NSApp.sendEvent(y)
+        await wait(0.05)
+        if brightness(ids[0]) != 33 {
+            failures.append("\(key) didn't redo (P0's brightness is \(brightness(ids[0]) ?? -1), not 33). RedoKeys.install watches the window's key presses.")
+        }
+    }
     _ = keeper
     hung.cancel()
     if failures.isEmpty { exit(0) }
@@ -129,4 +142,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/preset-undo" "$work/main.swift
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/preset-undo"
-echo "✓ preset-undo: each preset change is one undo with its time, a held arrow is one, an undo touches only its preset, a deleted preset comes back opened, and redo redoes"
+echo "✓ preset-undo: each preset change is one undo with its time, a held arrow is one, an undo touches only its preset, a deleted preset comes back opened, and redo redoes, from Cmd-Y and Control-Y too"

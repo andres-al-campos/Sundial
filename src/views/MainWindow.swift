@@ -28,6 +28,7 @@ enum MainWindow {
                 MainActor.assumeIsolated { NSApp.setActivationPolicy(.accessory) }
             }
             window = w
+            RedoKeys.install(for: w)
         }
         window?.makeKeyAndOrderFront(nil)
         // With keyboard navigation on, AppKit otherwise focuses the first button and

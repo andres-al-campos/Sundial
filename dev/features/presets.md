@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-09 20:03, at 1.1.0.
+Updated 2026-11-09 20:06, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -15,7 +15,7 @@ passed. Auto mode doesn't use them (see auto.md).
   Preview button does the same. Collapsing the row or closing the menu ends it.
 - Add a preset from the footer (it opens expanded, scrolled into view), and
   delete one from its card (the one after it opens in its place).
-- **Undo.** In the window, Cmd-Z and Shift-Cmd-Z cover adding, deleting, renaming, the time,
+- **Undo.** In the window, Cmd-Z and Shift-Cmd-Z (or Cmd-Y, or Control-Y outside a text field) cover adding, deleting, renaming, the time,
   on/off and each slider drag. A held time arrow is one undo, and a deleted preset comes back
   opened.
 - **Contrast locks in HDR.** While the configured display is in HDR, the
@@ -44,7 +44,8 @@ the headroom comparison loosened.
 
 `./build.sh drive preset-undo` (~8s): makes changes through the presets' undo history, off-screen,
 and checks that each is one undo, an undo touches only its own preset, twelve time steps in a row
-are one, a deleted preset comes back with its time and opens, and redo redoes. It doesn't press
+are one, a deleted preset comes back with its time and opens, and redo redoes, from Cmd-Y and
+Control-Y too. It doesn't press
 Cmd-Z: the Edit menu reaching the window's undo manager is by hand. Last driven: 2026-11-09,
 passed; failed with merging off, and with the reopen removed.
 
