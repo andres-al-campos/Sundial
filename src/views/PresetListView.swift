@@ -543,7 +543,6 @@ private struct PresetEditorBody: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .help("This is the active preset — edits apply to the monitor in real time.")
                 } else {
                     Button {
                         togglePreview()

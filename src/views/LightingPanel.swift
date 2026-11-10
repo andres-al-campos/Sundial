@@ -22,8 +22,8 @@ struct LightingPanel: View {
                         .foregroundStyle(Layout.dim)
                     if appState.keychainDeclined {
                         Button("Allow Keychain Access") { appState.onAllowKeychain?() }
+                            .buttonStyle(.outlined)
                             .font(.subheadline)
-                            .hoverShade()
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -86,7 +86,6 @@ struct LightingPanel: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Open \(bulb.name) in Sundial")
             // The sun says what the slider moves, as Control Center's display slider does.
             Image(systemName: "sun.min")
                 .font(.caption)
@@ -119,9 +118,10 @@ struct LightingPanel: View {
     private var status: some View {
         Group {
             if appState.keychainDeclined {
-                // One line, as every status here is, so the popup keeps its size.
-                Button("Allow Keychain Access so the lights follow the day") { appState.onAllowKeychain?() }
-                    .buttonStyle(.link)
+                // One line, as every status here is, so the popup keeps its size. The button is in
+                // the row below: a link here didn't read as one.
+                Text("The lights can't follow the day without Keychain access")
+                    .foregroundStyle(Layout.dim)
             } else if appState.lampsPaused {
                 Text("Paused").foregroundStyle(.orange)
             } else if let next = nextKey {
@@ -145,6 +145,10 @@ struct LightingPanel: View {
                 Text(appState.lampsFollow ? "Pause" : "Resume")
             }
             .buttonStyle(.outlined(appState.lampsPaused ? .orange : .primary))
+            if appState.keychainDeclined {
+                Button("Allow Keychain Access") { appState.onAllowKeychain?() }
+                    .buttonStyle(.outlined)
+            }
             if !appState.holds.isEmpty {
                 Button {
                     appState.returnLampsToSchedule { read = [:] }

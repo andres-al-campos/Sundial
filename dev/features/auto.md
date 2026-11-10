@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-09 19:42, at 1.1.0.
+Updated 2026-11-09 20:41, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -110,7 +110,7 @@ real reply from the M27Q.
 
 - A hover tooltip (`.help`) shows nothing in the menu bar popup: the Night Shift ⓘ's did nothing
   under the pointer (macOS 27, 2026-11-08). Explaining something there takes a click, a popover.
-  The Room (lux) reading's tooltip is the same and still unseen.
+  The popup has no tooltips since 2026-11-09.
 - Sundial sets the monitor itself over IOAVService, Apple silicon's private DDC path, since
   2026-11-05; before, it went through BetterDisplay's command line, which took about 16 seconds a
   command with BetterDisplay's app closed. On the Mac's own HDMI port the I2C chip address is

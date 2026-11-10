@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-09 20:06, at 1.1.0.
+Updated 2026-11-09 20:41, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -83,7 +83,7 @@ preview, add, delete, and Cmd-Z through the Edit menu).
   first reports 195, then 189 about 40ms later, so the cap takes a height
   only after it has held for 0.1s.
 - The note is not a system tooltip: one was tried first and never appeared in
-  the menu. The "Active" badge still uses one and may have the same problem.
+  the menu.
 - The lock follows an HDR toggle after a short delay.
 - The popup opened at a 44pt floor, showed "No presets yet", then expanded the
   active card: three resizes per open (fixed 2026-10-21). Each open builds the

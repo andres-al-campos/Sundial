@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-09 20:06, at 1.1.0.
+Updated 2026-11-09 20:41, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -178,7 +178,9 @@ blend looks in the room.
   Always Allow lasts until the next build. Until it's answered the lamps wait and
   the status says so; the rest of the app runs. Declined, the lamps stop and the
   popup, the Lights window and Settings say why, with Allow Keychain Access to
-  ask again (tests/drive/held-lamp.sh).
+  ask again (tests/drive/held-lamp.sh). In the popup the why is the status line and
+  the button sits beside Pause, outlined like the popup's other buttons: as a link in the
+  status line it "doesn't look like a button" (2026-11-09).
 - macOS asks for local network access the first time Sundial looks for the bridge.
   Refused, no bridge is found. Allow it in System Settings → Privacy & Security
   → Local Network.

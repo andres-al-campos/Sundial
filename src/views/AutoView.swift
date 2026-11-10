@@ -34,7 +34,6 @@ struct AutoView: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(Layout.dim)
                     .frame(width: 32, alignment: .trailing)
-                    .help(appState.sensorReading ? "Lux, from the light sensor beside the camera" : "No reading: the lid may be closed")
             } else {
                 Text("No reading yet: the lid may be closed")
                     .font(.caption)
@@ -168,7 +167,6 @@ struct InfoButton: View {
                 .foregroundStyle(Layout.dim)
         }
         .buttonStyle(.plain)
-        .help(text)
         // Above the icon, its arrow pointing down at it.
         .popover(isPresented: $shown, arrowEdge: .top) {
             Text(text)

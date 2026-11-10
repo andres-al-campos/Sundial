@@ -59,13 +59,15 @@ Task { @MainActor in
 
     var sizes: [String: CGSize] = [:], seen: [String: (colours: Int, orange: Int)] = [:]
     var failures: [String] = []
-    let shots: [(String, AppState.PopupTab, [String: LightDay.Hold])] = [
-        ("display", .display, [:]), ("display-held", .display, held),
-        ("lighting", .lighting, [:]), ("lighting-held", .lighting, held),
+    let shots: [(String, AppState.PopupTab, [String: LightDay.Hold], Bool)] = [
+        ("display", .display, [:], false), ("display-held", .display, held, false),
+        ("lighting", .lighting, [:], false), ("lighting-held", .lighting, held, false),
+        ("lighting-keychain", .lighting, [:], true),
     ]
-    for (name, tab, holds) in shots {
+    for (name, tab, holds, declined) in shots {
         state.popupTab = tab
         state.holds = holds
+        state.keychainDeclined = declined
         let host = NSHostingView(rootView: MenuBarView().environmentObject(state))
         let w = NSWindow(contentRect: NSRect(x: -8000, y: 100, width: 320, height: 600), styleMask: [.borderless], backing: .buffered, defer: false)
         w.contentView = host
@@ -90,6 +92,9 @@ Task { @MainActor in
     if sizes["lighting"] != sizes["lighting-held"] {
         failures.append("the Lights tab changed size when a bulb was held (\(sizes["lighting"]!) to \(sizes["lighting-held"]!)). Its status line and button row have to keep one height whatever they show; see LightingPanel.status and .buttons.")
     }
+    if sizes["lighting-keychain"] != sizes["lighting"] {
+        failures.append("the Lights tab changed size when Keychain access was declined (\(sizes["lighting"]!) to \(sizes["lighting-keychain"]!)). Its status stays one line and Allow Keychain Access goes in the button row; see LightingPanel.status and .buttons.")
+    }
     if NSWorkspace.shared.frontmostApplication?.processIdentifier != front {
         failures.append("this test took focus from the frontmost app. It has to stay out of the way: see stayOutOfTheWay in tests/drive/support/off-screen.swift.")
     }
@@ -110,4 +115,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/popup" "$work/main.swift" test
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/popup" "$out"
-echo "✓ popup: both tabs render off-screen, the Lights label turns orange while a bulb is held, and a hold doesn't resize the popup${POPUP_OUT:+, PNGs in $POPUP_OUT}"
+echo "✓ popup: both tabs render off-screen, the Lights label turns orange while a bulb is held, and neither a hold nor a declined Keychain resizes the popup${POPUP_OUT:+, PNGs in $POPUP_OUT}"
