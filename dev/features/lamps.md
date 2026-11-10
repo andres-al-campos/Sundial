@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-09 22:54, at 1.1.0.
+Updated 2026-11-09 23:26, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -56,8 +56,8 @@ artificial light follows the natural light along with the screen.
 - **Right-click.** Copy a keyframe and paste it onto another or onto a band at the point clicked. It brings its look and its rule (every day at this time, or after or before a mark), at the time where it lands, or copy and paste a bulb's whole day;
   rename a bulb, which renames it on the bridge; make one bulb follow another's
   day, and unlink it again.
-- **Keys log.** Every change to a bulb's color keys, undo and redo included, is a JSON line in
-  `keys-log.jsonl` next to `config.json`: the time, the change, the bulb and its keys after it. A new
+- **Lights log.** Every change to a bulb's color keys (brightness and color), undo and redo included, is a JSON line in
+  `lights-log.jsonl` next to `config.json`: the time, the change, the bulb and its keys after it. A new
   log starts with a line per bulb as it stood. From 2026-11-09; earlier keys weren't kept.
 - **Undo.** Cmd-Z and Shift-Cmd-Z cover every change to the bulbs; Cmd-Y and Control-Y redo too.
 - **Play the day** runs the day on the bulbs in 10 seconds and returns to now.
@@ -85,8 +85,8 @@ Click the sun in the menu bar, then Open Sundial, then Lights. Clicking its icon
 
 Preconditions: none; needs the Swift toolchain, no bridge.
 
-`./build.sh drive keys-log` (~5s): commits a change through the bulbs' history with no window and
-checks it lands in keys-log.jsonl after a first line per bulb, and that a commit that moves nothing
+`./build.sh drive lights-log` (~5s): commits a change through the bulbs' history with no window and
+checks it lands in lights-log.jsonl after a first line per bulb, and that a commit that moves nothing
 writes nothing. Last driven: 2026-11-09, passed; failed with the log call removed.
 
 `./build.sh drive lamps` (~3s): compiles the app's blending with a harness

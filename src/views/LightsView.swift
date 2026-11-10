@@ -42,7 +42,7 @@ final class LightsHistory: ObservableObject {
     private func finish(from before: [LightDay.Bulb]?, _ name: String) {
         guard let state else { return }
         state.save()
-        KeysLog.write(before: before, after: state.lights, change: name)
+        LightsLog.write(before: before, after: state.lights, change: name)
         for bulb in state.lights ?? [] {
             if let old = before?.first(where: { $0.id == bulb.id }), old.name != bulb.name {
                 state.onRenameBulb?(bulb.deviceID, bulb.name)

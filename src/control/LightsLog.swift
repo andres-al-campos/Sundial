@@ -1,11 +1,11 @@
 import Foundation
 
-/// Every change to a bulb's color keys, one JSON line each, beside room-log.csv as keys-log.jsonl.
+/// Every change to a bulb's day, its color keys' brightness and color, one JSON line each, beside room-log.csv as lights-log.jsonl.
 /// The room log has what the bulbs did each minute; this has the keys that made them do it, so the
 /// light data can be read later against the keys in force: "log so we can come back and revisit".
 /// The first line of a new log is every bulb as it stands, so the log starts from something.
-enum KeysLog {
-    static var url: URL { AppState.supportDirectory.appendingPathComponent("keys-log.jsonl") }
+enum LightsLog {
+    static var url: URL { AppState.supportDirectory.appendingPathComponent("lights-log.jsonl") }
 
     struct Line: Codable {
         var time: String
