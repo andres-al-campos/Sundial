@@ -1,6 +1,6 @@
 # Command line
 
-Updated 2026-11-02 02:25, at 1.1.0.
+Updated 2026-11-10 00:28, at 1.1.0.
 
 A script, a shortcut or a session can see what Sundial is doing and change it
 without opening it.
@@ -13,7 +13,7 @@ without opening it.
   app couldn't do it.
 - **`lights`** prints every bulb's keyframes as JSON. **`lights load <file>`** replaces
   them with an edited copy, refusing a bad one and saying why, and keeps what it
-  replaced in `lights-before-load.json`. Minutes count from midnight, `anchor` ties
+  replaced in `lights-before-load.json`; the change goes in the lights log too. Minutes count from midnight, `anchor` ties
   a keyframe to `sunrise`, `sunset` or `darkest` plus an `offset`, and `x`, `y` is the
   colour. A new keyframe needs no `id`.
 - **`hue`** prints the bridge's scenes and smart scenes as it holds them, without
@@ -47,9 +47,9 @@ and `open` then `screenshot`.
 ## Gotchas
 
 - `lights load` doesn't reach Cmd-Z in the window. `lights-before-load.json` is the way back.
-- `brightness` and `contrast` act like dragging Auto's sliders, so they're kept:
-  they change the level Sundial uses for this kind of room, not just the monitor
-  for now.
+- `brightness` and `contrast` act like dragging Auto's sliders: by day they change the level
+  Sundial uses for this kind of room, not just the monitor for now; in the evening they hold until
+  bedtime and the fade runs on from them; after bedtime they set the night pair.
 - Any app or web page can open a `sundial://` URL. The worst it can do is change
   a setting you can change back, so nothing here deletes anything or reads a key.
 - `open -g` starts Sundial if it isn't running, so a command can launch it.

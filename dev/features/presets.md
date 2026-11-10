@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-10 00:22, at 1.1.0.
+Updated 2026-11-10 00:28, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -57,7 +57,7 @@ off-screen, and checks the list's scroll height changes once per toggle, so the 
 resizes once rather than on every frame, that closing a card at the end of the list glides to
 the new end, and that adding a preset whose card opens out of view glides to it within the rows'
 own animation (failed at 0.45s with the old scroll 0.2s after the add), and that deleting the open
-card opens the one after it. Last driven: 2026-11-08, passed; failed with 22 changes per toggle when the change was
+card opens the one after it. Last driven: 2026-11-09, passed; failed with 22 changes per toggle when the change was
 wrapped in `withAnimation`, and with a 134-point snap when the list shrank at once on closing.
 
 By hand only: that the note replaces the slider and goes away again when HDR

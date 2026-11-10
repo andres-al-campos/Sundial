@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-10 00:06, at 1.1.0.
+Updated 2026-11-10 00:28, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -55,7 +55,7 @@ presets; Schedule (the presets) is the other.
   monitor moves at most 5 a second for brightness and contrast, 1 for Night
   Shift. Big changes are meant to be seen; most are small.
 - **No reading.** With the lid closed or no sensor, Auto keeps the last room
-  it saw (100 lux before the first) and the Room (lux) row says "no reading".
+  it saw (100 lux before the first), and the Room (lux) row shows "—" with its meter dimmed.
 - **Room log.** One line a minute, and one each time you let go of a slider
   (with the level, contrast multiple, night brightness or night contrast saved), in
   `room-log.csv` next to `config.json`. The `dark` column is how far along the
@@ -90,8 +90,8 @@ parses), that Night Shift lands near the presets it was fitted to, that the blin
 shutting as logged (237 → 35 lux) lands in about 20 seconds, and that a 1s
 spike or dip (a hand at the notch) leaves the average where it was.
 
-Last driven: 2026-10-27, macOS. Passed; on 2026-10-26 it failed as expected with the Night
-Shift ramp an hour late, and with the median removed.
+Last driven: 2026-11-09, macOS. Passed; it failed as expected with the Night Shift ramp an hour
+late and with the median removed (2026-10-26), and with the evening a straight line (2026-11-09).
 
 Seen on the real thing 2026-10-26: installed, it read 27 lux, stayed up, and
 followed the slider live; the level saved and survived a restart.
@@ -138,12 +138,14 @@ real reply from the M27Q.
   instead (about 10 per lux), which told apart an LED's settings at 0.15,
   2.2, 7 and 11 lux where lux read 0, 0, 2 and 7 (2026-10-26). Below about
   0.1 lux both read 0, so the two lowest settings look the same.
-- The sensor reads the lamps. By evening that's why the clock takes over; by
-  day the Morning and Noon scenes still add to the lux the curve scales from.
+- The sensor reads the lamps, though barely: after dark, with both lamps at the same brightness,
+  it read 0 lux under 40%, about 1.5 at 50% and about 7 at 100% (2026-11-04 to 09). By day that's
+  small beside the window's 100 or so. After dark the sensor reads 0 to 2 lux whatever the
+  room looks like, which is why the clock takes over then, more than the lamps' own light.
   Evening light Sundial doesn't control (a ceiling light) doesn't raise the
   screen either: a drag holds until the next evening.
-- The monitor's own light reaches the sensor. A brighter monitor reads as a
-  brighter room; small at the levels seen so far.
+- The monitor's own light doesn't reach the sensor at the levels used: after dark, with the lamps
+  under 40%, brightness 0 to 14 read 0 lux throughout (2026-11-04 to 09).
 - Auto writes only when a value changes, so a change made with the monitor's
   buttons stays until the room moves or the Mac wakes.
 - The first Auto (2026-10-26, a few hours) used two ends, Dark room and Bright

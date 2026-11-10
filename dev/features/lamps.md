@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-09 23:26, at 1.1.0.
+Updated 2026-11-10 00:28, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -17,8 +17,9 @@ artificial light follows the natural light along with the screen.
   the bulb as it goes and holds it, as the window's card does, and turns on a bulb that was off.
   While paused there's no hold: the drag just sets the bulb, and pausing ends every hold, from
   the button or the command line, so Resume takes every bulb back to the day.
-  A click on the name opens the window. Over the rows one line says Paused or when the next
-  color key comes; under them, outlined, Pause on the left and, while a bulb is held, Return to schedule beside it,
+  A click on the name opens the window. Over the rows one line says Paused, when the next
+  color key comes, or that the lights need Keychain access; under them, outlined, Pause on the left and, beside it,
+  Allow Keychain Access while that's declined or Return to schedule while a bulb is held,
   which glides the sliders back as the bulbs fade. The orange name says a bulb is held: a third
   orange "Held until sunrise" was "too much orange". While the
   lights are off the day the tab's label is orange, on either tab, so the orange sun leads to
@@ -113,7 +114,7 @@ The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's fu
 
 `./build.sh drive window` (~20s): builds the real window from the code as it is and renders Lights off-screen to PNGs, dark and light, taking no focus. `WINDOW_OUT=dir` keeps them and `WINDOW_REAL=1` starts from a throwaway copy of the real config. It shows the window at rest; showing a card takes a scratch copy of `src/` calling the view's private functions.
 
-`./build.sh drive popup` (~20s): builds the real popup and renders both tabs off-screen, taking no focus. It checks the Lights label turns orange while a bulb is held and that a hold doesn't resize the popup. `POPUP_OUT=dir` keeps the PNGs. A slider's drag isn't driven: the hold it makes is `AppState.holdLamp`, the window card's too.
+`./build.sh drive popup` (~20s): builds the real popup and renders both tabs off-screen, taking no focus. It checks the Lights label turns orange while a bulb is held and that neither a hold nor declined Keychain access resizes the popup. `POPUP_OUT=dir` keeps the PNGs. A slider's drag isn't driven: the hold it makes is `AppState.holdLamp`, the window card's too.
 
 `./build.sh drive popup-list` (~3s): opens the time menu's real list and checks it sits on the button's edges, with the chosen item over the label. It flashes in the screen's bottom-left corner for under half a second, taking no focus, since macOS moves a list opened off-screen onto a display. Renders can't show an open list: four fixes looked right closed and opened off the button's edges.
 

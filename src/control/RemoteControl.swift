@@ -91,6 +91,7 @@ enum RemoteControl {
         if let failed = store(current, in: "lights-before-load.json") { return failed }
         state.lights = bulbs
         state.save()
+        LightsLog.write(before: current, after: bulbs, change: "Load from the command line")
         state.onLampsChanged?()
         return nil
     }
