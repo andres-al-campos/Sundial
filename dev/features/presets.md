@@ -1,6 +1,6 @@
 # Presets
 
-Updated 2026-11-09 20:41, at 1.1.0.
+Updated 2026-11-10 00:22, at 1.1.0.
 
 A preset is a brightness, a contrast and a Night Shift strength with a time of
 day. In Schedule mode Sundial applies the preset whose time most recently
@@ -13,7 +13,8 @@ passed. Auto mode doesn't use them (see auto.md).
 - The active preset's sliders move the monitor as you drag.
 - Dragging a slider on another preset previews that preset on the monitor; the
   Preview button does the same. Collapsing the row or closing the menu ends it.
-- Add a preset from the footer (it opens expanded, scrolled into view), and
+- Add a preset with Add Preset at the top right of the list (it opens expanded where it sorts,
+  scrolled to only if it's out of view), and
   delete one from its card (the one after it opens in its place).
 - **Undo.** In the window, Cmd-Z and Shift-Cmd-Z (or Cmd-Y, or Control-Y outside a text field) cover adding, deleting, renaming, the time,
   on/off and each slider drag. A held time arrow is one undo, and a deleted preset comes back
