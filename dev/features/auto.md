@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-08 20:59, at 1.1.0.
+Updated 2026-11-09 19:42, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -55,7 +55,7 @@ presets; Schedule (the presets) is the other.
   monitor moves at most 5 a second for brightness and contrast, 1 for Night
   Shift. Big changes are meant to be seen; most are small.
 - **No reading.** With the lid closed or no sensor, Auto keeps the last room
-  it saw (100 lux before the first) and the Room row says "no reading".
+  it saw (100 lux before the first) and the Room (lux) row says "no reading".
 - **Room log.** One line a minute, and one each time you let go of a slider
   (with the level, contrast multiple, night brightness or night contrast saved), in
   `room-log.csv` next to `config.json`. The `dark` column is how far along the
@@ -110,7 +110,7 @@ real reply from the M27Q.
 
 - A hover tooltip (`.help`) shows nothing in the menu bar popup: the Night Shift ⓘ's did nothing
   under the pointer (macOS 27, 2026-11-08). Explaining something there takes a click, a popover.
-  The Room reading's lux tooltip is the same and still unseen.
+  The Room (lux) reading's tooltip is the same and still unseen.
 - Sundial sets the monitor itself over IOAVService, Apple silicon's private DDC path, since
   2026-11-05; before, it went through BetterDisplay's command line, which took about 16 seconds a
   command with BetterDisplay's app closed. On the Mac's own HDMI port the I2C chip address is

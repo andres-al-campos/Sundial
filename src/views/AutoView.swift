@@ -22,7 +22,7 @@ struct AutoView: View {
 
     private var room: some View {
         HStack(spacing: 8) {
-            Text("Room")
+            Text("Room (lux)")
                 .font(.caption)
                 .frame(width: 72, alignment: .leading)
             if let lux = appState.roomLux {
