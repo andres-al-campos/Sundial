@@ -1,6 +1,6 @@
 # Auto
 
-Updated 2026-11-09 23:31, at 1.1.0.
+Updated 2026-11-10 00:06, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -62,7 +62,9 @@ presets; Schedule (the presets) is the other.
   evening's slide it was (0 to 1), and from 2026-11-01 runs all evening, not
   only at 0 lux; `dark_hold` marks a drag that held. Rows from 2026-10-30 on carry the
   night minimum and `dark` columns, from 2026-10-31 night contrast, and from 2026-11-04 `lamps`, each bulb's brightness and xy or "off" at the last
-  read, up to 30 seconds old, as `Light 1=45/0.512/0.414;Light 2=off`. A log started before then has the older header.
+  read, up to 30 seconds old, as `Light 1=45/0.512/0.414;Light 2=off`. From 2026-11-10 two more:
+  `slide_from`, the brightness the evening's fade started from, and `event`, on rows of their own,
+  "start" when Sundial launches and "wake" when the Mac does. A log started before then has the older header.
 - **Display Follows**, a popup at the top of the Display tab, picks which one drives the monitor: Room Light or Schedule. The schedule's card opens that preset in the window on a click.
 
 ## How to get to it
@@ -99,7 +101,7 @@ row.
 
 `./build.sh drive auto-hold` (~5s): saves an evening hold and checks a new AutoController, as after
 an install or login, starts from it, and that a cleared one stays cleared. Last driven: 2026-11-09,
-passed; failed with the slide starting empty.
+passed; failed with the slide starting empty, and with a start row short of fields.
 
 `./build.sh drive time-field` (~6s): the arrows on the time field, which Bedtime uses.
 

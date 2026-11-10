@@ -22,6 +22,14 @@ MainActor.assumeIsolated {
         print("✗ auto-hold: after a relaunch Auto starts from \(String(describing: relaunched.heldSlide)), not the hold at brightness 4. AutoController.slide has to start from Slide.saved(), or every install and login throws the evening's drag away and the screen jumps back up.")
         exit(1)
     }
+    // The log marks a launch, with as many fields as the header, so a jump after one can be told
+    // from Auto's choice.
+    relaunched.logEvent("start")
+    let log = ((try? String(contentsOf: AutoController.logURL, encoding: .utf8)) ?? "").split(separator: "\n").map { $0.split(separator: ",", omittingEmptySubsequences: false) }
+    guard log.count == 2, log[0].map(String.init) == AutoController.columns, log[1].count == AutoController.columns.count, log[1].last == "start" else {
+        print("✗ auto-hold: the room log after a launch is \(log.map { $0.joined(separator: ",") }); it should be the header with slide_from and event at the end, then a start row with a field for every column. See AutoController.logEvent.")
+        exit(1)
+    }
     AutoController.Slide.save(nil)
     guard AutoController().heldSlide == nil else {
         print("✗ auto-hold: a cleared slide came back after a relaunch. Slide.save(nil) should remove auto-slide.json.")
@@ -39,4 +47,4 @@ if ! swiftc -target arm64-apple-macos14 -o "$work/auto-hold" "$work/main.swift" 
     exit 1
 fi
 CFFIXED_USER_HOME="$work/home" "$work/auto-hold"
-echo "✓ auto-hold: an evening hold is saved and a relaunched Auto starts from it"
+echo "✓ auto-hold: an evening hold is saved and a relaunched Auto starts from it, and the room log marks the launch"

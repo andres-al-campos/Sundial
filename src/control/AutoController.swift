@@ -87,6 +87,7 @@ final class AutoController {
                 Task { @MainActor in
                     guard let self else { return }
                     if self.slide?.evening == false { self.slide = nil }
+                    self.logEvent("wake")
                     self.snapOnNextReading = true
                     self.forceApply()
                 }
@@ -99,6 +100,7 @@ final class AutoController {
             NSTimeZone.resetSystemTimeZone()
             Task { @MainActor in self?.forceApply() }
         }
+        logEvent("start")
         tick()
     }
 
@@ -284,10 +286,7 @@ final class AutoController {
     /// so a few days of use show what you chose against how bright the room
     /// was. Kept next to config.json as room-log.csv.
     private enum Setting { case brightness, contrast, nightMinimum, nightContrast, hold }
-    private static let logURL: URL = {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return support.appendingPathComponent("Sundial/room-log.csv")
-    }()
+    static var logURL: URL { AppState.supportDirectory.appendingPathComponent("room-log.csv") }
 
     private func log(force: Bool, set: Setting?) {
         guard let state, let s = shown else { return }
@@ -309,15 +308,35 @@ final class AutoController {
             set == .nightContrast ? String(format: "%.1f", state.autoNightContrast) : "",
             set == .hold ? "1" : "",
             LightDay.logged(state.lampsRead, bulbs: state.lights ?? []),
+            slide.map { String(format: "%.1f", $0.brightness) } ?? "",
+            "",
         ]
-        let line = fields.joined(separator: ",") + "\n"
+        Self.append(fields)
+    }
+
+    /// A row with only the time and what happened: "start" when Sundial launches, "wake" when the
+    /// Mac does. Fitting the evening needs them: a jump right after one is Sundial starting over,
+    /// not its choice, and until 2026-11-10 that had to be guessed from `dark`.
+    func logEvent(_ event: String) {
+        let stamp = ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withInternetDateTime])
+        Self.append([stamp] + Array(repeating: "", count: Self.columns.count - 2) + [event])
+    }
+
+    /// `slide_from` is the brightness the evening's fade started from, the fade's own start: an
+    /// evening can be fitted without working it back out. Columns only ever go on the end, so older
+    /// rows read the same.
+    static let columns = ["time", "lux", "lux_avg", "brightness", "contrast", "night_shift", "level_set",
+                          "contrast_scale_set", "night_minimum_set", "dark", "night_contrast_set", "dark_hold",
+                          "lamps", "slide_from", "event"]
+
+    private static func append(_ fields: [String]) {
         let fm = FileManager.default
-        if !fm.fileExists(atPath: Self.logURL.path) {
-            fm.createFile(atPath: Self.logURL.path, contents: Data("time,lux,lux_avg,brightness,contrast,night_shift,level_set,contrast_scale_set,night_minimum_set,dark,night_contrast_set,dark_hold,lamps\n".utf8))
+        if !fm.fileExists(atPath: logURL.path) {
+            fm.createFile(atPath: logURL.path, contents: Data((columns.joined(separator: ",") + "\n").utf8))
         }
-        guard let handle = try? FileHandle(forWritingTo: Self.logURL) else { return }
+        guard let handle = try? FileHandle(forWritingTo: logURL) else { return }
         defer { try? handle.close() }
         _ = try? handle.seekToEnd()
-        try? handle.write(contentsOf: Data(line.utf8))
+        try? handle.write(contentsOf: Data((fields.joined(separator: ",") + "\n").utf8))
     }
 }
