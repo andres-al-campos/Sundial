@@ -158,6 +158,7 @@ private struct AutoSlider: View {
 /// did nothing for a click, and a click is what an icon invites.
 struct InfoButton: View {
     let text: String
+    private static let reach: CGFloat = 4
     @State private var shown = false
 
     var body: some View {
@@ -165,8 +166,13 @@ struct InfoButton: View {
             Image(systemName: "info.circle")
                 .font(.caption)
                 .foregroundStyle(Layout.dim)
+                // A little bigger than the circle to hit, "too small" at the glyph's own size,
+                // given back to the layout so the row doesn't move.
+                .padding(Self.reach)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(-Self.reach)
         // Above the icon, its arrow pointing down at it.
         .popover(isPresented: $shown, arrowEdge: .top) {
             Text(text)
