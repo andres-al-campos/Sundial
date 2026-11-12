@@ -24,6 +24,10 @@ struct LightingPanel: View {
                         Button("Allow Keychain Access") { appState.onAllowKeychain?() }
                             .buttonStyle(.outlined)
                             .font(.subheadline)
+                    } else if appState.localNetworkDenied {
+                        Button("Open Network Settings") { LocalNetwork.openSettings() }
+                            .buttonStyle(.outlined)
+                            .font(.subheadline)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -122,6 +126,9 @@ struct LightingPanel: View {
                 // the row below: a link here didn't read as one.
                 Text("The lights can't follow the day without Keychain access")
                     .foregroundStyle(Layout.dim)
+            } else if appState.localNetworkDenied {
+                Text("The lights can't reach the bridge without network access")
+                    .foregroundStyle(Layout.dim)
             } else if appState.lampsPaused {
                 Text("Paused").foregroundStyle(.orange)
             } else if let next = nextKey {
@@ -147,6 +154,9 @@ struct LightingPanel: View {
             .buttonStyle(.outlined(appState.lampsPaused ? .orange : .primary))
             if appState.keychainDeclined {
                 Button("Allow Keychain Access") { appState.onAllowKeychain?() }
+                    .buttonStyle(.outlined)
+            } else if appState.localNetworkDenied {
+                Button("Open Network Settings") { LocalNetwork.openSettings() }
                     .buttonStyle(.outlined)
             }
             if !appState.holds.isEmpty {
@@ -180,9 +190,17 @@ struct LightingPanel: View {
             Text("Sundial can fade Hue lamps along with the day.")
                 .font(.subheadline)
                 .foregroundStyle(Layout.dim)
-            Button("Pair Hue Bridge…") { appState.onPairLamps?() }
-                .buttonStyle(.outlined(OutlinedButtonStyle.createBlue))
-                .font(.subheadline)
+            // Pairing stays offered while the network is refused: nothing
+            // tells Sundial when the switch is turned back on.
+            HStack(spacing: 8) {
+                Button("Pair Hue Bridge…") { appState.onPairLamps?() }
+                    .buttonStyle(.outlined(OutlinedButtonStyle.createBlue))
+                if appState.localNetworkDenied {
+                    Button("Open Network Settings") { LocalNetwork.openSettings() }
+                        .buttonStyle(.outlined)
+                }
+            }
+            .font(.subheadline)
             if appState.lampStatus != "Not paired" {
                 Text(appState.lampStatus)
                     .font(.caption)

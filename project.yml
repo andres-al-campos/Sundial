@@ -33,6 +33,9 @@ targets:
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
         NSHumanReadableCopyright: ""
         NSPrincipalClass: NSApplication
+        NSLocalNetworkUsageDescription: Sundial finds your Philips Hue Bridge on your network so it can set your lamps through the day.
+        NSBonjourServices:
+          - _hue._tcp
         CFBundleURLTypes:
           - CFBundleURLName: com.aurende.sundial
             CFBundleURLSchemes:

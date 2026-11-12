@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-10 00:28, at 1.1.0.
+Updated 2026-11-12 17:08, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -189,9 +189,14 @@ blend looks in the room.
   ask again (tests/drive/held-lamp.sh). In the popup the why is the status line and
   the button sits beside Pause, outlined like the popup's other buttons: as a link in the
   status line it "doesn't look like a button" (2026-11-09).
-- macOS asks for local network access the first time Sundial looks for the bridge.
-  Refused, no bridge is found. Allow it in System Settings → Privacy & Security
-  → Local Network.
+- macOS asks for local network access the first time Sundial looks for the bridge,
+  giving the reason in `NSLocalNetworkUsageDescription` (project.yml). Refused, it
+  never asks again, a refusal lasts across builds, and requests fail as an ordinary
+  "hostname could not be found". So a failed request asks the Network framework
+  whether the permission is the cause (`LocalNetwork.denied`), and Settings, the
+  popup and the Lights window then say so, with Open Network Settings beside Pair.
+  Once it's switched back on, a paired bridge recovers on the next tick; an unpaired
+  one needs Pair pressed again.
 - The popup's oranges measure lighter than the window's (#ffb033 against #ff9230), though both are
   the system orange: the glass brightens them. Left as it is, as the platform draws it. Applies
   *Never a fight with the controls*.

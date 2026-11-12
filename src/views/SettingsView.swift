@@ -68,6 +68,11 @@ struct SettingsView: View {
                             .controlSize(.small)
                             .hoverShade()
                     } else {
+                        if appState.localNetworkDenied {
+                            Button("Open Network Settings") { LocalNetwork.openSettings() }
+                                .controlSize(.small)
+                                .hoverShade()
+                        }
                         Button(appState.hueHost == nil ? "Pair Hue Bridge" : "Pair again") { appState.onPairLamps?() }
                             .controlSize(.small)
                             .hoverShade()

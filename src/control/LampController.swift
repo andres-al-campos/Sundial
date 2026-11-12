@@ -90,7 +90,9 @@ final class LampController {
         Task {
             state.lampStatus = "Looking for the bridge…"
             guard let host = await HueBridge.discover() else {
-                state.lampStatus = "No bridge found. Check it's on and on this network, then pair again."
+                state.lampStatus = await LocalNetwork.denied()
+                    ? HueError.localNetworkDenied.message
+                    : "No bridge found. Check it's on and on this network, then pair again."
                 return
             }
             let b = HueBridge(host: host, key: nil)

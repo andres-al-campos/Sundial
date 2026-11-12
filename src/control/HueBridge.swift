@@ -100,7 +100,7 @@ final class HueBridge: NSObject, URLSessionDelegate {
         var req = try request("device/\(id)")
         req.httpMethod = "PUT"
         req.httpBody = try JSONSerialization.data(withJSONObject: ["metadata": ["name": name]])
-        let (data, resp) = try await session.data(for: req)
+        let (data, resp) = try await fetch(req)
         try check(resp, data)
     }
 
@@ -140,12 +140,12 @@ final class HueBridge: NSObject, URLSessionDelegate {
         var req = try request("light/\(id)")
         req.httpMethod = "PUT"
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, resp) = try await session.data(for: req)
+        let (data, resp) = try await fetch(req)
         try check(resp, data)
     }
 
     private func get(_ resource: String) async throws -> [[String: Any]] {
-        let (data, resp) = try await session.data(for: try request(resource))
+        let (data, resp) = try await fetch(try request(resource))
         try check(resp, data)
         return (try JSONSerialization.jsonObject(with: data) as? [String: Any])?["data"] as? [[String: Any]] ?? []
     }
@@ -155,6 +155,18 @@ final class HueBridge: NSObject, URLSessionDelegate {
         var req = URLRequest(url: URL(string: "https://\(host)/clip/v2/resource/\(resource)")!, timeoutInterval: 5)
         req.setValue(key, forHTTPHeaderField: "hue-application-key")
         return req
+    }
+
+    /// A request whose network failures say what to do. macOS reports a
+    /// declined Local Network permission as an ordinary lookup failure, so a
+    /// failed request asks the Network framework whether that's the cause.
+    private func fetch(_ req: URLRequest) async throws -> (Data, URLResponse) {
+        do { return try await session.data(for: req) }
+        catch let e as URLError where [.cannotFindHost, .dnsLookupFailed, .cannotConnectToHost,
+                                       .timedOut, .networkConnectionLost, .notConnectedToInternet].contains(e.code) {
+            if await LocalNetwork.denied(host: host) { throw HueError.localNetworkDenied }
+            throw HueError("Sundial can't reach the Hue Bridge (\(e.localizedDescription)). Check the bridge is plugged in and this Mac is on the same network as it, then try again.")
+        }
     }
 
     private func check(_ resp: URLResponse, _ data: Data) throws {
@@ -257,5 +269,8 @@ final class HueBridge: NSObject, URLSessionDelegate {
 struct HueError: LocalizedError {
     let message: String
     init(_ message: String) { self.message = message }
+    /// Shown as the lamp status; `AppState.localNetworkDenied` recognises it
+    /// to offer the button that opens the setting.
+    static let localNetworkDenied = HueError("Sundial isn't allowed to find devices on your network, so it can't reach the Hue Bridge. Click Open Network Settings and switch Sundial on.")
     var errorDescription: String? { message }
 }

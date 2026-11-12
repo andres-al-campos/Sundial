@@ -296,6 +296,9 @@ struct LightsView: View {
             if appState.keychainDeclined {
                 Button("Allow Keychain Access") { appState.onAllowKeychain?() }
                     .hoverShade()
+            } else if appState.localNetworkDenied {
+                Button("Open Network Settings") { LocalNetwork.openSettings() }
+                    .hoverShade()
             }
             // Here as well as on the card, since a hold is easy to forget once the card is shut.
             if !appState.holds.isEmpty {
@@ -360,8 +363,15 @@ struct LightsView: View {
         VStack(spacing: 10) {
             Text("Pair with your Hue Bridge to see your bulbs here.")
                 .foregroundStyle(Layout.dim)
-            Button("Pair Hue Bridge") { appState.onPairLamps?() }
-                .hoverShade()
+            // Pairing stays offered while the network is refused: nothing
+            // tells Sundial when the switch is turned back on.
+            HStack(spacing: 10) {
+                Button("Pair Hue Bridge") { appState.onPairLamps?() }
+                if appState.localNetworkDenied {
+                    Button("Open Network Settings") { LocalNetwork.openSettings() }
+                }
+            }
+            .hoverShade()
             Text(appState.lampStatus)
                 .font(.caption)
                 .foregroundStyle(Layout.dim)
