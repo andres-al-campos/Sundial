@@ -54,7 +54,7 @@ class AppState: ObservableObject {
     @Published var lampStatus: String = "Not paired"
     /// The Keychain prompt for the bridge key was declined; Allow Keychain Access asks again.
     @Published var keychainDeclined = false
-    /// The Local Network prompt was declined; Open Network Settings is the way back.
+    /// The Local Network prompt was declined; Open Privacy & Security is the way back.
     var localNetworkDenied: Bool { lampStatus == HueError.localNetworkDenied.message }
 
     // Auto's live state, set by AutoController and not saved.

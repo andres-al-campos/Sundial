@@ -41,9 +41,11 @@ enum LocalNetwork {
         }
     }
 
-    /// System Settings → Privacy & Security → Local Network.
+    /// System Settings → Privacy & Security. Local Network has no anchor of its
+    /// own (macOS 27 lists Privacy_Camera, Privacy_Bluetooth and the rest, but
+    /// not it), so the message names the last step.
     static func openSettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork")!)
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension")!)
     }
 
     private static func isPolicyDenied(_ e: NWError) -> Bool {

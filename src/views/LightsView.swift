@@ -297,7 +297,7 @@ struct LightsView: View {
                 Button("Allow Keychain Access") { appState.onAllowKeychain?() }
                     .hoverShade()
             } else if appState.localNetworkDenied {
-                Button("Open Network Settings") { LocalNetwork.openSettings() }
+                Button("Open Privacy & Security") { LocalNetwork.openSettings() }
                     .hoverShade()
             }
             // Here as well as on the card, since a hold is easy to forget once the card is shut.
@@ -368,7 +368,7 @@ struct LightsView: View {
             HStack(spacing: 10) {
                 Button("Pair Hue Bridge") { appState.onPairLamps?() }
                 if appState.localNetworkDenied {
-                    Button("Open Network Settings") { LocalNetwork.openSettings() }
+                    Button("Open Privacy & Security") { LocalNetwork.openSettings() }
                 }
             }
             .hoverShade()

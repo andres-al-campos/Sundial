@@ -69,7 +69,7 @@ struct SettingsView: View {
                             .hoverShade()
                     } else {
                         if appState.localNetworkDenied {
-                            Button("Open Network Settings") { LocalNetwork.openSettings() }
+                            Button("Open Privacy & Security") { LocalNetwork.openSettings() }
                                 .controlSize(.small)
                                 .hoverShade()
                         }

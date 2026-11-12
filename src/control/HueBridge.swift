@@ -271,6 +271,6 @@ struct HueError: LocalizedError {
     init(_ message: String) { self.message = message }
     /// Shown as the lamp status; `AppState.localNetworkDenied` recognises it
     /// to offer the button that opens the setting.
-    static let localNetworkDenied = HueError("Sundial isn't allowed to find devices on your network, so it can't reach the Hue Bridge. Click Open Network Settings and switch Sundial on.")
+    static let localNetworkDenied = HueError("Sundial isn't allowed to find devices on your network, so it can't reach the Hue Bridge. Click Open Privacy & Security, choose Local Network, and switch Sundial on.")
     var errorDescription: String? { message }
 }

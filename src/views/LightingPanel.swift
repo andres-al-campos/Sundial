@@ -25,7 +25,7 @@ struct LightingPanel: View {
                             .buttonStyle(.outlined)
                             .font(.subheadline)
                     } else if appState.localNetworkDenied {
-                        Button("Open Network Settings") { LocalNetwork.openSettings() }
+                        Button("Open Privacy & Security") { LocalNetwork.openSettings() }
                             .buttonStyle(.outlined)
                             .font(.subheadline)
                     }
@@ -156,7 +156,7 @@ struct LightingPanel: View {
                 Button("Allow Keychain Access") { appState.onAllowKeychain?() }
                     .buttonStyle(.outlined)
             } else if appState.localNetworkDenied {
-                Button("Open Network Settings") { LocalNetwork.openSettings() }
+                Button("Open Privacy & Security") { LocalNetwork.openSettings() }
                     .buttonStyle(.outlined)
             }
             if !appState.holds.isEmpty {
@@ -196,7 +196,7 @@ struct LightingPanel: View {
                 Button("Pair Hue Bridge…") { appState.onPairLamps?() }
                     .buttonStyle(.outlined(OutlinedButtonStyle.createBlue))
                 if appState.localNetworkDenied {
-                    Button("Open Network Settings") { LocalNetwork.openSettings() }
+                    Button("Open Privacy & Security") { LocalNetwork.openSettings() }
                         .buttonStyle(.outlined)
                 }
             }
