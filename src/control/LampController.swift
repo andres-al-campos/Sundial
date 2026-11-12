@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import OSLog
+import Combine
 
 /// The Hue lamps follow the day: every 30 seconds each bulb fades to where its
 /// keyframes put it now (`LightDay`). Each fade lasts until the next, so the lamps
@@ -11,6 +12,8 @@ final class LampController {
     private weak var state: AppState?
     private var bridge: HueBridge?
     private var timer: Timer?
+    private var networkWatch: AnyCancellable?
+    private var networkRecheck: Timer?
     private var bulbsRead = Date.distantPast
     private var sent: [String: LightDay.State] = [:]
     private var previewing = false
@@ -56,7 +59,31 @@ final class LampController {
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
+        networkWatch = state.$lampStatus.sink { [weak self] status in
+            if status == HueError.localNetworkDenied.message { self?.recheckNetwork() }
+        }
         refresh()
+    }
+
+    /// macOS doesn't say when the Local Network switch is turned back on, so
+    /// while it's off Sundial asks every 2 seconds, which is one connection
+    /// attempt, and the lamps catch up as soon as it's on instead of at the
+    /// next 30-second tick.
+    private func recheckNetwork() {
+        guard networkRecheck == nil else { return }
+        var asking = false
+        networkRecheck = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, let state = self.state, !asking else { return }
+                asking = true
+                let denied = await LocalNetwork.denied(host: state.hueHost)
+                asking = false
+                guard !denied else { return }
+                self.networkRecheck?.invalidate()
+                self.networkRecheck = nil
+                if state.hueHost == nil { state.lampStatus = "Not paired" } else { self.refresh() }
+            }
+        }
     }
 
     /// Reads the bridge's key from the Keychain, which may ask first. Declined, the lamps stop until

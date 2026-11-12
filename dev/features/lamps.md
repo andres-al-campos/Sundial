@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-12 17:13, at 1.1.0.
+Updated 2026-11-12 17:21, at 1.1.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -195,8 +195,9 @@ blend looks in the room.
   "hostname could not be found". So a failed request asks the Network framework
   whether the permission is the cause (`LocalNetwork.denied`), and Settings, the
   popup and the Lights window then say so, with Open Privacy & Security beside Pair; macOS has no link to the Local Network page itself, so the message says to choose it.
-  Once it's switched back on, a paired bridge recovers on the next tick; an unpaired
-  one needs Pair pressed again.
+  macOS doesn't say when it's switched back on, so while it's off Sundial asks every
+  2 seconds; once allowed, a paired bridge's lamps catch up at once and an unpaired
+  one's status goes back to Not paired, leaving Pair to press.
 - The popup's oranges measure lighter than the window's (#ffb033 against #ff9230), though both are
   the system orange: the glass brightens them. Left as it is, as the platform draws it. Applies
   *Never a fight with the controls*.
