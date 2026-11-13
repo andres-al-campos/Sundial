@@ -27,6 +27,7 @@ func refused(_ url: String, saying word: String) {
 means("sundial://status?id=1", .status)
 means("sundial://lights/pause", .pauseLights)
 means("sundial://lights/resume", .resumeLights)
+means("sundial://mode/room-light", .auto)
 means("sundial://mode/auto", .auto)
 means("sundial://mode/schedule", .schedule)
 means("sundial://open", .open(nil))

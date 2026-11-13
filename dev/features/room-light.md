@@ -1,10 +1,11 @@
-# Auto
+# Room Light
 
-Updated 2026-11-12 21:09, at 1.1.0.
+Updated 2026-11-12 21:10, at 1.1.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
-presets; Schedule (the presets) is the other.
+presets; Schedule (the presets) is the other. The code calls it Auto
+(`AppState.Mode.auto`, `AutoController`).
 
 ## Sub-features
 
@@ -54,7 +55,7 @@ presets; Schedule (the presets) is the other.
   the monitor goes straight to it. The
   monitor moves at most 5 a second for brightness and contrast, 1 for Night
   Shift. Big changes are meant to be seen; most are small.
-- **No reading.** With the lid closed or no sensor, Auto keeps the last room
+- **No reading.** With the lid closed or no sensor, Room Light keeps the last room
   it saw (100 lux before the first), and the Room (lux) row shows "—" with its meter dimmed.
 - **Room log.** One line a minute, and one each time you let go of a slider
   (with the level, contrast multiple, night brightness or night contrast saved), in
@@ -69,7 +70,7 @@ presets; Schedule (the presets) is the other.
 
 ## How to get to it
 
-Click the sun in the menu bar. Auto is what opens; Display Follows → Schedule
+Click the sun in the menu bar. Room Light is what opens; Display Follows → Schedule
 shows the schedule's preset in force.
 
 ## Driving it
@@ -131,7 +132,7 @@ real reply from the M27Q.
   kept alive with the service: freed, the next read crashed on a freed lock
   inside IOKit (three crashes on 2026-10-26 before the fix).
 - On 2026-10-12 the sensor gave no reading at all while the laptop's own
-  screen was at 0 nits. If that holds, a fully dark laptop screen freezes Auto
+  screen was at 0 nits. If that holds, a fully dark laptop screen freezes Room Light
   on the last room it saw.
 - The sensor's lux counts whole numbers, so a dark room reads 0 from a dim
   lamp down to black. Below 10 lux Sundial reads a raw detector count
@@ -146,9 +147,9 @@ real reply from the M27Q.
   screen either: a drag holds until the next evening.
 - The monitor's own light doesn't reach the sensor at the levels used: after dark, with the lamps
   under 40%, brightness 0 to 14 read 0 lux throughout (2026-11-04 to 09).
-- Auto writes only when a value changes, so a change made with the monitor's
+- Room Light writes only when a value changes, so a change made with the monitor's
   buttons stays until the room moves or the Mac wakes.
-- The first Auto (2026-10-26, a few hours) used two ends, Dark room and Bright
+- The first Room Light (2026-10-26, a few hours) used two ends, Dark room and Bright
   room, and a hold that lapsed after 20 minutes; its log is
   `room-log-first-version.csv`.
 

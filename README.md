@@ -6,15 +6,15 @@ Sundial drives your monitor's **hardware** brightness and contrast over DDC, not
 
 ## What it does
 
-- **Auto** (the main mode) — reads the room's light with the MacBook's ambient light sensor, the photodiode beside the camera (not the camera). By day you set the brightness you like once and the room's light scales it; contrast follows brightness at a multiple you can drag. From 30 minutes before sunset the clock takes over, since after dark the sensor reads 0 to 2 lux whatever the room looks like: the screen fades to your night minimum by bedtime, fast at first and slower later. A drag in the evening restarts the fade from what you chose, and is kept through sleep and restarts. Night Shift warms from before sunset to full at bedtime, then turns off before sunrise. No presets needed.
+- **Room Light** (the main mode) — reads the room's light with the MacBook's ambient light sensor, the photodiode beside the camera (not the camera). By day you set the brightness you like once and the room's light scales it; contrast follows brightness at a multiple you can drag. From 30 minutes before sunset the clock takes over, since after dark the sensor reads 0 to 2 lux whatever the room looks like: the screen fades to your night minimum by bedtime, fast at first and slower later. A drag in the evening restarts the fade from what you chose, and is kept through sleep and restarts. Night Shift warms from before sunset to full at bedtime, then turns off before sunrise. No presets needed.
 - **Lamps** — pair a Hue bridge and each bulb gets a day of color keys, each a brightness and a color or white temperature, at a time or tied to sunrise, sunset or bedtime. The Lights window draws them as a band per bulb; Sundial fades the bulbs between keys. A drag in the popup holds a bulb until you return it to the schedule, or until the next sunrise.
-- **Presets and a schedule** — instead of Auto, presets like _Morning_, _Day_, _Evening_ and _Night_, each a brightness, contrast and Night Shift strength at a time of day. Sundial applies the one whose time most recently passed, fading to it over a minute.
+- **Schedule** — instead of Room Light, presets like _Morning_, _Day_, _Evening_ and _Night_, each a brightness, contrast and Night Shift strength at a time of day. Sundial applies the one whose time most recently passed, fading to it over a minute.
 - **Live control** — drag a slider in the menu bar and the monitor or bulb follows as you drag.
 - **Undo** — in the window, Cmd-Z undoes changes to presets and color keys; Shift-Cmd-Z, Cmd-Y or Control-Y redo.
 - **Wake handling** — re-applies the right settings when your Mac wakes, so the screen is right the moment you return.
 - **Launch at login** — optional; lives quietly in the menu bar, with a Dock icon only while its window is open. Pinned to the Dock, a click opens the window.
 
-Everything lives under `~/Library/Application Support/Sundial/`: settings, presets and color keys in `config.json`, and two logs, kept for tuning Auto against what you actually chose: `room-log.csv` (the room's light, what the screen and bulbs were set to, and each drag, once a minute) and `lights-log.jsonl` (each change to the color keys). The bridge's key is in the Keychain.
+Everything lives under `~/Library/Application Support/Sundial/`: settings, presets and color keys in `config.json`, and two logs, kept for tuning Room Light against what you actually chose: `room-log.csv` (the room's light, what the screen and bulbs were set to, and each drag, once a minute) and `lights-log.jsonl` (each change to the color keys). The bridge's key is in the Keychain.
 
 ## Requirements
 
@@ -56,8 +56,8 @@ Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Release
 
 1. Click the sun icon in the menu bar — Sundial opens to a **setup screen**.
 2. Check the **monitor name**, filled in from the connected monitor (any part of the name matches).
-3. Hit **Connect Monitor**. If a monitor by that name is connected, the popup opens on Auto; otherwise the error tells you what to check (see [Monitor compatibility](#monitor-compatibility)).
-4. Sundial starts in Auto. Drag Brightness once in daylight to the level you like and it takes over from there. To set up lamps, open the popup's Lights tab and pair the bridge; macOS asks for local network access and, after each new build, for the Keychain. You can change the monitor's name later in Open Sundial → Settings.
+3. Hit **Connect Monitor**. If a monitor by that name is connected, the popup opens on Room Light; otherwise the error tells you what to check (see [Monitor compatibility](#monitor-compatibility)).
+4. Sundial starts in Room Light. Drag Brightness once in daylight to the level you like and it takes over from there. To set up lamps, open the popup's Lights tab and pair the bridge; macOS asks for local network access and, after each new build, for the Keychain. You can change the monitor's name later in Open Sundial → Settings.
 
 ## How it works
 
@@ -68,7 +68,7 @@ Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Release
 | Night Shift | macOS Night Shift (CoreBrightness)                              |
 | Lamps       | Philips Hue bridge, over the local network                      |
 
-In Auto, brightness before sunset is your level times the square root of the room's light against 100 lux, and contrast is a multiple of brightness. After the handover it fades toward your night minimum, with what's left halving every 2.5 hours, scaled to arrive at bedtime. The monitor moves at most 5 points a second, so changes are gradual. On a schedule, the active preset holds until the next, fading over a minute. On wake, Sundial forces a full re-apply.
+In Room Light, brightness before sunset is your level times the square root of the room's light against 100 lux, and contrast is a multiple of brightness. After the handover it fades toward your night minimum, with what's left halving every 2.5 hours, scaled to arrive at bedtime. The monitor moves at most 5 points a second, so changes are gradual. On a schedule, the active preset holds until the next, fading over a minute. On wake, Sundial forces a full re-apply.
 
 ## Releasing
 

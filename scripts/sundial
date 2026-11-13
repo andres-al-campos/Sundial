@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-usage="usage: sundial status | pause | resume | auto | schedule | open [lights|schedule|settings] | brightness 0-100 | contrast 0-100 | lights | lights load <file> | hue | screenshot"
+usage="usage: sundial status | pause | resume | room-light | schedule | open [lights|schedule|settings] | brightness 0-100 | contrast 0-100 | lights | lights load <file> | hue | screenshot"
 
 support="$HOME/Library/Application Support/Sundial"
 then=""
@@ -13,7 +13,8 @@ case "${1:-}" in
     status)     path="status" ;;
     pause)      path="lights/pause" ;;
     resume)     path="lights/resume" ;;
-    auto)       path="mode/auto" ;;
+    # auto is the old name for Room Light, kept so scripts written before still work.
+    room-light|auto) path="mode/room-light" ;;
     schedule)   path="mode/schedule" ;;
     open)       path="open${2:+/$2}" ;;
     hue)        path="hue"; then="hue.json" ;;

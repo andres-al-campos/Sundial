@@ -48,13 +48,13 @@ enum AmbientLightSensor {
     /// 2026-10-26, three crashes on the second read after launch).
     private static let sensor: (client: AnyObject, service: AnyObject)? = {
         guard let client = IOHIDEventSystemClientCreate(kCFAllocatorDefault)?.takeRetainedValue() else {
-            print("[Sundial] Couldn't open the HID event system, so the room's light can't be read. Auto will follow the schedule instead.")
+            print("[Sundial] Couldn't open the HID event system, so the room's light can't be read. Room Light will follow the schedule instead.")
             return nil
         }
         _ = IOHIDEventSystemClientSetMatching(client, ["PrimaryUsagePage": 0xFF00, "PrimaryUsage": 4] as CFDictionary)
         guard let services = IOHIDEventSystemClientCopyServices(client)?.takeRetainedValue() as? [AnyObject],
               let first = services.first else {
-            print("[Sundial] No ambient light sensor found (Macs without a built-in display have none). Auto will follow the schedule instead.")
+            print("[Sundial] No ambient light sensor found (Macs without a built-in display have none). Room Light will follow the schedule instead.")
             return nil
         }
         return (client, first)

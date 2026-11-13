@@ -1,13 +1,14 @@
 # Command line
 
-Updated 2026-11-12 21:09, at 1.1.0.
+Updated 2026-11-12 21:10, at 1.1.0.
 
 A script, a shortcut or a session can see what Sundial is doing and change it
 without opening it.
 
 ## Sub-features
 
-- **`scripts/sundial`**: `status`, `pause` and `resume` (the lights), `auto`,
+- **`scripts/sundial`**: `status`, `pause` and `resume` (the lights), `room-light` (`auto`, its old
+  name, still works),
   `schedule`, `open [lights|schedule|settings]` (`presets`, the Schedule tab's old
   name, still works), `brightness 0-100` and
   `contrast 0-100`. It prints the app's answer as JSON and exits non-zero if the
@@ -22,7 +23,7 @@ without opening it.
 - **`screenshot`** captures Sundial's window to a PNG and prints its path. It needs
   no Screen Recording permission, since the window is the app's own.
 - **`sundial://` URLs**: what the command sends, usable from anything that opens
-  a URL: `sundial://lights/pause`, `sundial://mode/auto`, `sundial://open/lights`,
+  a URL: `sundial://lights/pause`, `sundial://mode/room-light`, `sundial://open/lights`,
   `sundial://brightness/40`.
 - **`status.json`** beside the config holds the last answer: the mode, brightness,
   contrast, Night Shift, room light, lights and any error.
@@ -48,7 +49,7 @@ and `open` then `screenshot`.
 ## Gotchas
 
 - `lights load` doesn't reach Cmd-Z in the window. `lights-before-load.json` is the way back.
-- `brightness` and `contrast` act like dragging Auto's sliders: by day they change the level
+- `brightness` and `contrast` act like dragging Room Light's sliders: by day they change the level
   Sundial uses for this kind of room, not just the monitor for now; in the evening they hold until
   bedtime and the fade runs on from them; after bedtime they set the night pair.
 - Any app or web page can open a `sundial://` URL. The worst it can do is change
