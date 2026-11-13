@@ -42,14 +42,14 @@ private extension WindowSection {
     var title: String {
         switch self {
         case .lights: return "Lights"
-        case .presets: return "Presets"
+        case .schedule: return "Schedule"
         case .settings: return "Settings"
         }
     }
     var icon: String {
         switch self {
         case .lights: return "lightbulb"
-        case .presets: return "display"
+        case .schedule: return "display"
         case .settings: return "gearshape"
         }
     }
@@ -67,7 +67,7 @@ private struct MainWindowView: View {
         } detail: {
             switch appState.windowSection {
             case .lights: LightsView()
-            case .presets: PresetsSection()
+            case .schedule: PresetsSection()
             case .settings:
                 ScrollView {
                     SettingsView()

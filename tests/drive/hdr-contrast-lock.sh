@@ -3,7 +3,7 @@
 #
 # Compiles the app's own HDR decision with a small harness and feeds it screen
 # lists, so it runs without a monitor. It can't see whether macOS reports the
-# headroom it assumes, or how the greyed slider looks; dev/features/presets.md
+# headroom it assumes, or how the greyed slider looks; dev/features/schedule.md
 # says how to check those by hand.
 
 set -euo pipefail

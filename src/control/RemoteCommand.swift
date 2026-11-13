@@ -2,8 +2,13 @@ import Foundation
 
 /// A section of the desktop window.
 enum WindowSection: String, CaseIterable, Identifiable {
-    case presets, lights, settings
+    case schedule, lights, settings
     var id: Self { self }
+
+    /// Takes "presets", the tab's old name, too, so scripts written before the rename still work.
+    init?(named name: String) {
+        self.init(rawValue: name == "presets" ? "schedule" : name)
+    }
 }
 
 /// What can be asked of Sundial from outside it, as `sundial://` URLs
@@ -19,7 +24,7 @@ enum RemoteCommand: Equatable {
 
     struct Failure: Error, Equatable { let message: String }
 
-    static let usage = "Use status, pause, resume, auto, schedule, open [lights|presets|settings], brightness 0-100, contrast 0-100, lights, lights load <file>, hue or screenshot."
+    static let usage = "Use status, pause, resume, auto, schedule, open [lights|schedule|settings], brightness 0-100, contrast 0-100, lights, lights load <file>, hue or screenshot."
 
     static func parse(_ url: URL) -> Result<RemoteCommand, Failure> {
         guard url.scheme == "sundial", let host = url.host else {
@@ -38,8 +43,8 @@ enum RemoteCommand: Equatable {
         case ("mode", "schedule"): return .success(.schedule)
         case ("open", nil): return .success(.open(nil))
         case ("open", let name?):
-            guard let section = WindowSection(rawValue: name) else {
-                return .failure(Failure(message: "There's no section \"\(name)\". Use lights, presets or settings."))
+            guard let section = WindowSection(named: name) else {
+                return .failure(Failure(message: "There's no section \"\(name)\". Use lights, schedule or settings."))
             }
             return .success(.open(section))
         case ("brightness", let value?), ("contrast", let value?):

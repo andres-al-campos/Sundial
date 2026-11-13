@@ -123,7 +123,7 @@ class AppState: ObservableObject {
     var onScheduleChanged: (() -> Void)?
 
     /// The section the desktop window shows, and shows again next time it opens.
-    @Published var windowSection = UserDefaults.standard.string(forKey: "windowSection").flatMap(WindowSection.init) ?? .presets {
+    @Published var windowSection = UserDefaults.standard.string(forKey: "windowSection").flatMap(WindowSection.init(named:)) ?? .schedule {
         didSet { UserDefaults.standard.set(windowSection.rawValue, forKey: "windowSection") }
     }
 
@@ -268,12 +268,12 @@ class AppState: ObservableObject {
     // MARK: - Mutations
 
     /// Whichever mode is now on takes the monitor at once, in full.
-    /// A preset the window's Presets section should open, asked for from the popup.
+    /// A preset the window's Schedule section should open, asked for from the popup.
     @Published var presetToOpen: UUID?
 
     /// Opens the window on a preset, as clicking the popup's card does.
     func openPreset(_ id: UUID) {
-        windowSection = .presets
+        windowSection = .schedule
         presetToOpen = id
         onOpenWindow?()
     }

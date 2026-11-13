@@ -1,6 +1,6 @@
 # Command line
 
-Updated 2026-11-10 00:28, at 1.1.0.
+Updated 2026-11-12 21:09, at 1.1.0.
 
 A script, a shortcut or a session can see what Sundial is doing and change it
 without opening it.
@@ -8,7 +8,8 @@ without opening it.
 ## Sub-features
 
 - **`scripts/sundial`**: `status`, `pause` and `resume` (the lights), `auto`,
-  `schedule`, `open [lights|presets|settings]`, `brightness 0-100` and
+  `schedule`, `open [lights|schedule|settings]` (`presets`, the Schedule tab's old
+  name, still works), `brightness 0-100` and
   `contrast 0-100`. It prints the app's answer as JSON and exits non-zero if the
   app couldn't do it.
 - **`lights`** prints every bulb's keyframes as JSON. **`lights load <file>`** replaces

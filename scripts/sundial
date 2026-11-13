@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-usage="usage: sundial status | pause | resume | auto | schedule | open [lights|presets|settings] | brightness 0-100 | contrast 0-100 | lights | lights load <file> | hue | screenshot"
+usage="usage: sundial status | pause | resume | auto | schedule | open [lights|schedule|settings] | brightness 0-100 | contrast 0-100 | lights | lights load <file> | hue | screenshot"
 
 support="$HOME/Library/Application Support/Sundial"
 then=""

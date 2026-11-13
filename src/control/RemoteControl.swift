@@ -116,7 +116,7 @@ enum RemoteControl {
     }
 
     private static func scheduleOwns(_ what: String) -> String {
-        "\(what) comes from the current preset in Schedule mode. Run `sundial auto` first, or edit the preset with `sundial open presets`."
+        "\(what) comes from the current preset in Schedule mode. Run `sundial auto` first, or edit the preset with `sundial open schedule`."
     }
 
     private static func write(_ state: AppState, id: String?, error: String?) {

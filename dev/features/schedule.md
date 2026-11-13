@@ -1,10 +1,11 @@
-# Presets
+# Schedule
 
-Updated 2026-11-10 00:28, at 1.1.0.
+Updated 2026-11-12 21:09, at 1.1.0.
 
-A preset is a brightness, a contrast and a Night Shift strength with a time of
-day. In Schedule mode Sundial applies the preset whose time most recently
-passed. Auto mode doesn't use them (see auto.md).
+The schedule is a list of presets. A preset is a brightness, a contrast and a
+Night Shift strength with a time of day. When the display follows Schedule,
+Sundial applies the preset whose time most recently passed. Room Light doesn't
+use them (see [room-light.md](room-light.md)).
 
 ## Sub-features
 
@@ -26,8 +27,8 @@ passed. Auto mode doesn't use them (see auto.md).
 
 ## How to get to it
 
-Click the sun in the menu bar, then Open Sundial, then Presets. Choose Schedule
-on the popup's Display tab to have them drive the monitor; the popup then keeps the current
+Click the sun in the menu bar, then Open Sundial, then Schedule. Choose Schedule
+under Display Follows on the popup's Display tab to have them drive the monitor; the popup then keeps the current
 one's card open. Click a
 preset's row to expand it.
 
@@ -103,7 +104,7 @@ preview, add, delete, and Cmd-Z through the Edit menu).
 
 - A time picker's hour or minute stayed selected after a click elsewhere,
   until the panel was rebuilt: SwiftUI's empty space and plain views don't
-  take keyboard focus. A tap on the popup's background fixed Auto but not the
+  take keyboard focus. A tap on the popup's background fixed Room Light but not the
   cards, whose list catches the clicks first, so `EditFocus` watches every
   click and ends an edit on anything that isn't a field (2026-10-31).
 

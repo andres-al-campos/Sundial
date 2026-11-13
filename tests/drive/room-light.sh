@@ -6,7 +6,7 @@
 # logged on 2026-10-26 (lit room ~550, blinds shut ~35, night 0-3, a hand passing
 # the notch spiking to 3000+) and the brightnesses set that evening; the Night Shift and contrast cases are the presets the
 # curves were fitted to. It can't see whether the sensor reads, or how the
-# change feels on the monitor; dev/features/auto.md says how to check those.
+# change feels on the monitor; dev/features/room-light.md says how to check those.
 
 set -euo pipefail
 cd "$(dirname "$0")/../.."
