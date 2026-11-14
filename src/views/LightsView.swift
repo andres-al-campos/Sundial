@@ -873,7 +873,7 @@ enum Layout {
     })
     /// Between the window's edge and what's in it.
     static let edge: CGFloat = 28
-    static let name: CGFloat = 130
+    static let name: CGFloat = 90
     static let gap: CGFloat = 12
     static let bandHeight: CGFloat = 34
     static let linkedHeight: CGFloat = 12
