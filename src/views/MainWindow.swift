@@ -8,8 +8,10 @@ import SwiftUI
 enum MainWindow {
     private static var window: NSWindow?
     private static var closing: NSObjectProtocol?
-    /// Below this the bands are too short for their hour labels.
-    static let minSize = NSSize(width: 760, height: 420)
+    /// The page beside the sidebar: below this width the bands are too short for their
+    /// hour labels. It's the page's minimum, not the window's, so hiding the sidebar
+    /// lets the window come down to it.
+    static let minPage = NSSize(width: 600, height: 420)
 
     static func show(_ state: AppState) {
         NSApp.setActivationPolicy(.regular)
@@ -20,7 +22,6 @@ enum MainWindow {
             w.title = "Sundial"
             w.isReleasedWhenClosed = false
             w.contentView = NSHostingView(rootView: MainWindowView()
-                .frame(minWidth: minSize.width, minHeight: minSize.height)
                 .environmentObject(state))
             w.center()
             w.setFrameAutosaveName("SundialMain")
@@ -65,16 +66,19 @@ private struct MainWindowView: View {
             }
             .navigationSplitViewColumnWidth(min: 140, ideal: 160, max: 200)
         } detail: {
-            switch appState.windowSection {
-            case .lights: LightsView()
-            case .schedule: PresetsSection()
-            case .settings:
-                ScrollView {
-                    SettingsView()
-                        .frame(maxWidth: 520 + 2 * Layout.edge, alignment: .leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                switch appState.windowSection {
+                case .lights: LightsView()
+                case .schedule: PresetsSection()
+                case .settings:
+                    ScrollView {
+                        SettingsView()
+                            .frame(maxWidth: 520 + 2 * Layout.edge, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             }
+            .frame(minWidth: MainWindow.minPage.width, minHeight: MainWindow.minPage.height)
         }
     }
 }
