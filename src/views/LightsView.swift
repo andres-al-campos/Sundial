@@ -1139,8 +1139,11 @@ private struct KeyTimeRow: View {
                 anchorBinding.wrappedValue = i == 0 ? nil : choices[i - 1]
             }
             // One width for every choice, so the button and its caret don't move as it changes.
+            // It gives up a little only at the window's narrowest: held at its full width there,
+            // the row outgrew the card, which widened the whole column off the rows' edges.
             .controlSize(.small)
-            .frame(width: Self.menuWidth)
+            .frame(minWidth: Self.menuWidth - 20, maxWidth: Self.menuWidth)
+            .layoutPriority(1)
             .fixedSize(horizontal: false, vertical: true)
             .help(caption)
             Spacer(minLength: 0)
