@@ -50,7 +50,7 @@ To keep this from being a mystery, Sundial does nothing until it has found your 
 
 > Install via `./build.sh` (not by running a Debug build from Xcode) so launch-at-login binds the app in `/Applications` rather than a transient DerivedData path.
 
-Prefer not to build it yourself? Grab the latest `Sundial.app` from the [Releases](https://github.com/andres-al-campos/Sundial/releases) page, unzip it, and drag it to `/Applications`.
+Prefer not to build it yourself? Grab the latest DMG from the [Releases](https://github.com/andres-al-campos/Sundial/releases) page, open it, and drag Sundial into Applications.
 
 ## First run
 
@@ -78,4 +78,4 @@ To cut a release, bump `MARKETING_VERSION` in `project.yml`, commit, push, then 
 ./release.sh
 ```
 
-It reads the version from `project.yml`, refuses to run on a dirty or unpushed tree, builds a fresh `.app`, zips it, tags `v<version>`, and publishes a GitHub release with the zip attached and auto-generated notes.
+It reads the version from `project.yml`, refuses to run on a dirty or unpushed tree, builds a fresh `.app`, packages it in a DMG, tags `v<version>`, and publishes a GitHub release with the DMG attached and auto-generated notes.

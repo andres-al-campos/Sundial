@@ -2,8 +2,8 @@
 # Cut a GitHub release for the current version of Sundial.
 #
 # Reads the version from project.yml (MARKETING_VERSION) — the single source of
-# truth — tags it v<version>, builds a fresh Release .app, zips it, and creates
-# a GitHub release with auto-generated notes and the zip attached.
+# truth — tags it v<version>, builds a fresh Release .app, packages it in a DMG, and
+# creates a GitHub release with auto-generated notes and the DMG attached.
 #
 # Usage:
 #   ./release.sh          # build, tag, and publish the release
@@ -78,18 +78,23 @@ if [ ! -d "$APP_PATH" ]; then
     exit 1
 fi
 
-# --- Zip the artifact (ditto preserves the .app bundle + code signature) ---
-ZIP="build/$APP_NAME-$VERSION.zip"
-rm -f "$ZIP"
-echo "→ Zipping $ZIP"
-ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP"
+# --- Package a DMG: the app beside an Applications shortcut, so it gets installed ---
+DMG="build/$APP_NAME-$VERSION.dmg"
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+# ditto rather than cp: it keeps the bundle's symlinks and code signature intact.
+ditto "$APP_PATH" "$STAGE/$APP_NAME.app"
+ln -s /Applications "$STAGE/Applications"
+rm -f "$DMG"
+echo "→ Packaging $DMG"
+hdiutil create -quiet -volname "$APP_NAME" -srcfolder "$STAGE" -format UDZO "$DMG"
 
 # --- Tag and publish ---
 echo "→ Tagging $TAG and creating GitHub release"
 git tag "$TAG"
 git push origin "$TAG"
-gh release create "$TAG" "$ZIP" \
+gh release create "$TAG" "$DMG" \
     --title "$APP_NAME $VERSION" \
     --generate-notes
 
-echo "✓ Released $TAG with $ZIP attached."
+echo "✓ Released $TAG with $DMG attached."
