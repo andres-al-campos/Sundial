@@ -81,3 +81,5 @@ To cut a release, bump `MARKETING_VERSION` in `project.yml`, commit, push, then 
 ```
 
 It reads the version from `project.yml`, refuses to run on a dirty or unpushed tree, builds a fresh `.app`, packages it in a DMG, tags `v<version>`, and publishes a GitHub release with the DMG attached and auto-generated notes.
+
+`./release.sh --dry-run` builds and packages the DMG into `build/` and stops there, to check it before a release.
