@@ -6,25 +6,26 @@ The drawing is built from a few rules rather than tuned by eye, so each number f
   cut ends of its rim lie along that line. Where the line cuts the tail decides how far the top
   runs on, through the gnomon.
 - The gnomon's straight edge lies along that same line, so the cut and the gnomon read as one
-  diagonal, and is one radius long. Its base is that edge divided by the golden ratio. Its back is
-  one curve from the tip that lands flat on the base, so all three tips come to points. The outline
-  rounds its corner outward, so the gnomon is slid until the outline's outer edges meet at the
-  dial's center.
+  diagonal, and is one radius long. The gnomon is a garden sundial's, measured from a photo: its
+  base, its angle, and its back, a parabola whose axis runs along the base, through the foot and
+  the tip, narrowest a quarter of the way up. The outline rounds its corner outward, so the gnomon
+  is slid until the outline's outer edges meet at the dial's center.
 - The half dial is filled with a faint wash of the ink.
-- The base is centered across the icon, the padding is even left and right (the cut's angle is
-  solved for that), and the drawing is centered top to bottom.
+- The padding is even left and right, and the drawing is centered both ways.
 
 An unfilled dial cut along the gnomon's edge read as a pointy tail; the fill fixed that. Cutting
 the dial at a different angle from the gnomon instead left a sliver of dial above the gnomon's
-edge. Run render.sh afterwards.
+edge. A back curving in all the way from the tip left it a hairline, and the long edge looked
+bent beside it. Run render.sh afterwards.
 """
 import math, pathlib
 
-PHI = (1 + 5 ** 0.5) / 2
 ASPECT = 0.5        # the dial's height against its width: rounder put its top higher up the gnomon
-BASE = 1 / PHI      # the gnomon's base, in dial radii; its straight edge is one radius
-DEPTH = 0.7         # how far the back curves in toward the gnomon's corner: 1 left the tips hairlines
-SIDE_PAD = 23.3     # left and right, on the 170 grid: at this size the diagonal is exactly one radius
+# The gnomon, measured from dots placed on a photo of a garden sundial (designs/gnomon-wing):
+BASE = 1 / 2.136    # its base, in dial radii; its straight edge is one radius
+CUT = 43.5          # its angle at the corner, in degrees, which the dial's cut follows
+WAIST = 0.246       # where the back is narrowest, as a share of the tip's height
+SIDE_PAD = 23.3     # left and right, on the 170 grid, as before the gnomon changed
 LINE = 5            # the dial's rim: 7 looked heavy beside the filled face
 TIP = 3.5           # the outline round the filled gnomon: points, softened this much
 GROUND = "#313235"      # a dark gray, not black: black sank into a dark desktop
@@ -44,12 +45,13 @@ def gnomon_at(deg, sc, n=200):
 
 
 def back(tip, n):
-    pts = []
-    for i in range(n + 1):
-        t = i / n
-        a, b, c = (1 - t) ** 2, 2 * DEPTH * t * (1 - t), t * t
-        pts.append(((a * tip[0] + c * BASE) / (a + b + c), (a * tip[1]) / (a + b + c)))
-    return pts
+    # u = 1 + b v + a v^2 in base lengths from the corner: through the foot (u=1 at v=0) and the
+    # tip, with the vertex at WAIST of the tip's height.
+    tu, tv = tip[0] / BASE, tip[1] / BASE
+    a = (tu - 1) / (tv * tv * (1 - 2 * WAIST))
+    b = -2 * a * WAIST * tv
+    vs = (tv * (1 - i / n) for i in range(n + 1))
+    return [(BASE * (1 + b * v + a * v * v), BASE * v) for v in vs]
 
 
 def rim_ink(cut, sc, n=4000):
@@ -77,24 +79,13 @@ def ink_box(cut, sc, ox, oy):
     return min(xs), max(xs), min(ys), max(ys)
 
 
-def balanced_cut(sc, ox):
-    # A steeper cut shortens the tail, moving the left edge in; the rim fixes the right edge.
-    lo, hi = 35.0, 85.0
-    for _ in range(40):
-        m = (lo + hi) / 2
-        l, r, _, _ = ink_box(m, sc, ox, 85)
-        lo, hi = (m, hi) if l < 170 - r else (lo, m)
-    return (lo + hi) / 2
-
-
-sc = 100.0
+# The rim fixes the right edge and the tail the left; scale until they sit SIDE_PAD in, then center.
+sc, ox, cut = 100.0, 85.0, CUT
 for _ in range(8):
-    ox = 85 - sc * BASE / 2
-    cut = balanced_cut(sc, ox)
     l, r, _, _ = ink_box(cut, sc, ox, 85)
     sc *= (170 - 2 * SIDE_PAD) / (r - l)
-ox = 85 - sc * BASE / 2
-cut = balanced_cut(sc, ox)
+    l, r, _, _ = ink_box(cut, sc, ox, 85)
+    ox += (170 - l - r) / 2
 _, _, t, b = ink_box(cut, sc, ox, 85)
 oy = 85 + (170 - t - b) / 2
 l, r, t, b = ink_box(cut, sc, ox, oy)
