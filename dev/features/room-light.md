@@ -1,6 +1,6 @@
 # Room Light
 
-Updated 2026-11-12 21:10, at 1.1.0.
+Updated 2026-11-17 18:19, at 1.2.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -17,10 +17,11 @@ presets; Schedule (the presets) is the other. The code calls it Auto
   settled drags made before sunset from 2026-10-27 to 11-01 (level 30.4, power
   0.51, 25 to 470 lux). A level of 0 is the monitor's darkest in any room.
 - **Contrast follows brightness** at a multiple you set by dragging the
-  Contrast slider: it starts at π × brightness, and a drag keeps the
+  Contrast slider: it starts at the golden ratio (1.618) × brightness, and a drag keeps the
   multiple that gives what you chose, so brightness 0 is still contrast 0, the
-  monitor's darkest. Four days of drags (2026-10-26 to 30) fitted 3.0 × and
-  settled at 3.5-4 × from the 28th; a curve bent no better (power 0.99).
+  monitor's darkest. Four days of drags (2026-10-26 to 30) fitted 3.0 ×, and
+  π was the start until 2026-11-17, when it felt too strong from the slide's
+  start to full dark.
   Below brightness 1 a drag leaves the multiple alone: every multiple gives
   0 there.
 - **Night Shift follows the sun**: it starts warming 30 minutes before
@@ -40,7 +41,7 @@ presets; Schedule (the presets) is the other. The code calls it Auto
 - **After sunset, the clock dims to bedtime.** From where Night Shift starts
   warming (30 minutes before sunset, where the lamps start on Twilight), lux
   stops counting: brightness and contrast fade from what the room gave at that
-  moment, halving what's left every 2.5 hours (fast after sunset, slow later), to the night pair (brightness 1, contrast 3 to start) by
+  moment, halving what's left every 90 minutes (fast after sunset, slow later), to the night pair (brightness 1, contrast 3 to start) by
   bedtime, and stay there until Night Shift turns off. If Sundial didn't see
   the handover, it starts from your level at 38 lux, the median there over the
   first week. Contrast at night is its own number, not a multiple, so brightness
@@ -248,9 +249,6 @@ real reply from the M27Q.
   interpolate"). The log showed it: the room read 0 from 22:30-23:00 every
   night, and 30-60 minutes later the last drag took the screen to 1 (six
   nights of seven). Applies *Just right for the room*.
-- 2026-10-30 17:34, 1.1.0. Contrast starts at π × brightness ("how about a multiple of pi?"), between
-  the 3 × the drags fitted and the 3.5-4 × of the last days. Applies *Just
-  right for the room*.
 - 2026-10-31 14:10, 1.1.0. Waking the Mac or logging in goes straight to the room's brightness instead
   of easing for 20 seconds from the night's: "immediately go to the new day's
   brightness every time I wake up and log in." The screen was off, so the
@@ -272,3 +270,9 @@ real reply from the M27Q.
   relaunch forgot the hold. A best fit on the post-sunset holds, to use "for now before coming back
   to it"; the twilight hour either side of sunset, where both the monitor and the lamps run bright
   for the room, is still open. Applies *Just right for the room*.
+- 2026-11-17 18:19, 1.2.0. The fade halves every 90 minutes instead of 2.5 hours, and contrast starts at the golden ratio × brightness
+  instead of π. Evenings Nov 10 to 16, with holds kept across relaunches, had about 5 drags a night
+  instead of 15; the median of your drags ran about 2 under the 2.5-hour fade from an hour after sunset,
+  and the 90-minute one stays within 1 of it. Contrast felt too strong "between when the sunset starts
+  and when the sky actually goes fully dark"; the golden ratio was your pick. Applies *Just right for
+  the room*.

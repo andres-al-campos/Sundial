@@ -50,10 +50,11 @@ enum RoomLight {
     // MARK: - Contrast
 
     /// Contrast is a multiple of brightness, so brightness 0 is contrast 0 too,
-    /// the monitor's darkest. Dragging Contrast sets the multiple. π to start:
-    /// four days of drags (2026-10-26 to 30) fitted 3.0, and settled between
-    /// 3.5 and 4 from the 28th on; √2, from the presets' line, was too flat.
-    static let defaultContrastScale = Double.pi
+    /// the monitor's darkest. Dragging Contrast sets the multiple. The golden
+    /// ratio to start: π (from four days of drags, 2026-10-26 to 30) felt too
+    /// strong from the slide's start to full dark, and pinned contrast at 100
+    /// from brightness 32 up; √2, from the presets' line, was too flat.
+    static let defaultContrastScale = (1 + 5.0.squareRoot()) / 2
 
     static func contrast(brightness: Double, scale: Double = defaultContrastScale) -> Double {
         clamp(scale * brightness)
@@ -116,9 +117,11 @@ enum RoomLight {
         return (1 - left(now - since)) / (1 - left(bed - since))
     }
 
-    /// Minutes for the evening's fade to halve what's left: within 1 of the nine
-    /// evenings' medians at each hour from sunset to 3 hours after.
-    static let eveningHalfLife = 150.0
+    /// Minutes for the evening's fade to halve what's left. 150 came from the
+    /// evenings of 2026-11-01 to 09; on 11-10 to 16, with holds kept across
+    /// relaunches, the median of your drags ran about 2 under it from an hour
+    /// after sunset, and 90 stays within 1 of it from 40 minutes after sunset to bedtime.
+    static let eveningHalfLife = 90.0
 
     /// A value `dark` of the way to its night value, never up to it when it's
     /// already lower.

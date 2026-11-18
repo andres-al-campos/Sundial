@@ -70,7 +70,7 @@ Prefer not to build it yourself? Grab the latest DMG from the [Releases](https:/
 | Night Shift | macOS Night Shift (CoreBrightness)                              |
 | Lamps       | Philips Hue bridge, over the local network                      |
 
-In Room Light, brightness before sunset is your level times the square root of the room's light against 100 lux, and contrast is a multiple of brightness. After the handover it fades toward your night minimum, with what's left halving every 2.5 hours, scaled to arrive at bedtime. The monitor moves at most 5 points a second, so changes are gradual. On a schedule, the active preset holds until the next, fading over a minute. On wake, Sundial forces a full re-apply.
+In Room Light, brightness before sunset is your level times the square root of the room's light against 100 lux, and contrast is a multiple of brightness. After the handover it fades toward your night minimum, with what's left halving every 90 minutes, scaled to arrive at bedtime. The monitor moves at most 5 points a second, so changes are gradual. On a schedule, the active preset holds until the next, fading over a minute. On wake, Sundial forces a full re-apply.
 
 ## Releasing
 
