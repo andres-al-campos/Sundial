@@ -1,6 +1,6 @@
 # Lamps
 
-Updated 2026-11-12 17:21, at 1.1.0.
+Updated 2026-11-17 21:03, at 1.2.0.
 
 Sundial sets the Hue lamps through the day from your scenes, so the room's
 artificial light follows the natural light along with the screen.
@@ -110,7 +110,7 @@ It also checks when a hold ends and whose hold a follower is under.
 `./build.sh drive held-lamp` (~15s): the real `LampController` with a stand-in bridge that records what lands, so no bulb moves. A keyframe's drag sends nothing, even with a tick landing during it, and its drop arrives at the usual fade. After a preview a bulb goes back to its hold or the
 day, quickly, followers too, paused or not, including letting go with a preview's send still on its way, and previewing an off keyframe doesn't leave it off, while a bulb switched off by hand goes back off after a preview. A routine moving a bulb gets put back, held or on a flat stretch.
 
-The law `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band. `tests/card-stays-open.sh` checks that only `deselect` closes the card and the menus don't call it.
+The lint `tests/drag-moves-time.sh` checks the window's half of that: a drag's functions write only the time and call nothing that sends to the bulbs, and a new keyframe samples the band. `tests/card-stays-open.sh` checks that only `deselect` closes the card and the menus don't call it.
 
 `./build.sh drive window` (~20s): builds the real window from the code as it is and renders Lights off-screen to PNGs, dark and light, taking no focus. `WINDOW_OUT=dir` keeps them and `WINDOW_REAL=1` starts from a throwaway copy of the real config. It shows the window at rest; showing a card takes a scratch copy of `src/` calling the view's private functions.
 

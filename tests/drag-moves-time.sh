@@ -1,5 +1,5 @@
 #!/bin/bash
-# Law: dragging a keyframe changes only its time and sends nothing to the bulbs, and a new keyframe
+# Lint: dragging a keyframe changes only its time and sends nothing to the bulbs, and a new keyframe
 # is how a colour between two others gets made.
 #
 # "dragging just means change the time not the colors", and "new keyframes should get the in-between

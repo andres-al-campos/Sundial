@@ -1,5 +1,5 @@
 #!/bin/bash
-# Law: the DDC/CI bytes Sundial sends and reads are the ones the standard defines.
+# Test: the DDC/CI bytes Sundial sends and reads are the ones the standard defines.
 #
 # Checked against packets worked out by hand from the VESA DDC/CI layout and a reply the M27Q
 # really sent, so a change to DDCPacket can't quietly send a monitor bytes it ignores.

@@ -44,7 +44,7 @@ To keep this from being a mystery, Sundial does nothing until it has found your 
 
 ```bash
 ./build.sh -n       # build only, stage into ./build/Sundial.app (no install)
-./build.sh check    # the checks in tests/: types, tests and laws (no build, no window)
+./build.sh check    # the checks in tests/: types, tests and lints (no build, no window)
 ./build.sh drive    # every feature check in tests/drive/, off-screen; add a name for one
 ./build.sh -v       # verbose xcodebuild output
 ./build.sh --help   # usage

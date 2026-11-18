@@ -1,5 +1,5 @@
 #!/bin/bash
-# Law: a right-click never closes the Lights card.
+# Lint: a right-click never closes the Lights card.
 #
 # "right click actions should not close the color setting if it's open". Only `deselect` closes the
 # card, and it's for the X and clicks around the rows, so this reads who sets the selection to nil

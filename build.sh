@@ -6,8 +6,8 @@
 #                              # (set INSTALL_DIR in build.local.env to install elsewhere)
 #   ./build.sh --no-install    # build only, stage into ./build/Sundial.app
 #   ./build.sh -n              # short form of --no-install
-#   ./build.sh check           # run the laws in tests/ (no build)
-#   ./build.sh check --drives  # the laws, then every drive in tests/drive/
+#   ./build.sh check           # run the checks in tests/ (no build)
+#   ./build.sh check --drives  # the checks, then every drive in tests/drive/
 #   ./build.sh drive [name]    # run every feature check in tests/drive/, or one
 #   ./build.sh -v              # verbose xcodebuild output
 #   ./build.sh -n -v           # both
@@ -80,8 +80,8 @@ fi
 
 if [ "$MODE" = "check" ]; then
     failed=0
-    for law in tests/*.sh; do
-        "$law" || failed=1
+    for check in tests/*.sh; do
+        "$check" || failed=1
     done
     if [ "$DRIVES" = 1 ]; then
         drive "" || failed=1
