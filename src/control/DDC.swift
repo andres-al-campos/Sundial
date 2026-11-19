@@ -122,11 +122,7 @@ struct IOAVLink: DDCLink {
         var took = false
         for m in matching(display) {
             var p = DDCPacket.write(vcp: vcp, value: value)
-            // Sent twice, as MonitorControl does: a monitor busy with the last value can drop one.
-            for _ in 0..<2 {
-                if calls.writeI2C(m.av, m.address, Self.offset, &p, UInt32(p.count)) == 0 { took = true }
-                usleep(10_000)
-            }
+            if calls.writeI2C(m.av, m.address, Self.offset, &p, UInt32(p.count)) == 0 { took = true }
         }
         return took
     }

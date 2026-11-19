@@ -138,8 +138,9 @@ final class AutoController {
         shown = (Double(brightness), contrast, shown?.nightShift ?? Double(state.autoNightShift))
         state.autoBrightness = brightness
         state.autoContrast = Int(contrast.rounded())
-        write("hardwareBrightness", brightness)
-        write("hardwareContrast", Int(contrast.rounded()))
+        dragUntil = done ? .distantPast : Date().addingTimeInterval(1)
+        write("hardwareBrightness", brightness, final: done)
+        write("hardwareContrast", Int(contrast.rounded()), final: done)
         if done {
             state.save()
             log(force: true, set: target == .day ? .brightness : target == .nightPair ? .nightMinimum : .hold)
@@ -169,7 +170,8 @@ final class AutoController {
         }
         shown = (brightness, Double(contrast), shown?.nightShift ?? Double(state.autoNightShift))
         state.autoContrast = contrast
-        write("hardwareContrast", contrast)
+        dragUntil = done ? .distantPast : Date().addingTimeInterval(1)
+        write("hardwareContrast", contrast, final: done)
         if done {
             state.save()
             log(force: true, set: saved)
@@ -264,7 +266,8 @@ final class AutoController {
     }
 
     private func send(_ state: AppState) {
-        guard let s = shown else { return }
+        // A drag sends its own values; the tick's would go as ones that stay, twice and slower.
+        guard let s = shown, Date() >= dragUntil else { return }
         let b = Int(s.brightness.rounded()), c = Int(s.contrast.rounded()), n = Int(s.nightShift.rounded())
         if state.autoBrightness != b { state.autoBrightness = b }
         if state.autoContrast != c { state.autoContrast = c }
@@ -277,20 +280,27 @@ final class AutoController {
     /// Sends only each parameter's latest value: a drag gives a value every few milliseconds and a
     /// DDC write takes tens of them, so queueing every one left the monitor seconds behind the
     /// slider, playing back the whole drag. The schedule's sliders already kept only the last.
-    private func write(_ param: String, _ value: Int) {
-        guard written[param] != value, let controller else { return }
+    private func write(_ param: String, _ value: Int, final: Bool = true) {
+        guard let controller else { return }
+        // A drag's last value usually matches the one sent quickly just before it, and still has
+        // to go again as one that stays.
+        if written[param] == value, settled.contains(param) || !final { return }
         written[param] = value
-        pending[param] = value
+        if final { settled.insert(param) } else { settled.remove(param) }
+        pending[param] = (value, final)
         guard !sending else { return }
         sending = true
         Task {
-            while let param = Self.sendOrder.first(where: { pending[$0] != nil }), let value = pending.removeValue(forKey: param) {
-                await controller.applySingle(param, value: value)
+            while let param = Self.sendOrder.first(where: { pending[$0] != nil }), let next = pending.removeValue(forKey: param) {
+                await controller.applySingle(param, value: next.value, final: next.final)
             }
             sending = false
         }
     }
-    private var pending: [String: Int] = [:]
+    private var pending: [String: (value: Int, final: Bool)] = [:]
+    private var settled: Set<String> = []
+    /// A drag that ends without a release (the popup closed under it) lets the tick back in after a second.
+    private var dragUntil = Date.distantPast
     private var sending = false
     private static let sendOrder = ["hardwareBrightness", "hardwareContrast", "nightShift"]
 

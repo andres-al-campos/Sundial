@@ -18,11 +18,15 @@ class DDCController {
 
     /// Apply only a single parameter — used during live slider drag to avoid
     /// re-sending unchanged params.
-    func applySingle(_ param: String, value: Int) async {
+    /// `final` is false for the values in the middle of a drag: each goes once, with no wait, so the
+    /// monitor keeps up with the hand, and one dropped among dozens doesn't show. A value that's
+    /// meant to stay goes twice, as MonitorControl sends every value, since a monitor busy with the
+    /// last one can drop it.
+    func applySingle(_ param: String, value: Int, final: Bool = true) async {
         if param == "nightShift" {
             NightShiftController.setStrength(value)
         } else {
-            await setPercent(param, value: value)
+            await setPercent(param, value: value, final: final)
         }
     }
 
@@ -87,17 +91,21 @@ class DDCController {
         return value.max > 0 ? Int((Double(value.current) / Double(value.max) * 100).rounded()) : value.current
     }
 
-    private func setPercent(_ param: String, value: Int) async {
+    private func setPercent(_ param: String, value: Int, final: Bool = true) async {
         guard let vcp = Self.codes[param] else { return }
         let name = displayName
         let took = await Self.onQueue { () -> Bool in
             let raw = UInt16(max(0, min(100, value)) * Self.maximum(display: name, vcp: vcp) / 100)
-            return Self.link.write(display: name, vcp: vcp, value: raw)
+            var took = Self.link.write(display: name, vcp: vcp, value: raw)
+            if final {
+                usleep(10_000)
+                took = Self.link.write(display: name, vcp: vcp, value: raw) || took
+            }
+            return took
         }
         if !took {
             print("[Sundial] Couldn't set \(param) to \(value)% on \"\(name)\": no connected monitor by that name took it. Check the monitor name in Settings against the connected ones (\(await Self.monitors().joined(separator: ", "))), and that DDC/CI is on in the monitor's on-screen menu.")
         }
-        try? await Task.sleep(nanoseconds: 25_000_000)
     }
 
     private static var unanswered: Set<String> = []

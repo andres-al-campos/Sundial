@@ -722,7 +722,7 @@ private struct PresetEditorBody: View {
             try? await Task.sleep(nanoseconds: 25_000_000)
             guard !Task.isCancelled else { return }
             let controller = DDCController(displayName: displayName)
-            await controller.applySingle(param, value: value)
+            await controller.applySingle(param, value: value, final: false)
         }
     }
 }

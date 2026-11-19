@@ -40,7 +40,7 @@ Task { @MainActor in
     // A few milliseconds apart, as a drag's values come.
     var sends: [Task<Void, Never>] = []
     for v in 1...3 {
-        sends.append(Task { await ddc.applySingle("hardwareBrightness", value: v * 10) })
+        sends.append(Task { await ddc.applySingle("hardwareBrightness", value: v * 10, final: false) })
         try? await Task.sleep(for: .milliseconds(20))
     }
     for s in sends { await s.value }

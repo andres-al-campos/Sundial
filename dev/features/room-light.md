@@ -1,6 +1,6 @@
 # Room Light
 
-Updated 2026-11-19 16:00, at 1.2.0.
+Updated 2026-11-19 16:17, at 1.2.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -112,9 +112,10 @@ takes 2 seconds a write. The main thread keeps answering, and the values land in
 sent them. Fails as expected with the write on the main thread.
 
 `./build.sh drive auto-drag` (~15s): drags Room Light's brightness from 10 to 70 in a second against a
-stand-in monitor that takes 100ms a write, and checks the monitor lands on 70 within half a second of
-letting go. Last driven: 2026-11-19, passed; failed with every value queued, still at 54 eight seconds
-after the drag.
+stand-in monitor that takes 10ms a write, as the M27Q does, and checks the monitor moves every few
+milliseconds with each value sent once, and lands on 70, sent twice, within 0.2s of letting go. Last
+driven: 2026-11-19, passed; failed with every value queued (still at 54 eight seconds after), with the
+old 25ms wait after each write (41ms a step), and without the release's resend.
 
 `./build.sh check` runs `tests/ddc-packets.sh`, the DDC/CI bytes against hand-worked packets and a
 real reply from the M27Q.
@@ -123,7 +124,10 @@ real reply from the M27Q.
 
 - A drag of Room Light's sliders lagged seconds behind while the schedule's didn't (fixed 2026-11-19):
   each value was queued as its own DDC write, two per step with contrast, and the monitor played back
-  the whole drag. Now only each parameter's latest value waits while a write is out.
+  the whole drag. Now only each parameter's latest value waits while a write is out, a drag's values go
+  once with no wait, and only the value let go on goes twice. The 25ms wait after every write was left
+  from running BetterDisplay's command line, and the double send is MonitorControl's caution; neither was
+  measured on the M27Q, where a write takes about 10ms.
 
 - A hover tooltip (`.help`) shows nothing in the menu bar popup: the Night Shift ⓘ's did nothing
   under the pointer (macOS 27, 2026-11-08). Explaining something there takes a click, a popover.
