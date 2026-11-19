@@ -1,6 +1,6 @@
 # Room Light
 
-Updated 2026-11-17 18:19, at 1.2.0.
+Updated 2026-11-19 16:00, at 1.2.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -111,10 +111,19 @@ passed; failed with the slide starting empty, and with a start row short of fiel
 takes 2 seconds a write. The main thread keeps answering, and the values land in the order a drag
 sent them. Fails as expected with the write on the main thread.
 
+`./build.sh drive auto-drag` (~15s): drags Room Light's brightness from 10 to 70 in a second against a
+stand-in monitor that takes 100ms a write, and checks the monitor lands on 70 within half a second of
+letting go. Last driven: 2026-11-19, passed; failed with every value queued, still at 54 eight seconds
+after the drag.
+
 `./build.sh check` runs `tests/ddc-packets.sh`, the DDC/CI bytes against hand-worked packets and a
 real reply from the M27Q.
 
 ## Gotchas
+
+- A drag of Room Light's sliders lagged seconds behind while the schedule's didn't (fixed 2026-11-19):
+  each value was queued as its own DDC write, two per step with contrast, and the monitor played back
+  the whole drag. Now only each parameter's latest value waits while a write is out.
 
 - A hover tooltip (`.help`) shows nothing in the menu bar popup: the Night Shift ⓘ's did nothing
   under the pointer (macOS 27, 2026-11-08). Explaining something there takes a click, a popover.

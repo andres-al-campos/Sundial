@@ -274,11 +274,25 @@ final class AutoController {
         write("nightShift", n)
     }
 
+    /// Sends only each parameter's latest value: a drag gives a value every few milliseconds and a
+    /// DDC write takes tens of them, so queueing every one left the monitor seconds behind the
+    /// slider, playing back the whole drag. The schedule's sliders already kept only the last.
     private func write(_ param: String, _ value: Int) {
         guard written[param] != value, let controller else { return }
         written[param] = value
-        Task { await controller.applySingle(param, value: value) }
+        pending[param] = value
+        guard !sending else { return }
+        sending = true
+        Task {
+            while let param = Self.sendOrder.first(where: { pending[$0] != nil }), let value = pending.removeValue(forKey: param) {
+                await controller.applySingle(param, value: value)
+            }
+            sending = false
+        }
     }
+    private var pending: [String: Int] = [:]
+    private var sending = false
+    private static let sendOrder = ["hardwareBrightness", "hardwareContrast", "nightShift"]
 
     // MARK: - Log
 
