@@ -1,6 +1,6 @@
 # Sundial
 
-A macOS menu bar app that sets your monitor's brightness, contrast and Night Shift, and your Philips Hue lamps, so the light in the room matches the natural light by day, then fades like a slow sunset that ends at your bedtime, without you touching a slider.
+A macOS menu bar app that sets your monitor's brightness, contrast and Night Shift, and your Philips Hue lamps, so they move together: with the sun by day, then as a slow artificial sunset that ends at your bedtime, without you touching a slider.
 
 ![Sundial dimming a room's monitor and lamps through the evening, ending in an artificial sunset at bedtime (the room is rendered)](docs/demo.webp)
 

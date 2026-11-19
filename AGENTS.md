@@ -1,9 +1,8 @@
 # Sundial
 
-A person comes to Sundial so the light in the room, the screen and the smart
-lights, follows the day without their touching anything: it matches the natural
-light while the sun is up, then carries on as an artificial sunset that ends when
-their night does. Opening it means something isn't right yet. Some of that will
+A person comes to Sundial so the screen and the smart lights move together,
+without their touching anything: with the sun while it's up, then as an artificial
+sunset that ends when their night does. Opening it means something isn't right yet. Some of that will
 always happen; the aim is that it happens less.
 
 What a user can do, and the checks for each, are in `dev/features/`. Build, check
