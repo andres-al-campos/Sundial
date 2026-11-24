@@ -34,8 +34,11 @@ Task { @MainActor in
     let front = NSWorkspace.shared.frontmostApplication?.processIdentifier
     let view = PopUp(items: labels, selected: 1) { _ in }
         .controlSize(.small).frame(width: 192).fixedSize(horizontal: false, vertical: true).padding(20)
-    let screen = NSScreen.main!.visibleFrame
-    let w = NSWindow(contentRect: NSRect(x: screen.minX + 20, y: screen.minY + 120, width: 232, height: 60),
+    // A menu has to open on a real display, so this window can't go off-screen like the rest;
+    // it goes on one other than the main display, in the middle, clear of the edges a list
+    // would be pushed back from.
+    let screen = (NSScreen.screens.dropFirst().first ?? NSScreen.screens[0]).visibleFrame
+    let w = NSWindow(contentRect: NSRect(x: screen.midX - 116, y: screen.midY - 30, width: 232, height: 60),
                      styleMask: [.borderless], backing: .buffered, defer: false)
     w.appearance = NSAppearance(named: .darkAqua)
     w.contentView = NSHostingView(rootView: view)

@@ -1,6 +1,6 @@
 # Sundial features
 
-Updated 2026-11-17 21:03, at 1.2.0.
+Updated 2026-11-23 20:13, at 1.2.0.
 
 What a user can do with Sundial, how to reach it, and how to drive it. Read
 this before adding anything: if it's already here, extend it instead of
@@ -48,3 +48,9 @@ Sundial's features act on a real monitor over DDC, and
 its UI lives in a menu bar popover, so a drive covers a decision the app makes
 (compiled out of the app's source with a harness) and the rest is checked by
 hand.
+
+A drive that opens windows calls `stayOutOfTheWay()` from
+`tests/drive/support/off-screen.swift`, so it never takes the keyboard and its
+windows sit off every display (*Testing stays out of the owner's way*, in
+`~/Projects/Code/AGENTS.md`). A window that has to be on a real display, such as
+one whose menu opens, goes on a display other than the main one.
