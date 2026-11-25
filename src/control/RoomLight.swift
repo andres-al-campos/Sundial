@@ -120,8 +120,9 @@ enum RoomLight {
     /// Minutes for the evening's fade to halve what's left. 150 came from the
     /// evenings of 2026-11-01 to 09; on 11-10 to 16, with holds kept across
     /// relaunches, the median of your drags ran about 2 under it from an hour
-    /// after sunset, and 90 stays within 1 of it from 40 minutes after sunset to bedtime.
-    static let eveningHalfLife = 90.0
+    /// after sunset. 90 still ran 3 to 5 over it on 11-17 to 24; pairs of your own
+    /// successive drags on both weeks fit 60 to 66, and 60 lies on the median.
+    static let eveningHalfLife = 60.0
 
     /// A value `dark` of the way to its night value, never up to it when it's
     /// already lower.

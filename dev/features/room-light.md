@@ -1,6 +1,6 @@
 # Room Light
 
-Updated 2026-11-19 16:17, at 1.2.0.
+Updated 2026-11-25 13:43, at 1.2.0.
 
 Sundial reads the room's light with the MacBook's ambient light sensor and
 sets the monitor from it before sunset and from the clock after. It's the main mode and needs no
@@ -41,7 +41,7 @@ presets; Schedule (the presets) is the other. The code calls it Auto
 - **After sunset, the clock dims to bedtime.** From where Night Shift starts
   warming (30 minutes before sunset, where the lamps start on Twilight), lux
   stops counting: brightness and contrast fade from what the room gave at that
-  moment, halving what's left every 90 minutes (fast after sunset, slow later), to the night pair (brightness 1, contrast 3 to start) by
+  moment, halving what's left every 60 minutes (fast after sunset, slow later), to the night pair (brightness 1, contrast 3 to start) by
   bedtime, and stay there until Night Shift turns off. If Sundial didn't see
   the handover, it starts from your level at 38 lux, the median there over the
   first week. Contrast at night is its own number, not a multiple, so brightness
@@ -283,9 +283,10 @@ real reply from the M27Q.
   relaunch forgot the hold. A best fit on the post-sunset holds, to use "for now before coming back
   to it"; the twilight hour either side of sunset, where both the monitor and the lamps run bright
   for the room, is still open. Applies *Just right for the room*.
-- 2026-11-17 18:19, 1.2.0. The fade halves every 90 minutes instead of 2.5 hours, and contrast starts at the golden ratio × brightness
+- 2026-11-25 13:43, 1.2.0. The fade halves every 60 minutes instead of 2.5 hours, and contrast starts at the golden ratio × brightness
   instead of π. Evenings Nov 10 to 16, with holds kept across relaunches, had about 5 drags a night
-  instead of 15; the median of your drags ran about 2 under the 2.5-hour fade from an hour after sunset,
-  and the 90-minute one stays within 1 of it. Contrast felt too strong "between when the sunset starts
+  instead of 15; the median of your drags ran about 2 under the 2.5-hour fade from an hour after sunset.
+  90 minutes, shipped first, still ran 3 to 5 over the median on Nov 17 to 24 (about 4 adjustments a
+  day); pairs of your own successive drags on both weeks fit 60 to 66 minutes, and 60 lies on the median. Contrast felt too strong "between when the sunset starts
   and when the sky actually goes fully dark"; the golden ratio was your pick. Applies *Just right for
   the room*.
